@@ -73,6 +73,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn force_repair_item() -> Weight {
 		Weight::default()
 	}
+
+	fn upgrade_tokens_properties_limit() -> Weight {
+		Weight::default()
+	}
 }
 
 /// Implementation of `CommonCollectionOperations` for `FungibleHandle`. It wraps FungibleHandle Pallet
@@ -118,6 +122,14 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 
 	fn get_tokens_properties_limit(&self) -> u32 {
 		0
+	}
+
+	fn upgrade_tokens_properties_limit(
+		&mut self,
+		_sender: &T::CrossAccountId,
+		_new_limit: up_data_structs::PropertySizeLimit,
+	) -> sp_runtime::DispatchResult {
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn set_collection_properties(

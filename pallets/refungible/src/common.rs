@@ -130,6 +130,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn force_repair_item() -> Weight {
 		<SelfWeightOf<T>>::repair_item()
 	}
+
+	fn upgrade_tokens_properties_limit() -> Weight {
+		<pallet_common::SelfWeightOf<T>>::upgrade_tokens_properties_limit()
+	}
 }
 
 /// Weight of minting tokens with properties
@@ -325,6 +329,14 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn get_tokens_properties_limit(&self) -> u32 {
 		<Pallet<T>>::get_tokens_properties_limit(self)
+	}
+
+	fn upgrade_tokens_properties_limit(
+		&mut self,
+		sender: &T::CrossAccountId,
+		new_limit: up_data_structs::PropertySizeLimit,
+	) -> sp_runtime::DispatchResult {
+		<Pallet<T>>::upgrade_tokens_properties_limit(self, sender, new_limit)
 	}
 
 	fn set_collection_properties(

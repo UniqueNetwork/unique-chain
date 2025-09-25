@@ -32,9 +32,9 @@ use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	AccessMode, CollectionId, CollectionMode, CollectionPermissions, CreateCollectionData,
 	NestingPermissions, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyValue, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH,
-	MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH,
-	MAX_TOKEN_PREFIX_LENGTH, MAX_TOKEN_PROPERTIES_LIMIT,
+	PropertySizeLimit, PropertyValue, MAX_COLLECTION_DESCRIPTION_LENGTH,
+	MAX_COLLECTION_NAME_LENGTH, MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH,
+	MAX_PROPERTY_VALUE_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_TOKEN_PROPERTIES_LIMIT,
 };
 
 use crate::{BenchmarkPropertyWriter, CollectionHandle, CollectionIssuer, Config, Pallet};
@@ -290,6 +290,26 @@ mod benchmarks {
 		#[block]
 		{
 			<BenchmarkPropertyWriter<T>>::load_collection_info(&&collection, &sender);
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn upgrade_tokens_properties_limit() -> Result<(), BenchmarkError> {
+		bench_init! {
+			owner: sub; collection: collection(owner);
+			sender: sub;
+			sender: cross_from_sub(sender);
+		};
+
+		#[block]
+		{
+			<Pallet<T>>::upgrade_tokens_properties_limit(
+				&collection,
+				&sender,
+				PropertySizeLimit::Max,
+			)?;
 		}
 
 		Ok(())

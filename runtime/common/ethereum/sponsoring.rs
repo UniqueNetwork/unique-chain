@@ -263,6 +263,7 @@ mod common {
 			| SetCollectionSponsor { .. }
 			| SetCollectionSponsorCross { .. }
 			| SetCollectionLimit { .. }
+			| UpgradeTokensPropertiesLimit { .. }
 			| ConfirmCollectionSponsorship
 			| RemoveCollectionSponsor => None,
 		}

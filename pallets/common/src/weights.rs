@@ -36,6 +36,9 @@ pub trait WeightInfo {
 	fn set_collection_properties(b: u32, ) -> Weight;
 	fn check_accesslist() -> Weight;
 	fn property_writer_load_collection_info() -> Weight;
+
+	// FIXME benchmark this properly!
+	fn upgrade_tokens_properties_limit() -> Weight;
 }
 
 /// Weights for pallet_common using the Substrate node and recommended hardware.
@@ -77,6 +80,19 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(11_552_000, 20191)
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 	}
+
+	// FIXME benchmark this properly!
+	/// Storage: `Common::CollectionTokenPropertiesLimit` (r:1 w:1)
+	/// Proof: `Common::CollectionTokenPropertiesLimit` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+	fn upgrade_tokens_properties_limit() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `281`
+		//  Estimated: `3489`
+		// Minimum execution time: 3_667_000 picoseconds.
+		Weight::from_parts(3_937_000, 3489)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -116,6 +132,19 @@ impl WeightInfo for () {
 		// Minimum execution time: 11_246_000 picoseconds.
 		Weight::from_parts(11_552_000, 20191)
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
+	}
+
+	// FIXME benchmark this properly!
+	/// Storage: `Common::CollectionTokenPropertiesLimit` (r:1 w:1)
+	/// Proof: `Common::CollectionTokenPropertiesLimit` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+	fn upgrade_tokens_properties_limit() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `281`
+		//  Estimated: `3489`
+		// Minimum execution time: 3_667_000 picoseconds.
+		Weight::from_parts(3_937_000, 3489)
+			.saturating_add(RocksDbWeight::get().reads(1_u64))
+			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 }
 

@@ -27,8 +27,9 @@ use core::{
 
 use bondrewd::Bitfields;
 use derivative::Derivative;
-use evm_coder::AbiCoderFlags;
+use evm_coder::{AbiCoder, AbiCoderFlags};
 use frame_support::{
+	ensure,
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
 	traits::ConstU32,
 	BoundedVec,
@@ -1355,6 +1356,9 @@ pub enum PropertiesError {
 
 	/// Property key is empty.
 	EmptyPropertyKey,
+
+	/// A downgrade of the token property size limit is attempted.
+	CollectionTokensPropertiesLimitDowngrade,
 }
 
 /// Token owner error: it could be either `NotFound` ot `MultipleOwners`.
@@ -1393,7 +1397,19 @@ impl PropertyScope {
 	}
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Clone, Copy)]
+#[derive(
+	Debug,
+	Encode,
+	DecodeWithMemTracking,
+	Decode,
+	MaxEncodedLen,
+	TypeInfo,
+	PartialEq,
+	Clone,
+	Copy,
+	AbiCoder,
+)]
+#[repr(u8)]
 pub enum PropertySizeLimit {
 	Default,
 	Extended,
@@ -1742,11 +1758,25 @@ impl<const MAX_SPACE_LIMIT: u32> TrySetProperty
 pub type CollectionProperties = SpaceMeteredProperties<MAX_COLLECTION_PROPERTIES_LIMIT>;
 pub type TokenProperties = SpaceMeteredProperties<MAX_TOKEN_PROPERTIES_LIMIT>;
 
-#[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, TypeInfo, MaxEncodedLen, Clone, Copy)]
 pub struct CollectionTokensPropertiesLimit(u32);
+impl CollectionTokensPropertiesLimit {
+	pub fn upgrade(&mut self, new_limit: PropertySizeLimit) -> Result<(), PropertiesError> {
+		let new_limit: u32 = new_limit.into();
+
+		ensure!(
+			self.0 < new_limit,
+			PropertiesError::CollectionTokensPropertiesLimitDowngrade
+		);
+
+		self.0 = new_limit;
+
+		Ok(())
+	}
+}
 impl Default for CollectionTokensPropertiesLimit {
 	fn default() -> Self {
-		Self(DEFAULT_TOKEN_PROPERTIES_LIMIT)
+		PropertySizeLimit::Default.into()
 	}
 }
 impl From<PropertySizeLimit> for CollectionTokensPropertiesLimit {

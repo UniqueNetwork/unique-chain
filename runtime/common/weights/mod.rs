@@ -130,6 +130,10 @@ where
 	fn force_repair_item() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(force_repair_item())
 	}
+
+	fn upgrade_tokens_properties_limit() -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(upgrade_tokens_properties_limit())
+	}
 }
 
 #[cfg(feature = "refungible")]

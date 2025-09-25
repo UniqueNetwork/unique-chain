@@ -86,13 +86,12 @@ use up_data_structs::{
 	CollectionLimits, CollectionMode, CollectionPermissions,
 	CollectionProperties as CollectionPropertiesT, CollectionStats, CreateCollectionData,
 	CreateItemData, CreateItemExData, PhantomType, PropertiesError, PropertiesPermissionMap,
-	Property, PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
-	RpcCollection, RpcCollectionFlags, SpaceLimitedProperties, SponsoringRateLimit,
-	SponsorshipState, TokenChild, TokenData, TokenId, TokenOwnerError, TokenProperties,
-	TrySetProperty, COLLECTION_ADMINS_LIMIT, COLLECTION_NUMBER_LIMIT, CUSTOM_DATA_LIMIT,
-	DEFAULT_TOKEN_PROPERTIES_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
-	MAX_TOKEN_OWNERSHIP, MAX_TOKEN_PREFIX_LENGTH, NFT_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	Property, PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope,
+	PropertySizeLimit, PropertyValue, RpcCollection, RpcCollectionFlags, SpaceLimitedProperties,
+	SponsoringRateLimit, SponsorshipState, TokenChild, TokenData, TokenId, TokenOwnerError,
+	TokenProperties, TrySetProperty, COLLECTION_ADMINS_LIMIT, COLLECTION_NUMBER_LIMIT,
+	CUSTOM_DATA_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP,
+	MAX_TOKEN_PREFIX_LENGTH, NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 };
 use up_pov_estimate_rpc::PovInfo;
 
@@ -433,6 +432,10 @@ pub mod pallet {
 		/// Set price to create a collection.
 		#[pallet::constant]
 		type CollectionCreationPrice: Get<
+			<<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
+		>;
+
+		type PropertiesSizeLimitUpgradePrice: SizeLimitUpgradePrice<
 			<<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
 		>;
 
@@ -793,6 +796,9 @@ pub mod pallet {
 
 		/// Not Fungible item data used to mint in Fungible collection.
 		NotFungibleDataUsedToMintFungibleCollectionToken,
+
+		/// A downgrade of the token property size limit is attempted.
+		CollectionTokensPropertiesLimitDowngrade,
 	}
 
 	/// Storage of the count of created collections. Essentially contains the last collection ID.
@@ -1161,20 +1167,7 @@ impl<T: Config> Pallet<T> {
 				ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
 
 				// Take a (non-refundable) deposit of collection creation
-				let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
-				imbalance.subsume(<T as Config>::Currency::deposit(
-					&T::TreasuryAccountId::get(),
-					T::CollectionCreationPrice::get(),
-					Precision::Exact,
-				)?);
-				let credit = <T as Config>::Currency::settle(
-					payer.as_sub(),
-					imbalance,
-					Preservation::Preserve,
-				)
-				.map_err(|_| Error::<T>::NotSufficientFounds)?;
-
-				debug_assert!(credit.peek().is_zero());
+				Self::take_extra_fee(&payer, T::CollectionCreationPrice::get())?;
 			}
 			CollectionIssuer::Internals => {}
 		}
@@ -1398,6 +1391,27 @@ impl<T: Config> Pallet<T> {
 	/// Get the collection's tokens' properties size limit.
 	pub fn get_tokens_properties_limit(collection: &CollectionHandle<T>) -> u32 {
 		<CollectionTokenPropertiesLimit<T>>::get(&collection.id).into()
+	}
+
+	/// Upgrade the collection's tokens' properties size limit.
+	/// The collection's owner or its admin can upgrade the limit.
+	///
+	/// The sender will pay for the upgrade.
+	pub fn upgrade_tokens_properties_limit(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		new_limit: PropertySizeLimit,
+	) -> DispatchResult {
+		<CollectionTokenPropertiesLimit<T>>::try_mutate(&collection.id, |current_limit| {
+			collection.check_is_owner_or_admin(sender)?;
+
+			let upgrade_price =
+				T::PropertiesSizeLimitUpgradePrice::size_limit_upgrade_price(&new_limit);
+			Self::take_extra_fee(sender, upgrade_price)?;
+
+			current_limit.upgrade(new_limit).map_err(<Error<T>>::from)?;
+			Ok(())
+		})
 	}
 
 	/// Set collection property.
@@ -1912,6 +1926,25 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+
+	fn take_extra_fee(
+		payer: &T::CrossAccountId,
+		amount: <<T as Config>::Currency as Inspect<T::AccountId>>::Balance,
+	) -> DispatchResult {
+		let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
+		imbalance.subsume(<T as Config>::Currency::deposit(
+			&T::TreasuryAccountId::get(),
+			amount,
+			Precision::Exact,
+		)?);
+		let credit =
+			<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
+				.map_err(|_| Error::<T>::NotSufficientFounds)?;
+
+		debug_assert!(credit.peek().is_zero());
+
+		Ok(())
+	}
 }
 
 /// Indicates unsupported methods by returning [Error::UnsupportedOperation].
@@ -1949,6 +1982,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn delete_collection_properties(amount: u32) -> Weight {
 		Self::set_collection_properties(amount)
 	}
+
+	/// Collection's tokens' properties size limit upgrade weight.
+	fn upgrade_tokens_properties_limit() -> Weight;
 
 	/// Token property setting weight.
 	///
@@ -2109,6 +2145,13 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Get the collection's tokens' properties size limit.
 	fn get_tokens_properties_limit(&self) -> u32;
+
+	/// Upgrade the collection's tokens' properties size limit.
+	fn upgrade_tokens_properties_limit(
+		&mut self,
+		sender: &T::CrossAccountId,
+		new_limit: PropertySizeLimit,
+	) -> DispatchResult;
 
 	/// Get token properties raw map.
 	///
@@ -2483,6 +2526,10 @@ where
 	) -> DispatchResult;
 }
 
+pub trait SizeLimitUpgradePrice<Balance> {
+	fn size_limit_upgrade_price(new_limit: &PropertySizeLimit) -> Balance;
+}
+
 /// Merge [`DispatchResult`] with [`Weight`] into [`DispatchResultWithPostInfo`].
 ///
 /// Used for [`CommonCollectionOperations`] implementations and flexible enough to do so.
@@ -2505,6 +2552,9 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 			PropertiesError::InvalidCharacterInPropertyKey => Self::InvalidCharacterInPropertyKey,
 			PropertiesError::PropertyKeyIsTooLong => Self::PropertyKeyIsTooLong,
 			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
+			PropertiesError::CollectionTokensPropertiesLimitDowngrade => {
+				Self::CollectionTokensPropertiesLimitDowngrade
+			}
 		}
 	}
 }
@@ -2689,7 +2739,7 @@ where
 
 		let get_token_properties = || {
 			debug_assert!(self.collection.get_token_properties_raw(token_id).is_none());
-			TokenProperties::new().with_space_limit(DEFAULT_TOKEN_PROPERTIES_LIMIT)
+			TokenProperties::new().with_space_limit(self.collection.get_tokens_properties_limit())
 		};
 
 		self.internal_write_token_properties(

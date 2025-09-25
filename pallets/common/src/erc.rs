@@ -29,8 +29,8 @@ use pallet_evm_coder_substrate::{
 };
 use sp_std::vec;
 use up_data_structs::{
-	CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property, SponsoringRateLimit,
-	SponsorshipState,
+	CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property, PropertySizeLimit,
+	SponsoringRateLimit, SponsorshipState,
 };
 
 use crate::{
@@ -99,6 +99,18 @@ where
 		let value = value.0.try_into().map_err(|_| "value too large")?;
 
 		<Pallet<T>>::set_collection_property(self, &caller, Property { key, value })
+			.map_err(dispatch_to_evm::<T>)
+	}
+
+	#[weight(<SelfWeightOf<T>>::upgrade_tokens_properties_limit())]
+	fn upgrade_tokens_properties_limit(
+		&mut self,
+		caller: Caller,
+		new_limit: PropertySizeLimit,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		<Pallet<T>>::upgrade_tokens_properties_limit(self, &caller, new_limit)
 			.map_err(dispatch_to_evm::<T>)
 	}
 

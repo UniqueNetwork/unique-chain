@@ -1304,9 +1304,16 @@ impl<T: Config> Pallet<T> {
 		<TotalSupply<T>>::try_get((collection_id, token_id)).ok()
 	}
 
-	/// Get the collection's tokens properties size limit.
 	pub fn get_tokens_properties_limit(collection: &RefungibleHandle<T>) -> u32 {
 		<PalletCommon<T>>::get_tokens_properties_limit(&collection)
+	}
+
+	pub fn upgrade_tokens_properties_limit(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		new_limit: up_data_structs::PropertySizeLimit,
+	) -> DispatchResult {
+		<PalletCommon<T>>::upgrade_tokens_properties_limit(collection, sender, new_limit)
 	}
 
 	pub fn set_collection_properties(

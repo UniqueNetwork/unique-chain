@@ -104,10 +104,10 @@ pub mod pallet {
 	use up_data_structs::{
 		budget, CollectionId, CollectionLimits, CollectionMode, CollectionPermissions,
 		CreateCollectionData, CreateItemData, CreateItemExData, Property, PropertyKey,
-		PropertyKeyPermission, TokenId, COLLECTION_ADMINS_LIMIT, MAX_COLLECTION_DESCRIPTION_LENGTH,
-		MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_PROPERTIES_LIMIT, MAX_PROPERTIES_PER_ITEM,
-		MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-		MAX_TOKEN_PROPERTIES_LIMIT,
+		PropertyKeyPermission, PropertySizeLimit, TokenId, COLLECTION_ADMINS_LIMIT,
+		MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH,
+		MAX_COLLECTION_PROPERTIES_LIMIT, MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH,
+		MAX_PROPERTY_VALUE_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_TOKEN_PROPERTIES_LIMIT,
 	};
 	use weights::WeightInfo;
 
@@ -1329,6 +1329,27 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			dispatch_tx::<T, _>(collection_id, |d| d.repair_item(item_id))
+		}
+
+		// TODO docs
+		#[pallet::call_index(32)]
+		#[pallet::weight(T::CommonWeightInfo::upgrade_tokens_properties_limit())]
+		pub fn upgrade_tokens_properties_limit(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			new_limit: PropertySizeLimit,
+		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			<PalletCommon<T>>::upgrade_tokens_properties_limit(
+				&target_collection,
+				&sender,
+				new_limit,
+			)
 		}
 	}
 

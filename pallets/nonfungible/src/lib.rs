@@ -620,9 +620,16 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	/// Get the collection's tokens properties size limit.
 	pub fn get_tokens_properties_limit(collection: &NonfungibleHandle<T>) -> u32 {
 		<PalletCommon<T>>::get_tokens_properties_limit(&collection)
+	}
+
+	pub fn upgrade_tokens_properties_limit(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		new_limit: up_data_structs::PropertySizeLimit,
+	) -> DispatchResult {
+		<PalletCommon<T>>::upgrade_tokens_properties_limit(collection, sender, new_limit)
 	}
 
 	/// Add or edit properties for the collection
