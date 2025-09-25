@@ -1478,6 +1478,23 @@ pub trait TrySetProperty: Sized {
 	}
 }
 
+/// Check if map contains key with key validation.
+fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
+	if key.is_empty() {
+		return Err(PropertiesError::EmptyPropertyKey);
+	}
+
+	for byte in key.as_slice().iter() {
+		let byte = *byte;
+
+		if !byte.is_ascii_alphanumeric() && byte != b'_' && byte != b'-' && byte != b'.' {
+			return Err(PropertiesError::InvalidCharacterInPropertyKey);
+		}
+	}
+
+	Ok(())
+}
+
 /// Wrapped map for storing properties.
 #[derive(Encode, Decode, TypeInfo, Derivative, Clone, PartialEq, MaxEncodedLen)]
 #[derivative(Default(bound = ""))]
@@ -1493,7 +1510,7 @@ impl<Value> PropertiesMap<Value> {
 
 	/// Remove property from map.
 	pub fn remove(&mut self, key: &PropertyKey) -> Result<Option<Value>, PropertiesError> {
-		Self::check_property_key(key)?;
+		check_property_key(key)?;
 
 		Ok(self.0.remove(key))
 	}
@@ -1503,26 +1520,14 @@ impl<Value> PropertiesMap<Value> {
 		self.0.get(key)
 	}
 
+	/// Get mutable property with appropriate key from map.
+	pub fn get_mut(&mut self, key: &PropertyKey) -> Option<&mut Value> {
+		self.0.get_mut(key)
+	}
+
 	/// Check if map contains key.
 	pub fn contains_key(&self, key: &PropertyKey) -> bool {
 		self.0.contains_key(key)
-	}
-
-	/// Check if map contains key with key validation.
-	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
-		if key.is_empty() {
-			return Err(PropertiesError::EmptyPropertyKey);
-		}
-
-		for byte in key.as_slice().iter() {
-			let byte = *byte;
-
-			if !byte.is_ascii_alphanumeric() && byte != b'_' && byte != b'-' && byte != b'.' {
-				return Err(PropertiesError::InvalidCharacterInPropertyKey);
-			}
-		}
-
-		Ok(())
 	}
 
 	pub fn values(&self) -> impl Iterator<Item = &Value> {
@@ -1558,7 +1563,7 @@ impl<Value> TrySetProperty for PropertiesMap<Value> {
 		key: PropertyKey,
 		value: Self::Value,
 	) -> Result<Option<Self::Value>, PropertiesError> {
-		Self::check_property_key(&key)?;
+		check_property_key(&key)?;
 
 		let key = scope.apply(key)?;
 		self.0
@@ -1571,14 +1576,8 @@ impl<Value> TrySetProperty for PropertiesMap<Value> {
 pub type PropertiesPermissionMap = PropertiesMap<PropertyPermission>;
 
 fn slice_size(data: &[u8]) -> u32 {
-	scoped_slice_size(PropertyScope::None, data)
-}
-fn scoped_slice_size(scope: PropertyScope, data: &[u8]) -> u32 {
 	use parity_scale_codec::Compact;
-	let prefix = scope.prefix();
-	<Compact<u32>>::compact_len(&(data.len() as u32 + prefix.len() as u32)) as u32
-		+ data.len() as u32
-		+ prefix.len() as u32
+	<Compact<u32>>::compact_len(&(data.len() as u32)) as u32 + data.len() as u32
 }
 
 /// Wrapper for properties map with consumed space control.
@@ -1713,29 +1712,52 @@ impl<'a, const MAX_SPACE_LIMIT: u32> TrySetProperty
 		key: PropertyKey,
 		value: Self::Value,
 	) -> Result<Option<Self::Value>, PropertiesError> {
-		let key_size = scoped_slice_size(scope, &key);
+		check_property_key(&key)?;
+
+		let key = scope.apply(key)?;
+
+		let key_size = slice_size(&key);
 		let value_size = slice_size(&value);
 
-		if self.properties.consumed_space + value_size + key_size > self.space_limit
-			&& !cfg!(feature = "runtime-benchmarks")
-		{
-			return Err(PropertiesError::NoSpaceForProperty);
+		// No entry API is available for BoundedBTreeMap, unfortunately
+		// Workarounds look bad. Using the least ugly approach in this case.
+
+		let property_value = self.properties.map.get_mut(&key);
+		let mut consumed_space = self.properties.consumed_space;
+
+		macro_rules! apply_consumed_space {
+			() => {
+				if consumed_space <= self.space_limit || cfg!(feature = "runtime-benchmarks") {
+					self.properties.consumed_space = consumed_space;
+				} else {
+					return Err(PropertiesError::NoSpaceForProperty);
+				}
+			};
 		}
 
-		let old_value = self.properties.map.try_scoped_set(scope, key, value)?;
-
-		if let Some(old_value) = old_value.as_ref() {
-			let old_value_size = slice_size(old_value);
-			self.properties.consumed_space = self
+		if let Some(property_value) = property_value {
+			let old_value_size = slice_size(property_value);
+			consumed_space = self
 				.properties
 				.consumed_space
 				.saturating_sub(old_value_size)
 				+ value_size;
-		} else {
-			self.properties.consumed_space += key_size + value_size;
-		}
 
-		Ok(old_value)
+			apply_consumed_space!();
+
+			Ok(Some(core::mem::replace(property_value, value)))
+		} else {
+			consumed_space += key_size + value_size;
+
+			apply_consumed_space!();
+
+			self.map
+				.0
+				.try_insert(key, value)
+				.map_err(|_| PropertiesError::PropertyLimitReached)?;
+
+			Ok(None)
+		}
 	}
 }
 impl<const MAX_SPACE_LIMIT: u32> TrySetProperty
@@ -1761,17 +1783,18 @@ pub type TokenProperties = SpaceMeteredProperties<MAX_TOKEN_PROPERTIES_LIMIT>;
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen, Clone, Copy)]
 pub struct CollectionTokensPropertiesLimit(u32);
 impl CollectionTokensPropertiesLimit {
-	pub fn upgrade(&mut self, new_limit: PropertySizeLimit) -> Result<(), PropertiesError> {
+	pub fn upgrade(&mut self, new_limit: PropertySizeLimit) -> Result<bool, PropertiesError> {
 		let new_limit: u32 = new_limit.into();
 
 		ensure!(
-			self.0 < new_limit,
+			self.0 <= new_limit,
 			PropertiesError::CollectionTokensPropertiesLimitDowngrade
 		);
 
+		let is_upgraded = new_limit > self.0;
 		self.0 = new_limit;
 
-		Ok(())
+		Ok(is_upgraded)
 	}
 }
 impl Default for CollectionTokensPropertiesLimit {

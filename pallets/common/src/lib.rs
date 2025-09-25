@@ -1405,11 +1405,12 @@ impl<T: Config> Pallet<T> {
 		<CollectionTokenPropertiesLimit<T>>::try_mutate(&collection.id, |current_limit| {
 			collection.check_is_owner_or_admin(sender)?;
 
-			let upgrade_price =
-				T::PropertiesSizeLimitUpgradePrice::size_limit_upgrade_price(&new_limit);
-			Self::take_extra_fee(sender, upgrade_price)?;
+			if current_limit.upgrade(new_limit).map_err(<Error<T>>::from)? {
+				let upgrade_price =
+					T::PropertiesSizeLimitUpgradePrice::size_limit_upgrade_price(&new_limit);
+				Self::take_extra_fee(sender, upgrade_price)?;
+			}
 
-			current_limit.upgrade(new_limit).map_err(<Error<T>>::from)?;
 			Ok(())
 		})
 	}
