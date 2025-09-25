@@ -15,24 +15,114 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Contract, HDNodeWallet} from 'ethers';
-import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util';
-import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types';
-import {before, beforeEach, describe, Pallets} from '@unique/test-utils/util';
-import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '@unique-nft/playgrounds/unique';
+import type {IProperty, ITokenPropertyPermission} from '@unique-nft/playgrounds/types';
+import {UniqueBaseCollection, UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection, UniqueRFToken} from '@unique-nft/playgrounds/unique';
+import {DevUniqueHelper} from '@unique/test-utils';
 import {CreateCollectionData, TokenPermissionField} from '@unique/test-utils/eth/types';
+import {expect, hexlifyString, itEth, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {before, beforeEach, describe, Pallets} from '@unique/test-utils/util';
+import {Contract, HDNodeWallet} from 'ethers';
 import {Buffer} from "node:buffer";
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([1000n], donor);
+      [alice, bob] = await helper.arrange.createAccounts([1000n, 100n], donor);
     });
   });
+
+  const maxKeySize = 256;
+
+  function makeMaxLimitedProperties(limit: number) {
+    const propertiesNum = 4; // An arbitrary number of props
+
+    const encodedKeyMetadataLen = 2; // the max key is 256 bytes, Compcat<u32> will encode it using 2 bytes
+    const encodedValMetadataLen = 2; // the value will always be less than or equal to 16384 in this case. It is also encoded using 2 bytes
+    const kvSize = limit / propertiesNum - (encodedKeyMetadataLen + encodedValMetadataLen);
+    const valueSize = kvSize - maxKeySize;
+
+    return [
+      ['a', '0'],
+      ['b', '1'],
+      ['c', '2'],
+      ['d', '3']
+    ].map(([k, v]) => ({ key: k.repeat(maxKeySize), value: v.repeat(valueSize) }));
+  }
+
+  async function testPropLimitUpgrade(helper: DevUniqueHelper, mode: 'NFT' | 'RFT', testSubjectCb: (collectionId: number, props: IProperty[]) => Promise<void>) {
+    const defaultLimit = 8*1024;
+    const extendedLimit = 32*1024;
+    const maxLimit = 64*1024;
+
+    const defaultProps = makeMaxLimitedProperties(defaultLimit);
+    const extendedProps = makeMaxLimitedProperties(extendedLimit);
+    const maxProps = makeMaxLimitedProperties(maxLimit);
+
+    const tokenPropertyPermissions = ['a', 'b', 'c', 'd']
+      .map(k => ({key: k.repeat(maxKeySize), permission: {mutable: true, tokenOwner: true}}));
+
+    let collection: UniqueBaseCollection;
+
+    if (mode === 'NFT') {
+      collection = await helper.nft.mintCollection(alice, {tokenPropertyPermissions});
+    } else {
+      collection = await helper.rft.mintCollection(alice, {tokenPropertyPermissions});
+    }
+
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(defaultLimit);
+
+    const collectionId = collection.collectionId;
+
+    await expect(testSubjectCb(collectionId, defaultProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, extendedProps)).to.be.rejectedWith(/NoSpaceForProperty/);
+    await expect(testSubjectCb(collectionId, maxProps)).to.be.rejectedWith(/NoSpaceForProperty/);
+
+    await expect(collection.upgradeTokensPropertiesLimit(bob, 'Extended')).to.be.rejectedWith(/NoPermission/);
+
+    // No-op
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(defaultLimit);
+
+    const upgradeToExtendedFee = await helper.arrange.calculcateFee({Substrate: alice.address}, async () => {
+      await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
+    });
+    expect(upgradeToExtendedFee > 2000n * helper.balance.getOneTokenNominal()).to.be.true;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);
+
+    await expect(testSubjectCb(collectionId, defaultProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, extendedProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, maxProps)).to.be.rejectedWith(/NoSpaceForProperty/);
+
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.rejectedWith(/CollectionTokensPropertiesLimitDowngrade/);
+
+    // No-op
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);
+
+    const upgradeToMaxFee = await helper.arrange.calculcateFee({Substrate: alice.address}, async () => {
+      await expect(collection.upgradeTokensPropertiesLimit(alice, 'Max')).to.be.fulfilled;
+    });
+    expect(upgradeToMaxFee > 5000n * helper.balance.getOneTokenNominal()).to.be.true;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(maxLimit);
+
+    await expect(testSubjectCb(collectionId, defaultProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, extendedProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, maxProps)).to.be.fulfilled;
+
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.rejectedWith(/CollectionTokensPropertiesLimitDowngrade/);
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.rejectedWith(/CollectionTokensPropertiesLimitDowngrade/);
+
+    // No-op
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Max')).to.be.fulfilled;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(maxLimit);
+
+  }
+
 
   [
     {mode: 'nft' as const, requiredPallets: []},
@@ -362,6 +452,77 @@ describe('EVM token properties', () => {
 
     const value = await contract.property.staticCall(token.tokenId, 'testKey');
     expect(value).to.equal(hexlifyString('testValue'));
+  });
+
+  itEth('Upgrade collection tokens property size limit: minting new tokens with properties (ETH)', async({helper}) => {
+    await testPropLimitUpgrade(helper, 'NFT', async (collectionId, properties) => {
+      const caller = await helper.eth.createAccountWithBalance(donor);
+      await helper.nft.mintToken(
+        alice,
+        {
+          collectionId,
+          owner: {Ethereum: caller.address},
+          properties
+        },
+      );
+    });
+  });
+
+  itEth('Upgrade collection tokens property size limit: modifying properties of an existing token (ETH)', async({helper}) => {
+    let token: UniqueNFToken | null = null;
+
+    await testPropLimitUpgrade(helper, 'NFT', async (collectionId, properties) => {
+      if (!token) {
+        const caller = await helper.eth.createAccountWithBalance(donor);
+        token = await helper.nft.mintToken(
+          alice,
+          {
+            collectionId,
+            owner: {Ethereum: caller.address},
+          },
+        );
+      }
+
+      await token.setProperties(alice, properties);
+    });
+  });
+
+  itEth.ifWithPallets('Upgrade collection tokens property size limit: minting new tokens with properties (ETH, ReFungible)', [Pallets.ReFungible], async({helper}) => {
+    const pieces = 500n;
+
+    await testPropLimitUpgrade(helper, 'RFT', async (collectionId, properties) => {
+      const caller = await helper.eth.createAccountWithBalance(donor);
+      await helper.rft.mintToken(
+        alice,
+        {
+          collectionId,
+          pieces,
+          owner: {Ethereum: caller.address},
+          properties
+        },
+      );
+    });
+  });
+
+  itEth.ifWithPallets('Upgrade collection tokens property size limit: modifying properties of an existing token (ETH, ReFungible)', [Pallets.ReFungible], async({helper}) => {
+    let token: UniqueRFToken | null = null;
+
+    await testPropLimitUpgrade(helper, 'RFT', async (collectionId, properties) => {
+      if (!token) {
+        const pieces = 500n;
+        const caller = await helper.eth.createAccountWithBalance(donor);
+        token = await helper.rft.mintToken(
+          alice,
+          {
+            collectionId,
+            pieces,
+            owner: {Ethereum: caller.address},
+          },
+        );
+      }
+
+      await token.setProperties(alice, properties);
+    });
   });
 });
 

@@ -629,7 +629,6 @@ describe('Integration Test: Token Properties', () => {
     });
   });
 
-  // TODO test eth-variants in the same manner
 });
 
 describe('Negative Integration Test: Token Properties', () => {
