@@ -16,7 +16,9 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect, sizeOfProperty} from '@unique/test-utils/util';
-import {UniqueHelper, UniqueNFToken, UniqueRFToken} from '@unique-nft/playgrounds/unique';
+import {DevUniqueHelper} from '@unique/test-utils';
+import {UniqueHelper, UniqueNFToken, UniqueRFToken, UniqueBaseCollection} from '@unique-nft/playgrounds/unique';
+import {IProperty} from '@unique-nft/playgrounds/types';
 
 describe('Integration Test: Token Properties', () => {
   let alice: IKeyringPair; // collection owner
@@ -28,7 +30,7 @@ describe('Integration Test: Token Properties', () => {
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({url: import.meta.url});
-      [alice, bob, charlie] = await helper.arrange.createAccounts([200n, 100n, 100n], donor);
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100000n, 100n, 100n], donor);
     });
 
     permissions = [
@@ -471,6 +473,163 @@ describe('Integration Test: Token Properties', () => {
     expect(bobBalanceAfter).to.be.equal(bobBalanceBefore);
     expect(aliceBalanceBefore > aliceBalanceAfter).to.be.true;
   });
+
+  const maxKeySize = 256;
+
+  function makeMaxLimitedProperties(limit: number) {
+    const propertiesNum = 4; // An arbitrary number of props
+
+    const encodedKeyMetadataLen = 2; // the max key is 256 bytes, Compcat<u32> will encode it using 2 bytes
+    const encodedValMetadataLen = 2; // the value will always be less than or equal to 16384 in this case. It is also encoded using 2 bytes
+    const kvSize = limit / propertiesNum - (encodedKeyMetadataLen + encodedValMetadataLen);
+    const valueSize = kvSize - maxKeySize;
+
+    return [
+      ['a', '0'],
+      ['b', '1'],
+      ['c', '2'],
+      ['d', '3']
+    ].map(([k, v]) => ({ key: k.repeat(maxKeySize), value: v.repeat(valueSize) }));
+  }
+
+  async function testPropLimitUpgrade(helper: DevUniqueHelper, mode: 'NFT' | 'RFT', testSubjectCb: (collectionId: number, props: IProperty[]) => Promise<void>) {
+    const defaultLimit = 8*1024;
+    const extendedLimit = 32*1024;
+    const maxLimit = 64*1024;
+
+    const defaultProps = makeMaxLimitedProperties(defaultLimit);
+    const extendedProps = makeMaxLimitedProperties(extendedLimit);
+    const maxProps = makeMaxLimitedProperties(maxLimit);
+
+    const tokenPropertyPermissions = ['a', 'b', 'c', 'd']
+      .map(k => ({key: k.repeat(maxKeySize), permission: {mutable: true, tokenOwner: true}}));
+
+    let collection: UniqueBaseCollection;
+
+    if (mode === 'NFT') {
+      collection = await helper.nft.mintCollection(alice, {tokenPropertyPermissions});
+    } else {
+      collection = await helper.rft.mintCollection(alice, {tokenPropertyPermissions});
+    }
+
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(defaultLimit);
+
+    const collectionId = collection.collectionId;
+
+    await expect(testSubjectCb(collectionId, defaultProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, extendedProps)).to.be.rejectedWith(/NoSpaceForProperty/);
+    await expect(testSubjectCb(collectionId, maxProps)).to.be.rejectedWith(/NoSpaceForProperty/);
+
+    await expect(collection.upgradeTokensPropertiesLimit(bob, 'Extended')).to.be.rejectedWith(/NoPermission/);
+
+    // No-op
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(defaultLimit);
+
+    const upgradeToExtendedFee = await helper.arrange.calculcateFee({Substrate: alice.address}, async () => {
+      await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
+    });
+    expect(upgradeToExtendedFee > 2000n * helper.balance.getOneTokenNominal()).to.be.true;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);
+
+    await expect(testSubjectCb(collectionId, defaultProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, extendedProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, maxProps)).to.be.rejectedWith(/NoSpaceForProperty/);
+
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.rejectedWith(/CollectionTokensPropertiesLimitDowngrade/);
+
+    // No-op
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);
+
+    const upgradeToMaxFee = await helper.arrange.calculcateFee({Substrate: alice.address}, async () => {
+      await expect(collection.upgradeTokensPropertiesLimit(alice, 'Max')).to.be.fulfilled;
+    });
+    expect(upgradeToMaxFee > 5000n * helper.balance.getOneTokenNominal()).to.be.true;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(maxLimit);
+
+    await expect(testSubjectCb(collectionId, defaultProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, extendedProps)).to.be.fulfilled;
+    await expect(testSubjectCb(collectionId, maxProps)).to.be.fulfilled;
+
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.rejectedWith(/CollectionTokensPropertiesLimitDowngrade/);
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.rejectedWith(/CollectionTokensPropertiesLimitDowngrade/);
+
+    // No-op
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Max')).to.be.fulfilled;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(maxLimit);
+
+  }
+
+  itSub('Upgrade collection tokens property size limit: minting new tokens with properties (NFT)', async({helper}) => {
+    await testPropLimitUpgrade(helper, 'NFT', async (collectionId, properties) => {
+      await helper.nft.mintToken(
+        alice,
+        {
+          collectionId,
+          owner: {Substrate: alice.address},
+          properties
+        },
+      );
+    });
+  });
+
+  itSub('Upgrade collection tokens property size limit: modifying properties of an existing token (NFT)', async({helper}) => {
+    let token: UniqueNFToken | null = null;
+
+    await testPropLimitUpgrade(helper, 'NFT', async (collectionId, properties) => {
+      if (!token) {
+        token = await helper.nft.mintToken(
+          alice,
+          {
+            collectionId,
+            owner: {Substrate: alice.address},
+          },
+        );
+      }
+
+      await token.setProperties(alice, properties);
+    });
+  });
+
+  itSub.ifWithPallets('Upgrade collection tokens property size limit: minting new tokens with properties (ReFungible)', [Pallets.ReFungible], async({helper}) => {
+    const pieces = 500n;
+
+    await testPropLimitUpgrade(helper, 'RFT', async (collectionId, properties) => {
+      await helper.rft.mintToken(
+        alice,
+        {
+          collectionId,
+          pieces,
+          owner: {Substrate: alice.address},
+          properties
+        },
+      );
+    });
+  });
+
+  itSub.ifWithPallets('Upgrade collection tokens property size limit: modifying properties of an existing token (RFT)', [Pallets.ReFungible], async({helper}) => {
+    let token: UniqueRFToken | null = null;
+
+    await testPropLimitUpgrade(helper, 'RFT', async (collectionId, properties) => {
+      if (!token) {
+        const pieces = 500n;
+
+        token = await helper.rft.mintToken(
+          alice,
+          {
+            collectionId,
+            pieces,
+            owner: {Substrate: alice.address},
+          },
+        );
+      }
+
+      await token.setProperties(alice, properties);
+    });
+  });
+
+  // TODO test eth-variants in the same manner
 });
 
 describe('Negative Integration Test: Token Properties', () => {
