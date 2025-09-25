@@ -457,7 +457,6 @@ describe('EVM token properties', () => {
   });
 
   itEth('Set property size limit with ETH', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.nft.mintCollection(alice, {
       tokenPropertyPermissions: [{
         key: 'testKey',
@@ -468,10 +467,10 @@ describe('EVM token properties', () => {
       }],
     });
 
-    expect(await collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
-    expect(await collection.getTokensPropertiesLimit()).to.be.equal(8*1024);
-    expect(await collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
-    expect(await collection.getTokensPropertiesLimit()).to.be.equal(32*1024);
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
+    await expect(collection.getTokensPropertiesLimit()).to.be.equal(8*1024);
+    await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
+    await expect(collection.getTokensPropertiesLimit()).to.be.equal(32*1024);
   });
 
   itEth('Upgrade collection tokens property size limit: minting new tokens with properties (ETH)', async({helper}) => {

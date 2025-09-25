@@ -16722,6 +16722,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "staging-xcm",
+ "up-common",
  "up-data-structs",
  "up-sponsorship",
 ]
