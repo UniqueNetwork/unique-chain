@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {IProperty, ITokenPropertyPermission} from '@unique-nft/playgrounds/types';
 import {UniqueBaseCollection, UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection, UniqueRFToken} from '@unique-nft/playgrounds/unique';
-import {DevUniqueHelper} from '@unique/test-utils';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
 import {CreateCollectionData, TokenPermissionField} from '@unique/test-utils/eth/types';
 import {expect, hexlifyString, itEth, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
 import {before, beforeEach, describe, Pallets} from '@unique/test-utils/util';
@@ -54,7 +54,7 @@ describe('EVM token properties', () => {
     ].map(([k, v]) => ({ key: k.repeat(maxKeySize), value: v.repeat(valueSize) }));
   }
 
-  async function testPropLimitUpgrade(helper: DevUniqueHelper, mode: 'NFT' | 'RFT', testSubjectCb: (collectionId: number, props: IProperty[]) => Promise<void>) {
+  async function testPropLimitUpgrade(helper: EthUniqueHelper, mode: 'NFT' | 'RFT', testSubjectCb: (collectionId: number, props: IProperty[]) => Promise<void>) {
     const defaultLimit = 8*1024;
     const extendedLimit = 32*1024;
     const maxLimit = 64*1024;
@@ -88,7 +88,9 @@ describe('EVM token properties', () => {
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
     expect(await collection.getTokensPropertiesLimit()).to.be.equal(defaultLimit);
 
-    const upgradeToExtendedFee = await helper.arrange.calculcateFee({Substrate: alice.address}, async () => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+
+    const upgradeToExtendedFee = await helper.arrange.calculcateFee({Ethereum: caller.address}, async () => {
       await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
     });
     expect(upgradeToExtendedFee > 2000n * helper.balance.getOneTokenNominal()).to.be.true;
@@ -102,9 +104,9 @@ describe('EVM token properties', () => {
 
     // No-op
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
-    expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);    
 
-    const upgradeToMaxFee = await helper.arrange.calculcateFee({Substrate: alice.address}, async () => {
+    const upgradeToMaxFee = await helper.arrange.calculcateFee({Ethereum: caller.address}, async () => {
       await expect(collection.upgradeTokensPropertiesLimit(alice, 'Max')).to.be.fulfilled;
     });
     expect(upgradeToMaxFee > 5000n * helper.balance.getOneTokenNominal()).to.be.true;
@@ -452,6 +454,24 @@ describe('EVM token properties', () => {
 
     const value = await contract.property.staticCall(token.tokenId, 'testKey');
     expect(value).to.equal(hexlifyString('testValue'));
+  });
+
+  itEth('Set property size limit with ETH', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(alice, {
+      tokenPropertyPermissions: [{
+        key: 'testKey',
+        permission: {
+          mutable: true,
+          tokenOwner: true,
+        },
+      }],
+    });
+
+    expect(await collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(8*1024);
+    expect(await collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(32*1024);
   });
 
   itEth('Upgrade collection tokens property size limit: minting new tokens with properties (ETH)', async({helper}) => {
