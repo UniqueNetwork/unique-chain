@@ -1499,6 +1499,14 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
   async doesTokenExist(collectionId: number, tokenId: number): Promise<boolean> {
     return (await this.helper.callRpc('api.rpc.unique.tokenExists', [collectionId, tokenId])).toJSON();
   }
+
+  async upgradeTokensPropertiesLimit(signer: IKeyringPair, collectionId: number, newLimit: 'Default' | 'Extended' | 'Max') {
+    return await this.helper.executeExtrinsic(signer, 'api.tx.unique.upgradeTokensPropertiesLimit', [collectionId, newLimit]);
+  }
+
+  async getTokensPropertiesLimit(collectionId: number): Promise<number> {
+    return (await this.helper.callRpc('api.query.common.collectionTokenPropertiesLimit', [collectionId])).toJSON();
+  }
 }
 
 class NFTnRFT extends CollectionGroup {
@@ -3171,6 +3179,14 @@ export class UniqueBaseCollection {
 
   async burn(signer: TSigner) {
     return await this.helper.collection.burn(signer, this.collectionId);
+  }
+
+  async upgradeTokensPropertiesLimit(signer: TSigner, newLimit: 'Default' | 'Extended' | 'Max') {
+    return await this.helper.collection.upgradeTokensPropertiesLimit(signer, this.collectionId, newLimit);
+  }
+
+  async getTokensPropertiesLimit() {
+    return await this.helper.collection.getTokensPropertiesLimit(this.collectionId);
   }
 }
 
