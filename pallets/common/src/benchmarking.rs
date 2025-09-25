@@ -28,11 +28,13 @@ use frame_support::{
 use pallet_evm::account::CrossAccountId;
 use sp_runtime::{traits::Zero, DispatchError};
 #[cfg(not(feature = "std"))]
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	AccessMode, CollectionId, CollectionMode, CollectionPermissions, CreateCollectionData,
-	NestingPermissions, Property, PropertyKey, PropertyValue, MAX_COLLECTION_DESCRIPTION_LENGTH,
-	MAX_COLLECTION_NAME_LENGTH, MAX_PROPERTIES_PER_ITEM, MAX_TOKEN_PREFIX_LENGTH,
+	NestingPermissions, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
+	PropertyValue, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH,
+	MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH,
+	MAX_TOKEN_PREFIX_LENGTH, MAX_TOKEN_PROPERTIES_LIMIT,
 };
 
 use crate::{BenchmarkPropertyWriter, CollectionHandle, CollectionIssuer, Config, Pallet};
@@ -57,7 +59,7 @@ pub fn create_var_data<const S: u32>(size: u32) -> BoundedVec<u8, ConstU32<S>> {
 		.try_into()
 		.unwrap()
 }
-pub fn property_key(id: usize) -> PropertyKey {
+pub fn max_property_key_from_id(id: u32) -> PropertyKey {
 	#[cfg(not(feature = "std"))]
 	use alloc::string::ToString;
 	let mut data = create_data();
@@ -70,8 +72,41 @@ pub fn property_key(id: usize) -> PropertyKey {
 	data[len - bytes.len()..].copy_from_slice(bytes.as_bytes());
 	data
 }
-pub fn property_value() -> PropertyValue {
-	create_data()
+pub fn property_value(property_size: u32) -> PropertyValue {
+	create_var_data(property_size)
+}
+
+/// Computes the maximum value size of i-th property depending on the total number of properties.
+/// It assumes that every key will have the maximum size.
+///
+/// The max value size is computed so that all the key-value pairs can fit into the token properties limit.
+/// The last property may have a smaller value size than the rest of the property values
+/// because the total property size limit may not be divisible by the total number of properties.
+pub fn max_property_value_size(current_property_id: u32, properties_num: u32) -> u32 {
+	let last_id = properties_num - 1;
+
+	let property_max_size = MAX_TOKEN_PROPERTIES_LIMIT / properties_num;
+
+	let property_max_size = if property_max_size > MAX_PROPERTY_VALUE_LENGTH {
+		MAX_PROPERTY_VALUE_LENGTH
+	} else if current_property_id == last_id {
+		property_max_size + MAX_TOKEN_PROPERTIES_LIMIT % properties_num
+	} else {
+		property_max_size
+	};
+
+	property_max_size - MAX_PROPERTY_KEY_LENGTH
+}
+
+pub fn max_property_value_from_id(property_id: u32, properties_num: u32) -> PropertyValue {
+	property_value(max_property_value_size(property_id, properties_num))
+}
+
+pub fn max_property(property_id: u32, properties_num: u32) -> Property {
+	Property {
+		key: max_property_key_from_id(property_id),
+		value: max_property_value_from_id(property_id, properties_num),
+	}
 }
 
 pub fn create_collection_raw<T: Config, R>(
@@ -110,6 +145,22 @@ pub fn create_collection_raw<T: Config, R>(
 				mint_mode: Some(true),
 				..Default::default()
 			}),
+
+			// The max data in token property permissions is needed
+			// for benchmarking the property-related logic.
+			// It needs to load the collection info that includes token property permissions.
+			token_property_permissions: (0..MAX_PROPERTIES_PER_ITEM)
+				.map(|idx| PropertyKeyPermission {
+					key: max_property_key_from_id(idx),
+					permission: PropertyPermission {
+						mutable: true,
+						collection_admin: true,
+						token_owner: true,
+					},
+				})
+				.collect::<Vec<_>>()
+				.try_into()
+				.unwrap(),
 			..Default::default()
 		},
 	)
@@ -183,12 +234,7 @@ mod benchmarks {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub;
 		};
-		let props = (0..b)
-			.map(|p| Property {
-				key: property_key(p as usize),
-				value: property_value(),
-			})
-			.collect::<Vec<_>>();
+		let props = (0..b).map(|id| max_property(id, b)).collect::<Vec<_>>();
 
 		#[block]
 		{
@@ -237,6 +283,9 @@ mod benchmarks {
 			sender: sub;
 			sender: cross_from_sub(sender);
 		};
+
+		// The token property permissions are filled with max data at collection creation.
+		// Thus, its reading will be accounted for.
 
 		#[block]
 		{

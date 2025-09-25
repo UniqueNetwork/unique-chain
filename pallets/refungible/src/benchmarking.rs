@@ -17,7 +17,7 @@
 use frame_benchmarking::v2::*;
 use pallet_common::{
 	bench_init,
-	benchmarking::{create_collection_raw, property_key, property_value},
+	benchmarking::{create_collection_raw, max_property, max_property_key_from_id},
 	CollectionIssuer, Pallet as PalletCommon,
 };
 use sp_std::prelude::*;
@@ -34,13 +34,19 @@ const SEED: u32 = 1;
 fn create_max_item_data<T: Config>(
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> CreateItemData<T> {
+	let properties = (0..MAX_PROPERTIES_PER_ITEM)
+		.map(|property_id| max_property(property_id, MAX_PROPERTIES_PER_ITEM))
+		.collect::<Vec<_>>()
+		.try_into()
+		.unwrap();
+
 	CreateItemData::<T> {
 		users: users
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
 			.unwrap(),
-		properties: Default::default(),
+		properties,
 	}
 }
 
@@ -446,22 +452,8 @@ mod benchmarks {
 			owner: cross_from_sub;
 		};
 
-		let perms = (0..b)
-			.map(|k| PropertyKeyPermission {
-				key: property_key(k as usize),
-				permission: PropertyPermission {
-					mutable: false,
-					collection_admin: true,
-					token_owner: true,
-				},
-			})
-			.collect::<Vec<_>>();
-		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
 		let props = (0..b)
-			.map(|k| Property {
-				key: property_key(k as usize),
-				value: property_value(),
-			})
+			.map(|property_id| max_property(property_id, b))
 			.collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, [(owner.clone(), 200)])?;
 
@@ -496,7 +488,7 @@ mod benchmarks {
 		};
 		let perms = (0..b)
 			.map(|k| PropertyKeyPermission {
-				key: property_key(k as usize),
+				key: max_property_key_from_id(k),
 				permission: PropertyPermission {
 					mutable: false,
 					collection_admin: false,

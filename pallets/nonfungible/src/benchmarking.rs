@@ -17,13 +17,13 @@
 use frame_benchmarking::v2::{account, benchmarks, BenchmarkError};
 use pallet_common::{
 	bench_init,
-	benchmarking::{create_collection_raw, property_key, property_value},
+	benchmarking::{create_collection_raw, max_property, max_property_key_from_id},
 	CollectionIssuer, Pallet as PalletCommon,
 };
 use sp_std::prelude::*;
 use up_data_structs::{
-	budget::Unlimited, CollectionMode, PropertyPermission, MAX_ITEMS_PER_BATCH,
-	MAX_PROPERTIES_PER_ITEM,
+	budget::Unlimited, CollectionMode, Property, PropertyPermission, MAX_ITEMS_PER_BATCH,
+	MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_TOKEN_PROPERTIES_LIMIT,
 };
 
 use super::*;
@@ -32,10 +32,13 @@ use crate::{Config, Pallet};
 const SEED: u32 = 1;
 
 fn create_max_item_data<T: Config>(owner: T::CrossAccountId) -> CreateItemData<T> {
-	CreateItemData::<T> {
-		owner,
-		properties: Default::default(),
-	}
+	let properties = (0..MAX_PROPERTIES_PER_ITEM)
+		.map(|property_id| max_property(property_id, MAX_PROPERTIES_PER_ITEM))
+		.collect::<Vec<_>>()
+		.try_into()
+		.unwrap();
+
+	CreateItemData::<T> { owner, properties }
 }
 pub fn create_max_item<T: Config>(
 	collection: &NonfungibleHandle<T>,
@@ -251,22 +254,8 @@ mod benchmarks {
 			owner: cross_from_sub;
 		};
 
-		let perms = (0..b)
-			.map(|k| PropertyKeyPermission {
-				key: property_key(k as usize),
-				permission: PropertyPermission {
-					mutable: false,
-					collection_admin: true,
-					token_owner: true,
-				},
-			})
-			.collect::<Vec<_>>();
-		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
 		let props = (0..b)
-			.map(|k| Property {
-				key: property_key(k as usize),
-				value: property_value(),
-			})
+			.map(|property_id| max_property(property_id, b))
 			.collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
 
@@ -301,7 +290,7 @@ mod benchmarks {
 		};
 		let perms = (0..b)
 			.map(|k| PropertyKeyPermission {
-				key: property_key(k as usize),
+				key: max_property_key_from_id(k),
 				permission: PropertyPermission {
 					mutable: false,
 					collection_admin: false,
