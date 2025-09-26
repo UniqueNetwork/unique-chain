@@ -3,7 +3,7 @@ import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygr
 import {DevAcalaHelper, DevAstarHelper, DevHydraDxHelper, DevMoonbeamHelper, DevRelayHelper, DevUniqueHelper, DevWestmintHelper, Event} from '@unique/test-utils';
 import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm';
 import {IEvent} from '@unique-nft/playgrounds/types';
-import process from "node:process";
+import process from 'node:process';
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const POLKADOT_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_ID || 1000);
@@ -327,7 +327,7 @@ export class XcmTestHelper {
       };
       const feeAssetItem = 0;
 
-      let messageHash: any;
+      let messageHashOrId: any;
 
       // `polkadotXcm.transferAssets` is filtered on Acala chains.
       // Astar chains have prohibitive weights for it.
@@ -343,15 +343,15 @@ export class XcmTestHelper {
           V4: {
             parents: 1,
             interior: to === 'relay'
-            ? { X1: [beneficiaryAccount] }
-            : {
-              X2: [
-                {
-                  Parachain: mapToChainId(to),
-                },
-                beneficiaryAccount,
-              ],
-            },
+              ? {X1: [beneficiaryAccount]}
+              : {
+                X2: [
+                  {
+                    Parachain: mapToChainId(to),
+                  },
+                  beneficiaryAccount,
+                ],
+              },
           },
         };
 
@@ -363,7 +363,7 @@ export class XcmTestHelper {
           'Unlimited',
         );
 
-        messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
+        messageHashOrId = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
       } else {
         const destination = from === 'relay'
           ? {V4: {parents: 0, interior: {X1: [{Parachain: mapToChainId(to)}]}}}
@@ -389,11 +389,11 @@ export class XcmTestHelper {
       }
 
       if(from === 'relay') {
-        messageHash = Event.XcmPallet.Sent.expect(transferResult).messageId;
-      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub') {
-        messageHash = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
+        messageHashOrId = Event.XcmPallet.Sent.expect(transferResult).messageId;
+      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub' || from === 'unique') {
+        messageHashOrId = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
       } else {
-        messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
+        messageHashOrId = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
       }
 
       const balanceAfter = await getRandomAccountBalance();
@@ -411,7 +411,9 @@ export class XcmTestHelper {
         ).to.be.true;
       }
 
-      setMessageHash(messageHash);
+      console.log('[%s -> %s] Asset has been sent with message hash or id: %s', from, to, messageHashOrId);
+
+      setMessageHash(messageHashOrId);
     });
   }
 
@@ -456,7 +458,7 @@ export class XcmTestHelper {
 
       expect(
         validEventIndex >= 0,
-        `no 'MessageQueue.Processed' event was found on ${to}`,
+        `no 'MessageQueue.Processed' event was found on ${to} for message hash or id: ${getMessageHash()}`,
       ).to.be.true;
 
       const balanceAfter = await getRandomAccountBalance();
@@ -501,9 +503,8 @@ export class XcmTestHelper {
     const fromPlayground = getDevPlayground(from);
 
     const assetId = from === 'relay'
-      ? { parents: 0, interior: 'here' }
-      : { parents: 1, interior: 'here' };
-
+      ? {parents: 0, interior: 'here'}
+      : {parents: 1, interior: 'here'};
     await fromPlayground(async (helper) => {
       const getRandomAccountBalance = async (): Promise<bigint> => {
         if(!isFromUnique) {
@@ -515,7 +516,7 @@ export class XcmTestHelper {
 
       const balanceBefore = await getRandomAccountBalance();
 
-      let beneficiaryAccount = {
+      const beneficiaryAccount = {
         AccountId32: {
           id: toAccount.addressRaw,
         },
@@ -532,7 +533,7 @@ export class XcmTestHelper {
         ],
       };
 
-      let messageHash: any;
+      let messageHashOrId: any;
 
       const destination = from === 'relay'
         ? {V4: {parents: 0, interior: {X1: [{Parachain: mapToChainId(to)}]}}}
@@ -549,26 +550,26 @@ export class XcmTestHelper {
           V4: [
             {
               DepositAsset: {
-                assets: { Wild: 'All' },
+                assets: {Wild: 'All'},
                 beneficiary: {
                   parents: 0,
                   interior: {
                     X1: [beneficiaryAccount],
                   },
                 },
-              }
-            }
-          ]
+              },
+            },
+          ],
         },
         'Unlimited',
       );
 
       if(from === 'relay') {
-        messageHash = Event.XcmPallet.Sent.expect(transferResult).messageId;
-      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub') {
-        messageHash = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
+        messageHashOrId = Event.XcmPallet.Sent.expect(transferResult).messageId;
+      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub' || from === 'unique') {
+        messageHashOrId = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
       } else {
-        messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
+        messageHashOrId = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
       }
 
       const balanceAfter = await getRandomAccountBalance();
@@ -586,7 +587,8 @@ export class XcmTestHelper {
         ).to.be.true;
       }
 
-      setMessageHash(messageHash);
+      console.log('[%s -> %s] Dot has been sent with message hash or id: %s', from, to, messageHashOrId);
+      setMessageHash(messageHashOrId);
     });
   }
 
@@ -619,7 +621,7 @@ export class XcmTestHelper {
 
     let sendDotExpectedResult: Promise<void>;
 
-    if (expectedOutcome == 'ExpectSuccess') {
+    if(expectedOutcome == 'ExpectSuccess') {
       sendDotExpectedResult = this.#awaitTokens({
         from,
         to,

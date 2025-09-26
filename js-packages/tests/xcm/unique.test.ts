@@ -61,8 +61,8 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
   const assetHubLocation = {
     parents: 1,
     interior: {
-      X1: [{ Parachain: 1000 }],
-    }
+      X1: [{Parachain: 1000}],
+    },
   };
 
   before(async () => {
@@ -114,7 +114,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       2n * SENDTO_AMOUNT,
       dotDerivativeCollectionId,
-      'ExpectSuccess'
+      'ExpectSuccess',
     );
 
     // Unique sends some DOT back using pallet-xcm `transfer_assets_using_type_and_then`
@@ -126,7 +126,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       SENDBACK_AMOUNT,
       dotDerivativeCollectionId,
-      'ExpectSuccess'
+      'ExpectSuccess',
     );
 
     // XTokens should send the message to the correct destination (Relay, in this case)
@@ -136,7 +136,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       const xtokensTransferCall = await helper.constructApiCall('api.tx.xTokens.transfer', [
         dotDerivativeCollectionId,
         SENDBACK_AMOUNT,
-        {V4: { parents: 1, interior: {X1: [{AccountId32: { id:randomAccount.addressRaw }}]} }},
+        {V4: {parents: 1, interior: {X1: [{AccountId32: {id:randomAccount.addressRaw}}]}}},
         'Unlimited',
       ]);
 
@@ -164,7 +164,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       SENDTO_AMOUNT,
       dotDerivativeCollectionId,
-      'ExpectFailure'
+      'ExpectFailure',
     );
   });
 
@@ -182,7 +182,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       2n * SENDTO_AMOUNT,
       dotDerivativeCollectionId,
-      'ExpectSuccess'
+      'ExpectSuccess',
     );
 
     // Unique sends some DOT back using pallet-xcm `transfer_assets_using_type_and_then`
@@ -194,7 +194,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       SENDBACK_AMOUNT,
       dotDerivativeCollectionId,
-      'ExpectSuccess'
+      'ExpectSuccess',
     );
 
     // XTokens should send the message to the correct destination (AH, in this case)
@@ -204,7 +204,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       const xtokensTransferCall = await helper.constructApiCall('api.tx.xTokens.transfer', [
         dotDerivativeCollectionId,
         SENDBACK_AMOUNT,
-        {V4: { parents: 1, interior: {X1: [{AccountId32: { id:randomAccount.addressRaw }}]} }},
+        {V4: {parents: 1, interior: {X1: [{AccountId32: {id:randomAccount.addressRaw}}]}}},
         'Unlimited',
       ]);
 
@@ -232,7 +232,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       SENDTO_AMOUNT / 2n,
       dotDerivativeCollectionId,
-      'ExpectFailure'
+      'ExpectFailure',
     );
   });
 
@@ -245,7 +245,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
     });
 
     // Relay sends DOT as its reserve chain
-    testHelper.palletXcmSendDotFromTo(
+    await testHelper.palletXcmSendDotFromTo(
       'relay',
       'unique',
       'LocalReserve',
@@ -253,7 +253,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       2n * SENDTO_AMOUNT,
       dotDerivativeCollectionId,
-      'ExpectSuccess'
+      'ExpectSuccess',
     );
 
     // Unique sends some DOT back using pallet-xcm `transfer_assets_using_type_and_then`
@@ -265,27 +265,27 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       SENDBACK_AMOUNT,
       dotDerivativeCollectionId,
-      'ExpectSuccess'
+      'ExpectSuccess',
     )).to.be.rejectedWith(/polkadotXcm\.LocalExecutionIncomplete/);
 
     await usingPlaygrounds(async (helper) => {
-      expect(helper.xTokens.transfer(
+      await expect(helper.xTokens.transfer(
         randomAccount,
         dotDerivativeCollectionId,
         SENDBACK_AMOUNT,
-        {V4: {parents: 1, interior: {X1: [{ AccountId32: { id: randomAccount.addressRaw } }]}}},
-        'Unlimited'
-      )).to.be.rejectedWith(/polkadotXcm\.LocalExecutionIncomplete/);
+        {V4: {parents: 1, interior: {X1: [{AccountId32: {id: randomAccount.addressRaw}}]}}},
+        'Unlimited',
+      )).to.be.rejectedWith(/xTokens\.XcmExecutionFailed/);
 
       // Disable suspension
       await helper.getSudo().foreignAssets.forceSetForeignAssetSuspension(alice, relayLocation, false);
 
-      expect(helper.xTokens.transfer(
+      await expect(helper.xTokens.transfer(
         randomAccount,
         dotDerivativeCollectionId,
         SENDBACK_AMOUNT,
-        {V4: {parents: 1, interior: {X1: [{ AccountId32: { id: randomAccount.addressRaw } }]}}},
-        'Unlimited'
+        {V4: {parents: 1, interior: {X1: [{AccountId32: {id: randomAccount.addressRaw}}]}}},
+        'Unlimited',
       )).to.be.fulfilled;
     });
 
@@ -298,7 +298,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () 
       randomAccount,
       SENDBACK_AMOUNT,
       dotDerivativeCollectionId,
-      'ExpectSuccess'
+      'ExpectSuccess',
     );
   });
 });
