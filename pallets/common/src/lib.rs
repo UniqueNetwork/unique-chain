@@ -416,6 +416,9 @@ pub mod pallet {
 
 	use super::*;
 
+	type BalanceOf<T> =
+		<<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
+
 	#[pallet::config]
 	pub trait Config:
 		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::Config + TypeInfo
@@ -431,13 +434,7 @@ pub mod pallet {
 
 		/// Set price to create a collection.
 		#[pallet::constant]
-		type CollectionCreationPrice: Get<
-			<<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
-		>;
-
-		type PropertiesSizeLimitUpgradePrice: SizeLimitUpgradePrice<
-			<<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
-		>;
+		type CollectionCreationPrice: Get<BalanceOf<Self>>;
 
 		/// Dispatcher of operations on collections.
 		type CollectionDispatch: CollectionDispatch<Self>;
@@ -454,6 +451,18 @@ pub mod pallet {
 
 		/// Mapper for token addresses to [`CrossAccountId`].
 		type CrossTokenAddressMapping: TokenAddressMapping<Self::CrossAccountId>;
+
+		/// Default price to upgrade property size limit.
+		#[pallet::constant]
+		type PropertySizeLimitUpgradePriceDefault: Get<BalanceOf<Self>>;
+
+		/// Price to upgrade property size limit to extended.
+		#[pallet::constant]
+		type PropertySizeLimitUpgradePriceExtended: Get<BalanceOf<Self>>;
+
+		/// Price to upgrade property size limit to maximum.
+		#[pallet::constant]
+		type PropertySizeLimitUpgradePriceMax: Get<BalanceOf<Self>>;
 	}
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
@@ -1406,8 +1415,11 @@ impl<T: Config> Pallet<T> {
 			collection.check_is_owner_or_admin(sender)?;
 
 			if current_limit.upgrade(new_limit).map_err(<Error<T>>::from)? {
-				let upgrade_price =
-					T::PropertiesSizeLimitUpgradePrice::size_limit_upgrade_price(&new_limit);
+				let upgrade_price = match new_limit {
+					PropertySizeLimit::Default => T::PropertySizeLimitUpgradePriceDefault::get(),
+					PropertySizeLimit::Extended => T::PropertySizeLimitUpgradePriceExtended::get(),
+					PropertySizeLimit::Max => T::PropertySizeLimitUpgradePriceMax::get(),
+				};
 				Self::take_extra_fee(sender, upgrade_price)?;
 			}
 
@@ -2525,10 +2537,6 @@ where
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult;
-}
-
-pub trait SizeLimitUpgradePrice<Balance> {
-	fn size_limit_upgrade_price(new_limit: &PropertySizeLimit) -> Balance;
 }
 
 /// Merge [`DispatchResult`] with [`Weight`] into [`DispatchResultWithPostInfo`].

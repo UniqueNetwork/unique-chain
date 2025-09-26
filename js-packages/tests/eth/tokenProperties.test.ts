@@ -468,9 +468,9 @@ describe('EVM token properties', () => {
     });
 
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
-    await expect(collection.getTokensPropertiesLimit()).to.be.equal(8*1024);
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(8*1024);
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
-    await expect(collection.getTokensPropertiesLimit()).to.be.equal(32*1024);
+    expect(await collection.getTokensPropertiesLimit()).to.be.equal(32*1024);
   });
 
   itEth('Upgrade collection tokens property size limit: minting new tokens with properties (ETH)', async({helper}) => {

@@ -27,10 +27,7 @@ use up_common::{
 	constants::*,
 	types::{AccountId, Balance, BlockNumber},
 };
-use up_data_structs::{
-	mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping},
-	PropertySizeLimit,
-};
+use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
@@ -58,6 +55,9 @@ pub mod preimage;
 
 parameter_types! {
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
+	pub const PropertySizeLimitUpgradePriceDefault: Balance = 0;
+	pub const PropertySizeLimitUpgradePriceExtended: Balance = 2000 * UNIQUE;
+	pub const PropertySizeLimitUpgradePriceMax: Balance = 5000 * UNIQUE;
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 }
 
@@ -66,24 +66,15 @@ impl pallet_common::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
-	type PropertiesSizeLimitUpgradePrice = PropertiesSizeLimitUpgradePrice;
+	type PropertySizeLimitUpgradePriceDefault = PropertySizeLimitUpgradePriceDefault;
+	type PropertySizeLimitUpgradePriceExtended = PropertySizeLimitUpgradePriceExtended;
+	type PropertySizeLimitUpgradePriceMax = PropertySizeLimitUpgradePriceMax;
 	type TreasuryAccountId = TreasuryAccountId;
 	type CollectionDispatch = CollectionDispatchT<Self>;
 
 	type EvmTokenAddressMapping = EvmTokenAddressMapping;
 	type CrossTokenAddressMapping = CrossTokenAddressMapping<Self::AccountId>;
 	type ContractAddress = EvmCollectionHelpersAddress;
-}
-
-pub struct PropertiesSizeLimitUpgradePrice;
-impl pallet_common::SizeLimitUpgradePrice<Balance> for PropertiesSizeLimitUpgradePrice {
-	fn size_limit_upgrade_price(new_limit: &PropertySizeLimit) -> Balance {
-		match new_limit {
-			PropertySizeLimit::Default => 0,
-			PropertySizeLimit::Extended => 2000 * UNIQUE,
-			PropertySizeLimit::Max => 5000 * UNIQUE,
-		}
-	}
 }
 
 impl pallet_structure::Config for Runtime {
