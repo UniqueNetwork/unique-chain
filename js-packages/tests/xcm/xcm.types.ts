@@ -390,7 +390,7 @@ export class XcmTestHelper {
 
       if(from === 'relay') {
         messageHashOrId = Event.XcmPallet.Sent.expect(transferResult).messageId;
-      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub' || from === 'unique') {
+      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub' || to === 'acala' || to === 'polkadotAssetHub') {
         messageHashOrId = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
       } else {
         messageHashOrId = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
@@ -566,7 +566,7 @@ export class XcmTestHelper {
 
       if(from === 'relay') {
         messageHashOrId = Event.XcmPallet.Sent.expect(transferResult).messageId;
-      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub' || from === 'unique') {
+      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub' || to === 'acala' || to === 'polkadotAssetHub') {
         messageHashOrId = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
       } else {
         messageHashOrId = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
