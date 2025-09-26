@@ -673,7 +673,7 @@ export class ChainHelperBase {
                 moduleError = `Token: ${dispatchError.asToken}`;
               } else {
                 // May be [object Object] in case of unhandled non-unit enum
-                moduleError = `Misc: ${dispatchError.toHuman()}`;
+                moduleError = `Misc: ${dispatchError.toString()}`;
               }
             } else {
               this.logger.log(result, this.logger.level.ERROR);

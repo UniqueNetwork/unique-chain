@@ -265,7 +265,7 @@ declare module '@polkadot/api-base/types/errors' {
       /**
        * Insufficient funds to perform an action
        **/
-      NotSufficientFounds: AugmentedError<ApiType>;
+      NotSufficientFunds: AugmentedError<ApiType>;
       /**
        * Tried to enable permissions which are only permitted to be disabled
        **/

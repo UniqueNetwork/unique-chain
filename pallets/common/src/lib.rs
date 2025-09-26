@@ -763,7 +763,7 @@ pub mod pallet {
 		UnsupportedOperation,
 
 		/// Insufficient funds to perform an action
-		NotSufficientFounds,
+		NotSufficientFunds,
 
 		/// User does not satisfy the nesting rule
 		UserIsNotAllowedToNest,
@@ -1952,7 +1952,7 @@ impl<T: Config> Pallet<T> {
 		)?);
 		let credit =
 			<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
-				.map_err(|_| Error::<T>::NotSufficientFounds)?;
+				.map_err(|_| Error::<T>::NotSufficientFunds)?;
 
 		debug_assert!(credit.peek().is_zero());
 

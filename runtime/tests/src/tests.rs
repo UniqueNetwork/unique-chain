@@ -217,7 +217,7 @@ fn check_not_sufficient_founds() {
 		};
 
 		let result = Unique::create_collection_ex(RuntimeOrigin::signed(acc), data);
-		assert_err!(result, <CommonError<Test>>::NotSufficientFounds);
+		assert_err!(result, <CommonError<Test>>::NotSufficientFunds);
 	});
 }
 

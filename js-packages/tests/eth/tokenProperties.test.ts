@@ -32,7 +32,7 @@ describe('EVM token properties', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      [alice, bob] = await helper.arrange.createAccounts([1000n, 100n], donor);
+      [alice, bob] = await helper.arrange.createAccounts([10000n, 100n], donor);
     });
   });
 
