@@ -678,6 +678,17 @@ pub mod module {
 			});
 			Ok(())
 		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_currency_exchange_url())]
+		pub fn update_currency_exchange_url(
+			origin: OriginFor<T>,
+			url: BoundedVec<u8, ConstU32<200>>,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
+			CurrencyExchangeUrl::<T>::set(Some(url));
+			Ok(())
+		}
 	}
 
 	#[pallet::genesis_config]

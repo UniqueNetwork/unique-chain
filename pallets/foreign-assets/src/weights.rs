@@ -40,6 +40,7 @@ pub trait WeightInfo {
 	fn add_oracle_member() -> Weight;
 	fn remove_oracle_member() -> Weight;
 	fn force_set_foreign_asset_conversion_coefficient() -> Weight;
+	fn update_currency_exchange_url() -> Weight;
 }
 
 /// Weights for pallet_foreign_assets using the Substrate node and recommended hardware.
@@ -112,6 +113,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn remove_oracle_member() -> Weight {
 		Weight::default()
 	}
+	fn update_currency_exchange_url() -> Weight {
+		Weight::default()
+	}
 }
 
 // For backwards compatibility and tests
@@ -181,6 +185,9 @@ impl WeightInfo for () {
 		Weight::default()
 	}
 	fn remove_oracle_member() -> Weight {
+		Weight::default()
+	}
+	fn update_currency_exchange_url() -> Weight {
 		Weight::default()
 	}
 }

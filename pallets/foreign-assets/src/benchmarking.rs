@@ -160,4 +160,17 @@ mod benchmarks {
 
 		Ok(())
 	}
+
+	#[benchmark]
+	fn update_currency_exchange_url() -> Result<(), BenchmarkError> {
+		let url = create_data::<200>();
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			url,
+		);
+
+		Ok(())
+	}
 }

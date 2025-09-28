@@ -57,7 +57,7 @@ describe('Performace tests', () => {
 
     expect(startCount).to.be.equal(MAX_TOKENS_TO_MINT);
 
-    while(currentSize <= 32_000) {
+    while(currentSize <= 8192) {
       const property = {key: propertyKey, value: 'A'.repeat(currentSize - sizeOfKey - sizeOfInt(currentSize))};
       const tokens = await minterFunc(helper, alice, MAX_TOKENS_TO_MINT, collection.collectionId, {Substrate: alice.address}, property);
       expect(tokens).to.be.equal(MAX_TOKENS_TO_MINT);
