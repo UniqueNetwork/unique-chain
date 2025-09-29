@@ -9,22 +9,21 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  
   dev_build_int_tests:
     # The type of runner that the job will run on
-    runs-on: [ ci ]
+    runs-on: [ci]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: true #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
         include:
-          - network: "opal"
-          - network: "quartz"
-          - network: "unique"
+          - network: 'opal'
+          - network: 'quartz'
+          - network: 'unique'
 
     steps:
       - name: Clean Workspace
@@ -33,7 +32,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2.3.0
@@ -45,7 +44,7 @@ jobs:
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             NETWORK=${{ matrix.network }}
-    
+
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
@@ -54,7 +53,7 @@ jobs:
 
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: ${{ env.DENO_VERSION }}
           cache: true
 
       - name: Run tests
@@ -84,11 +83,11 @@ jobs:
           deno -A ./benchmarks/opsFee/index.ts
 
       - name: Stop running containers
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: docker compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
 
       - name: Remove builder cache
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: |
           docker builder prune -f -a
           docker system prune -f

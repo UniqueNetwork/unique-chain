@@ -1,5 +1,5 @@
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837012/Code+style+testing
-# Nested workflow for checks related to formatting Rust code 
+# Nested workflow for checks related to formatting Rust code
 
 name: make-bench
 
@@ -7,19 +7,19 @@ name: make-bench
 on:
   push:
     branches:
-      - "feature/ci-make-bench"
+      - 'feature/ci-make-bench'
   workflow_dispatch:
 
 jobs:
   make-bench:
-    runs-on: [ bench ]
+    runs-on: [bench]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
       - uses: actions/checkout@v4.1.7
         with:
-          ref: develop 
+          ref: develop
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2.3.0.3.0
@@ -29,7 +29,7 @@ jobs:
 
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: ${{ env.DENO_VERSION }}
           cache: true
 
       - name: RUN benchmarking
@@ -46,7 +46,7 @@ jobs:
           deno install
           deno --allow-env --allow-net calibrate.ts
           deno -A calibrateApply.ts
-          
+
       - name: show git diff
         run: |
           git diff

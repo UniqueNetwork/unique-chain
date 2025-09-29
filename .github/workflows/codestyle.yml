@@ -1,5 +1,5 @@
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837012/Code+style+testing
-# Nested workflow for checks related to formatting Rust code 
+# Nested workflow for checks related to formatting Rust code
 
 name: codestyle
 
@@ -9,38 +9,40 @@ on:
 
 jobs:
   rustfmt:
-    runs-on: [ ci ]
+    runs-on: [ci]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}            
+          ref: ${{ github.head_ref }}
       - name: Read .env file
         uses: xom9ikk/dotenv@v2.3.0
       - name: Install toolchain version from .env
         uses: dtolnay/rust-toolchain@master
         with:
-            toolchain: ${{ env.RUST_TOOLCHAIN }}
-            targets: wasm32-unknown-unknown
-            components: rustfmt, clippy        
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - name: Run cargo fmt
-        run: cargo fmt -- --check   # In that mode it returns only exit code.
+        run: cargo fmt -- --check # In that mode it returns only exit code.
       - name: Cargo fmt state
         if: success()
         run: echo "Nothing to do. Command 'cargo fmt -- --check' returned exit code 0."
 
   deno_lint:
-    runs-on: [ ci ]
+    runs-on: [ci]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}            
+          ref: ${{ github.head_ref }}
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2.3.0
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: ${{ env.DENO_VERSION }}
           cache: true
       - name: Install modules
         run: cd js-packages && deno install
@@ -48,16 +50,18 @@ jobs:
         run: cd js-packages && deno lint './**/*.ts'
 
   deno_types_check:
-    runs-on: [ ci ]
+    runs-on: [ci]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}            
+          ref: ${{ github.head_ref }}
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2.3.0
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: ${{ env.DENO_VERSION }}
           cache: true
       - name: Install modules
         run: cd js-packages && deno install
@@ -65,13 +69,13 @@ jobs:
         run: cd js-packages && deno check './**/*.ts'
 
   clippy:
-    runs-on: [ ci ]
+    runs-on: [ci]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}   
+          ref: ${{ github.head_ref }}
       - name: Install substrate dependencies
         run: sudo apt install -y libssl-dev pkg-config libclang-dev clang protobuf-compiler
       - name: Read .env file
@@ -79,9 +83,9 @@ jobs:
       - name: Install toolchain version from .env
         uses: dtolnay/rust-toolchain@master
         with:
-            toolchain: ${{ env.RUST_TOOLCHAIN }}
-            targets: wasm32-unknown-unknown
-            components: rustfmt, clippy        
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - name: Run cargo check
         # unreachable_patterns emitted from polkadot sdk crates
         # const_evaluatable_unchecked emitted from evm-coder after compiler upgrade
