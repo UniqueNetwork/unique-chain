@@ -2,9 +2,8 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingKusamaAssetHubPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadotAssetHubPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util';
 import {DevAcalaHelper, DevAstarHelper, DevHydraDxHelper, DevMoonbeamHelper, DevRelayHelper, DevUniqueHelper, DevWestmintHelper, Event} from '@unique/test-utils';
 import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm';
-import {IEvent} from '@unique-nft/playgrounds/types';
+import {IEvent, ITransactionResult} from '@unique-nft/playgrounds/types';
 import process from 'node:process';
-
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const POLKADOT_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_ID || 1000);
 export const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
@@ -288,7 +287,7 @@ export class XcmTestHelper {
 
     const fromPlayground = getDevPlayground(from);
 
-    let transferResult: any;
+    let transferResult: ITransactionResult;
     await fromPlayground(async (helper) => {
       const getRandomAccountBalance = async (): Promise<bigint> => {
         if(!isFromUnique) {
