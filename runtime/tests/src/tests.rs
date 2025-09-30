@@ -32,7 +32,7 @@ use crate::{
 	new_test_ext, CollectionCreationPrice, RuntimeOrigin, Test, TestCrossAccountId, Unique,
 };
 
-fn add_balance(user: u64, value: u64) {
+fn add_balance(user: u64, value: u128) {
 	const DONOR_USER: u64 = 999;
 	assert_ok!(<pallet_balances::Pallet<Test>>::force_set_balance(
 		RuntimeOrigin::root(),
@@ -79,7 +79,7 @@ fn create_test_collection_for_owner(
 	owner: u64,
 	id: CollectionId,
 ) -> CollectionId {
-	add_balance(owner, CollectionCreationPrice::get() as u64 + 1);
+	add_balance(owner, CollectionCreationPrice::get() as u128 + 1);
 
 	let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
@@ -2377,7 +2377,7 @@ fn total_number_collections_bound_neg() {
 		};
 
 		// 11-th collection in chain. Expects error
-		add_balance(user, CollectionCreationPrice::get() as u64 + 1);
+		add_balance(user, CollectionCreationPrice::get() as u128 + 1);
 		assert_noop!(
 			Unique::create_collection_ex(origin1, data),
 			CommonError::<Test>::TotalCollectionsLimitExceeded

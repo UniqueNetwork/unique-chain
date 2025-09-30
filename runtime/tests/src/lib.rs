@@ -95,7 +95,7 @@ impl system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -121,7 +121,7 @@ parameter_types! {
 impl pallet_balances::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type AccountStore = System;
-	type Balance = u64;
+	type Balance = u128;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type WeightInfo = ();
@@ -142,8 +142,8 @@ parameter_types! {
 impl pallet_transaction_payment::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = CurrencyAdapter<pallet_balances::Pallet<Test>, ()>;
-	type LengthToFee = IdentityFee<u64>;
-	type WeightToFee = IdentityFee<u64>;
+	type LengthToFee = IdentityFee<u128>;
+	type WeightToFee = IdentityFee<u128>;
 	type FeeMultiplierUpdate = ();
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightInfo = ();
