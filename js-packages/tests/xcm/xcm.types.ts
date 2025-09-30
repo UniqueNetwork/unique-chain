@@ -460,6 +460,12 @@ export class XcmTestHelper {
         `no 'MessageQueue.Processed' event was found on ${to} for message hash or id: ${getMessageHash()}`,
       ).to.be.true;
 
+      if(validEventIndex !== -1) {
+        const processedMsgEvent = collectedEventData[validEventIndex];
+        const success = processedMsgEvent[3];
+        console.log('[%s -> %s] Success status for message %s: %s', from, to, getMessageHash(), success);
+      }
+
       const balanceAfter = await getRandomAccountBalance();
 
       if(isToUnique) {
@@ -470,7 +476,7 @@ export class XcmTestHelper {
 
         expect(
           fees === 0n,
-          `invalid asset fees when receiving to ${to}: ${fees}`,
+          `invalid asset fees when receiving to ${to}: ${fees}. Balance before: ${balanceBefore}. Balance after: ${balanceAfter}`,
         ).to.be.true;
       }
     });
@@ -602,22 +608,6 @@ export class XcmTestHelper {
     expectedOutcome: 'ExpectSuccess' | 'ExpectFailure',
   ) {
     let messageHash: any = null;
-
-    const sendDot: Promise<void> = this.#sendDot({
-      from,
-      to,
-      transferType,
-      fromAccount: randomAccountOnFrom,
-      toAccount: randomAccountOnTo,
-      amount,
-      decimals: UNQ_DECIMALS,
-      getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
-        dotDerivativeCollectionId,
-        {Substrate: randomAccountOnFrom.address},
-      ),
-      setMessageHash: (hash) => messageHash = hash,
-    });
-
     let sendDotExpectedResult: Promise<void>;
 
     if(expectedOutcome == 'ExpectSuccess') {
@@ -636,9 +626,25 @@ export class XcmTestHelper {
       sendDotExpectedResult = this.#awaitMaliciousProgramRejection(() => messageHash);
     }
 
+    const sendDot = this.#sendDot({
+      from,
+      to,
+      transferType,
+      fromAccount: randomAccountOnFrom,
+      toAccount: randomAccountOnTo,
+      amount,
+      decimals: UNQ_DECIMALS,
+      getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
+        dotDerivativeCollectionId,
+        {Substrate: randomAccountOnFrom.address},
+      ),
+      setMessageHash: (hash) => messageHash = hash,
+    });
+
+
     await Promise.all([
-      sendDot,
       sendDotExpectedResult,
+      sendDot,
     ]);
   }
 
