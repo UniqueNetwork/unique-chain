@@ -1,6 +1,6 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {blake2AsHex} from '@polkadot/util-crypto';
-import {DAYS} from './blocktimes';
+import {DAYS} from './blocktimes.ts';
 import process from "node:process";
 
 async function main() {
