@@ -25,6 +25,6 @@ git clone https://github.com/paritytech/polkadot-launch && cd polkadot-launch
 
 ## How to run tests
 
-1. Run `yarn install`.
+1. Run `deno install`.
 2. Optional step - configure tests with env variables or by editing [configuration file](src/config.ts).
-3. Run `yarn test`.
+3. Run `deno task test`.

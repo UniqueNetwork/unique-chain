@@ -71,4 +71,7 @@ pub type RootOrFinancialCouncilMember =
 pub type AllFinancialCouncil =
 	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCollective, 1, 1>;
 
+pub type HalfFinancialCouncil =
+	pallet_collective::EnsureProportionAtLeast<AccountId, FinancialCollective, 1, 2>;
+
 pub type RootOrAllFinancialCouncil = EitherOfDiverse<EnsureRoot<AccountId>, AllFinancialCouncil>;

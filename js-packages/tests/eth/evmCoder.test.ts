@@ -15,7 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {before, describe} from "@unique/test-utils/util";
 
 const getContractSource = (collectionAddress: string, contractAddress: string): string => `
   // SPDX-License-Identifier: MIT

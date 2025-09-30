@@ -16,9 +16,9 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
-  yarn-dev:
+  deno-dev:
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
-    uses: ./.github/workflows/yarn-dev.yml
+    uses: ./.github/workflows/deno-dev.yml
     secrets: inherit    
 
   unit-test:
@@ -29,6 +29,11 @@ jobs:
   xcm:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-xcm')
     uses: ./.github/workflows/xcm.yml
+    secrets: inherit
+
+  offchain-worker:
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-offchain-worker')
+    uses: ./.github/workflows/offchain-worker.yml
     secrets: inherit
     
   collator-selection:

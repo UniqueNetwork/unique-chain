@@ -1,7 +1,8 @@
-import {writeFile} from 'fs/promises';
-import {join} from 'path';
-import {exit} from 'process';
-import {fileURLToPath} from 'url';
+import {writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {exit} from 'node:process';
+import {fileURLToPath} from 'node:url';
+import process from "node:process";
 
 // TODO: Extract metadata statically with chainql.
 const url = process.env.RELAY_OPAL_HTTP_URL || process.env.RELAY_QUARTZ_HTTP_URL || process.env.RELAY_UNIQUE_HTTP_URL || process.env.RELAY_SAPPHIRE_HTTP_URL || 'http://127.0.0.1:9944';

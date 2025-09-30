@@ -1,14 +1,16 @@
-import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {readFile} from 'fs/promises';
-import type {ICrossAccountId} from '@unique-nft/playgrounds/types.js';
+import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
+import {Buffer} from "node:buffer";
+import {readFile} from 'node:fs/promises';
+import type {ICrossAccountId} from '@unique-nft/playgrounds/types';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';
+import {UniqueNFTCollection} from '@unique-nft/playgrounds/unique';
 import {Contract, hexlify} from 'ethers';
 import {createObjectCsvWriter} from 'csv-writer';
-import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.js';
-import {makeNames} from '@unique/test-utils/util.js';
-import type {ContractImports} from '@unique/test-utils/eth/types.js';
+import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.ts';
+import {makeNames} from '@unique/test-utils/util';
+import type {ContractImports} from '@unique/test-utils/eth/types';
+import process from "node:process";
 
 const {dirname} = makeNames(import.meta.url);
 

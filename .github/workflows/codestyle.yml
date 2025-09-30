@@ -30,7 +30,7 @@ jobs:
         if: success()
         run: echo "Nothing to do. Command 'cargo fmt -- --check' returned exit code 0."
 
-  yarn_eslint:
+  deno_lint:
     runs-on: [ ci ]
     steps:
       - name: Clean Workspace
@@ -38,16 +38,16 @@ jobs:
       - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}            
-      - uses: actions/setup-node@v4.0.2
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
+          deno-version: v2.x
+          cache: true
       - name: Install modules
-        run: cd js-packages && yarn
+        run: cd js-packages && deno install
       - name: Run ESLint
-        # run: cd js-packages && yarn lint --max-warnings=0
-        run: cd js-packages && yarn lint
+        run: cd js-packages && deno lint './**/*.ts'
 
-  yarn_types_check:
+  deno_types_check:
     runs-on: [ ci ]
     steps:
       - name: Clean Workspace
@@ -55,13 +55,14 @@ jobs:
       - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}            
-      - uses: actions/setup-node@v4.0.2
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
+          deno-version: v2.x
+          cache: true
       - name: Install modules
-        run: cd js-packages && yarn
+        run: cd js-packages && deno install
       - name: Run tsc
-        run: cd js-packages && yarn ts-check
+        run: cd js-packages && deno check './**/*.ts'
 
   clippy:
     runs-on: [ ci ]

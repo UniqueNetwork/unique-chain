@@ -1,11 +1,12 @@
-import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {readFile} from 'fs/promises';
+import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
+import {readFile} from 'node:fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract, HDNodeWallet} from 'ethers';
-import {convertToTokens} from '../utils/common.js';
-import {makeNames} from '@unique/test-utils/util.js';
-import type {ContractImports} from '@unique/test-utils/eth/types.js';
+import {convertToTokens} from '../utils/common.ts';
+import {makeNames} from '@unique/test-utils/util';
+import type {ContractImports} from '@unique/test-utils/eth/types';
+import process from "node:process";
 
 const {dirname} = makeNames(import.meta.url);
 

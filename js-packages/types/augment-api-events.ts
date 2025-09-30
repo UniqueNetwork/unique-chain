@@ -6,7 +6,7 @@
 import '@polkadot/api-base/types/events';
 
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
-import type { Bytes, Null, Option, Result, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
 import type { CumulusPrimitivesCoreAggregateMessageOrigin, EthereumLog, EvmCoreErrorExitReason, FrameSupportMessagesProcessMessageError, FrameSupportPreimagesBounded, FrameSupportTokensMiscBalanceStatus, FrameSystemDispatchEventInfo, OrmlVestingVestingSchedule, PalletDemocracyMetadataOwner, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeignAssetsMigrationStatus, PalletRankedCollectiveTally, PalletRankedCollectiveVoteRecord, PalletStateTrieMigrationError, PalletStateTrieMigrationMigrationCompute, SpRuntimeDispatchError, SpWeightsWeightV2Weight, StagingXcmV5Asset, StagingXcmV5AssetAssets, StagingXcmV5Location, StagingXcmV5Response, StagingXcmV5TraitsOutcome, StagingXcmV5Xcm, XcmV3TraitsSendError, XcmV5TraitsError, XcmVersionedAssetId, XcmVersionedAssets, XcmVersionedLocation } from '@polkadot/types/lookup';
@@ -48,6 +48,17 @@ declare module '@polkadot/api-base/types/events' {
        * * Balance : unstaking amount
        **/
       Unstake: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    assetTransactionPayment: {
+      /**
+       * A transaction fee `actual_fee`, of which `tip` was added to the minimum inclusion fee,
+       * has been paid by `who` in an asset `asset_id`.
+       **/
+      AssetTxFeePaid: AugmentedEvent<ApiType, [who: AccountId32, actualFee: u128, tip: u128, assetId: Option<StagingXcmV5Location>], { who: AccountId32, actualFee: u128, tip: u128, assetId: Option<StagingXcmV5Location> }>;
       /**
        * Generic event
        **/
@@ -144,6 +155,17 @@ declare module '@polkadot/api-base/types/events' {
        * Some amount was withdrawn from the account (e.g. for transaction fees).
        **/
       Withdraw: AugmentedEvent<ApiType, [who: AccountId32, amount: u128], { who: AccountId32, amount: u128 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    charging: {
+      /**
+       * A transaction fee `actual_fee`, of which `tip` was added to the minimum inclusion fee,
+       * has been paid by `who` in an asset `asset_id`.
+       **/
+      AssetTxFeePaid: AugmentedEvent<ApiType, [who: AccountId32, actualFee: u128, tip: u128, assetId: Option<StagingXcmV5Location>], { who: AccountId32, actualFee: u128, tip: u128, assetId: Option<StagingXcmV5Location> }>;
       /**
        * Generic event
        **/
@@ -725,6 +747,7 @@ declare module '@polkadot/api-base/types/events' {
       [key: string]: AugmentedEvent<ApiType>;
     };
     foreignAssets: {
+      ForeignAssetConversionCoefficientSet: AugmentedEvent<ApiType, [oldConversionCoefficient: u128, newConversionCoefficient: u128], { oldConversionCoefficient: u128, newConversionCoefficient: u128 }>;
       ForeignAssetMoved: AugmentedEvent<ApiType, [oldAssetId: XcmVersionedAssetId, newAssetId: XcmVersionedAssetId], { oldAssetId: XcmVersionedAssetId, newAssetId: XcmVersionedAssetId }>;
       /**
        * The foreign asset registered.
@@ -823,6 +846,16 @@ declare module '@polkadot/api-base/types/events' {
        * Message discarded due to an error in the `MessageProcessor` (usually a format error).
        **/
       ProcessingFailed: AugmentedEvent<ApiType, [id: H256, origin: CumulusPrimitivesCoreAggregateMessageOrigin, error: FrameSupportMessagesProcessMessageError], { id: H256, origin: CumulusPrimitivesCoreAggregateMessageOrigin, error: FrameSupportMessagesProcessMessageError }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    oracle: {
+      /**
+       * New feed data is submitted.
+       **/
+      NewFeedData: AugmentedEvent<ApiType, [sender: AccountId32, values: Vec<ITuple<[Bytes, u128]>>], { sender: AccountId32, values: Vec<ITuple<[Bytes, u128]>> }>;
       /**
        * Generic event
        **/

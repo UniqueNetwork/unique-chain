@@ -134,9 +134,10 @@ jobs:
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - uses: actions/setup-node@v4.0.2
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
+          deno-version: v2.x
+          cache: true
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@v1.2
@@ -180,8 +181,7 @@ jobs:
         id: alive1
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
-          yarn
-          yarn install
+          deno install
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -203,7 +203,7 @@ jobs:
         if: ${{ !cancelled() && steps.reconcile0.outcome == 'success' }}
         id: alive1_1
         run: |
-          yarn        
+          deno install        
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -224,7 +224,7 @@ jobs:
         id: alive2
         if: ${{ !cancelled() && steps.reconcile1.outcome == 'success' }}
         run: |
-          yarn        
+          deno install        
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -235,7 +235,7 @@ jobs:
         if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         run: |
           echo "Executing upgrade"
-          yarn tsx ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
+          deno -A ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
@@ -253,7 +253,7 @@ jobs:
         id: alive3
         if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
         run: |
-          yarn
+          deno install
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -265,7 +265,7 @@ jobs:
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          yarn testParallel --grep 'decimals' || true
+          deno task testParallel --filter 'decimals' || true
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
@@ -278,7 +278,7 @@ jobs:
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          NOW=$(date +%s) && yarn testSubParallel --reporter tap
+          NOW=$(date +%s) && deno task testSubParallel
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
@@ -286,7 +286,7 @@ jobs:
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          NOW=$(date +%s) && yarn testSubSequential --reporter tap
+          NOW=$(date +%s) && deno task testSubSequential
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
@@ -294,7 +294,7 @@ jobs:
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          NOW=$(date +%s) && yarn testEthParallel --reporter tap
+          NOW=$(date +%s) && deno task testEthParallel
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
@@ -302,7 +302,7 @@ jobs:
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          NOW=$(date +%s) && yarn testEthSequential --reporter tap
+          NOW=$(date +%s) && deno task testEthSequential
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 

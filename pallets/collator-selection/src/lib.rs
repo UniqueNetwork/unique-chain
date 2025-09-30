@@ -77,6 +77,7 @@
 //! [this issue](https://github.com/paritytech/statemint/issues/21#issuecomment-810481073).
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::useless_conversion)]
 
 pub use pallet::*;
 
@@ -419,7 +420,7 @@ pub mod pallet {
 
 			let current_count =
 				<Candidates<T>>::try_mutate(|candidates| -> Result<usize, DispatchError> {
-					if candidates.iter().any(|candidate| *candidate == who) {
+					if candidates.contains(&who) {
 						Err(Error::<T>::AlreadyCandidate)?
 					} else {
 						candidates
@@ -598,7 +599,7 @@ pub mod pallet {
 					} else {
 						let outcome = Self::try_remove_candidate_and_release_license(&c, true, false);
 						if let Err(why) = outcome {
-							log::warn!("Failed to kick collator and release license {:?}", why);
+							log::warn!("Failed to kick collator and release license {why:?}");
 							debug_assert!(false, "failed to kick collator and release license {why:?}");
 						}
 						None

@@ -2,7 +2,9 @@
   description = "Unique Network Node";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/release-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
+    nixpkgs-master.url = "github:nixos/nixpkgs/master";
+
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -31,26 +33,17 @@
       inputs.crane.follows = "crane";
     };
   };
-  outputs =
-    inputs:
-    let
-      inherit (inputs.nixpkgs) lib;
-    in
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs:
+    let inherit (inputs.nixpkgs) lib;
+    in inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [ inputs.shelly.flakeModule ];
       systems = lib.systems.flakeExposed;
-      perSystem =
-        {
-          pkgs,
-          system,
-          inputs',
-          ...
-        }:
+      perSystem = { pkgs, system, inputs', ... }:
         let
           rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
           craneLib = (inputs.crane.mkLib pkgs).overrideToolchain rust;
-        in
-        {
+          pkgsMaster = import inputs.nixpkgs-master { inherit system; };
+        in {
           _module.args.pkgs = import inputs.nixpkgs {
             inherit system;
             overlays = [ inputs.rust-overlay.overlays.default ];
@@ -62,6 +55,9 @@
               # Build
               cargo-edit
               rustPlatform.bindgenHook
+              pkg-config
+              # TODO: OpenSSL seems to be optional, switch usage (fc-db) to rustls, or disable irrelevant database backends (we use sqlite for storage, why do we even bring openssl dependency?)
+              openssl
 
               # Solidity stubs
               solc
@@ -72,8 +68,9 @@
               inputs'.chainql.packages.chainql
 
               # Test
-              nodejs_23
-              (yarn-berry.override { nodejs = nodejs_23; })
+              nodejs_24
+              pkgsMaster.deno
+              (yarn-berry.override { nodejs = nodejs_24; })
 
               # Format
               taplo-cli

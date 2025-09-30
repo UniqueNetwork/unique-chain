@@ -16,9 +16,9 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, expect, itSub} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, expect, itSub, describe, before} from '@unique/test-utils/util';
 import type {u32} from '@polkadot/types-codec';
-import {itEth} from '@unique/test-utils/eth/util.js';
+import {itEth} from '@unique/test-utils/eth/util';
 import {ITransactionResult} from '@unique-nft/playgrounds/types';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
@@ -28,12 +28,12 @@ const createCollectionDeposit = 100;
 
 // Skip the inflation block pauses if the block is close to inflation block
 // until the inflation happens
-/*eslint no-async-promise-executor: "off"*/
 function skipInflationBlock(api: ApiPromise): Promise<void> {
-  const promise = new Promise<void>(async (resolve) => {
+  return new Promise<void>((resolve, reject) => {
     const inflationBlockInterval = api.consts.inflation.inflationBlockInterval as u32;
     const blockInterval = inflationBlockInterval.toNumber();
-    const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
+    let unsubscribe: any = null;
+    api.rpc.chain.subscribeNewHeads(head => {
       const currentBlock = head.number.toNumber();
       if(currentBlock % blockInterval < blockInterval - (blockInterval / 5)) {
         unsubscribe();
@@ -41,10 +41,10 @@ function skipInflationBlock(api: ApiPromise): Promise<void> {
       } else {
         console.log(`Skipping inflation block, current block: ${currentBlock}`);
       }
-    });
+    })
+    .then(unsub => unsubscribe = unsub)
+    .catch(reject);
   });
-
-  return promise;
 }
 
 describe('integration test: Fees must be credited to Treasury:', () => {
@@ -77,13 +77,13 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     await helper.wait.newBlocks(1);
 
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
-    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
+    const aliceBalanceBefore: bigint = await helper.balance.getSubstrate(alice.address);
 
     const amount = 1n;
     await helper.balance.transferToSubstrate(alice, bob.address, amount);
 
     const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
-    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
+    const aliceBalanceAfter: bigint = await helper.balance.getSubstrate(alice.address);
 
     const fee = aliceBalanceBefore - aliceBalanceAfter - amount;
     const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
@@ -169,7 +169,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   itEth('Evm Transactions send fees to Treasury', async ({helper}) => {
     const value = helper.balance.getOneTokenNominal();
     const gasPrice = await helper.getGasPrice();
-    let result = null;
+    let result;
 
     const lambda = async () => {
       result = await helper.executeExtrinsic(alice, 'api.tx.evm.call', [

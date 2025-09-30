@@ -10,6 +10,7 @@ fp-evm = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+pallet-aura = { workspace = true }
 scale-info = { workspace = true }
 smallvec = { workspace = true }
 sp-arithmetic = { workspace = true }
@@ -19,6 +20,9 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 staging-xcm = { workspace = true }
 up-common = { workspace = true }
+
+cumulus-pallet-parachain-system = { workspace = true }
+polkadot-core-primitives = { workspace = true }
 
 hex-literal = { workspace = true }
 log = { workspace = true }
@@ -37,5 +41,7 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"cumulus-pallet-parachain-system/std",
+	"polkadot-core-primitives/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

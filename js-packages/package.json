@@ -9,10 +9,15 @@
   "private": true,
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.2",
+    "@polkadot/api-base": "15.5.2",
+    "@polkadot/keyring": "^13.5.3",
+    "@polkadot/rpc-core": "15.5.2",
+    "@polkadot/types-codec": "15.5.2",
+    "@polkadot/types": "15.5.2",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",
-    "ethers": "6.13.5",
+    "ethers": "6.15.0",
     "solc": "^0.8.22"
   },
   "devDependencies": {
@@ -20,7 +25,6 @@
     "@types/chai-as-promised": "^7.1.8",
     "@types/chai-like": "^1.1.3",
     "@types/chai-subset": "^1.3.6",
-    "@types/mocha": "^10.0.10",
     "@types/node": "^20.8.10",
     "@typescript-eslint/eslint-plugin": "8.27.0",
     "@typescript-eslint/parser": "8.27.0",
@@ -32,24 +36,22 @@
     "chai-subset": "^1.6.0",
     "eslint": "^8.53.0",
     "eslint-plugin-mocha": "^10.2.0",
-    "tsx": "4.19.3",
     "typescript": "5.8.3"
   },
   "scripts": {
-    "prepublish": "yarn tsc",
-    "ts-check": "yarn tsc --noEmit true",
-    "lint": "eslint --ext .ts .",
-    "fix": "yarn lint --fix",
-    "polkadot-types-fetch-metadata": "yarn tsx scripts/fetchMetadata.ts",
-    "polkadot-types-from-defs": "yarn tsx ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
-    "polkadot-types-from-chain": "yarn tsx ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
-    "polkadot-types": "echo \"export default {}\" > types/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain && rm types/registry.ts"
+    "prepublish": "deno check",
+    "ts-check": "deno check --quiet",
+    "lint": "deno lint './**/*.ts'",
+    "fix": "deno lint --fix './**/*.ts'",
+    "polkadot-types-fetch-metadata": "deno -A scripts/fetchMetadata.ts",
+    "polkadot-types-from-defs": "deno -A ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
+    "polkadot-types-from-chain": "deno -A ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
+    "polkadot-types": "echo \"export default {}\" > types/lookup.ts && deno task polkadot-types-fetch-metadata && deno task polkadot-types-from-defs && deno task polkadot-types-from-defs && deno task polkadot-types-from-chain && rm types/registry.ts"
   },
   "resolutions": {
     "decode-uri-component": "^0.2.1"
   },
   "type": "module",
-  "packageManager": "yarn@3.6.1",
   "workspaces": [
     "types",
     "evm-abi",

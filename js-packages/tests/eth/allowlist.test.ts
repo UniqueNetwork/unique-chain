@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Pallets} from '@unique/test-utils/util.js';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util.js';
-import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
+import {before, describe, Pallets} from '@unique/test-utils/util';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util';
+import {CreateCollectionData} from '@unique/test-utils/eth/types';
 
 describe('EVM contract allowlist', () => {
   let donor: IKeyringPair;

@@ -15,11 +15,12 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
+import {before, describe, usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip, after, UniqueTestContext} from '@unique/test-utils/util';
+import process from "node:process";
 
 async function nodeAddress(name: string) {
   // eslint-disable-next-line require-await
-  return await usingPlaygrounds(async (helper) => {
+  return await usingPlaygrounds((helper) => {
     const envNodeStash = `RELAY_UNIQUE_NODE_${name.toUpperCase()}_STASH`;
 
     const nodeStash = process.env[envNodeStash];
@@ -66,19 +67,17 @@ async function resetInvulnerables() {
 }
 
 // todo:collator Most preferable to launch this test in parallel somehow -- or change the session period (1 hr).
-describe('Integration Test: Collator Selection', () => {
+describe.ifRunCollators('Integration Test: Collator Selection', () => {
   let superuser: IKeyringPair;
   let previousLicenseBond = 0n;
   let licenseBond = 0n;
 
-  before(async function() {
-    if(!process.env.RUN_COLLATOR_TESTS) this.skip();
-
+  before(async function(this: UniqueTestContext) {
     // Check env vars
     await getInitialInvulnerables();
 
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.CollatorSelection]);
+      requirePalletsOrSkip(helper, [Pallets.CollatorSelection]);
       superuser = await privateKey('//Alice');
 
       previousLicenseBond = await helper.collatorSelection.getLicenseBond();
@@ -95,14 +94,15 @@ describe('Integration Test: Collator Selection', () => {
     let gammaNode: string;
     let deltaNode: string;
 
-    before(async function() {
+    before(async function(this: UniqueTestContext) {
       // Check env vars
       await getInitialInvulnerables();
 
       await usingPlaygrounds(async (helper) => {
         // todo:collator see again if blocks start to be finalized in dev mode
         // Skip the collator block production in dev mode, since the blocks are sealed automatically.
-        if(await helper.arrange.isDevNode()) this.skip();
+        if(await helper.arrange.isDevNode())
+          this.skip("Disabled for dev node");
 
         [alphaNode, betaNode, gammaNode, deltaNode] = await getInitialInvulnerables();
 
@@ -417,8 +417,6 @@ describe('Integration Test: Collator Selection', () => {
   });
 
   after(async function() {
-    if(!process.env.RUN_COLLATOR_TESTS) return;
-
     await usingPlaygrounds(async (helper) => {
       if(helper.fetchMissingPalletNames([Pallets.CollatorSelection]).length != 0) return;
 

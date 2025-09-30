@@ -8,11 +8,19 @@
   "name": "@unique/test-utils",
   "type": "module",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "dependencies": {
     "@polkadot/api": "15.5.2",
     "@polkadot/util": "^13.3.1",
     "@polkadot/util-crypto": "^13.3.1",
     "@unique-nft/opal-testnet-types": "workspace:*"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./util": "./util.ts",
+    "./eth": "./eth/index.ts",
+    "./eth/types": "./eth/types.ts",
+    "./eth/util": "./eth/util.ts",
+    "./xcm": "./xcm/index.ts"
   }
 }

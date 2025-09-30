@@ -1,10 +1,10 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, describeGov} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, describe, before, beforeEach, afterEach} from '@unique/test-utils/util';
 import {Event} from '@unique/test-utils';
-import {democracyFastTrackVotingPeriod, IFinCounselors, clearTechComm, dummyProposalCall, initFinCouncil, clearFinCouncil, democracyLaunchPeriod, initFellowship, dummyProposal, fellowshipPropositionOrigin, defaultEnactmentMoment, initCouncil, clearCouncil, clearFellowship} from './util.js';
+import {democracyFastTrackVotingPeriod, IFinCounselors, clearTechComm, dummyProposalCall, initFinCouncil, clearFinCouncil, democracyLaunchPeriod, initFellowship, dummyProposal, fellowshipPropositionOrigin, defaultEnactmentMoment, initCouncil, clearCouncil, clearFellowship} from './util.ts';
 
 
-describeGov('Governance: Financial Council tests', () => {
+describe.ifRunGov('Governance: Financial Council tests', () => {
   let donor: IKeyringPair;
   let finCounselors: IFinCounselors;
   let sudoer: IKeyringPair;
@@ -12,7 +12,7 @@ describeGov('Governance: Financial Council tests', () => {
   const moreThanHalfCouncilThreshold = 2;
 
   before(async function() {
-    await usingPlaygrounds(async (helper, privateKey) => {
+    await usingPlaygrounds(async (_helper, privateKey) => {
       sudoer = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});
     });

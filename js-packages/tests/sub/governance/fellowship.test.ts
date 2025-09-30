@@ -1,10 +1,10 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describe, before, after} from '@unique/test-utils/util';
 import {DevUniqueHelper, Event} from '@unique/test-utils';
-import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util.js';
-import type {ICounselors, ITechComms} from './util.js';
+import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util.ts';
+import type {ICounselors, ITechComms} from './util.ts';
 
-describeGov('Governance: Fellowship tests', () => {
+describe.ifRunGov('Governance: Fellowship tests', () => {
   let members: IKeyringPair[][];
 
   let rank1Proposer: IKeyringPair;
@@ -50,7 +50,7 @@ describeGov('Governance: Fellowship tests', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Democracy, Pallets.Fellowship, Pallets.TechnicalCommittee, Pallets.Council]);
+      requirePalletsOrSkip(helper, [Pallets.Democracy, Pallets.Fellowship, Pallets.TechnicalCommittee, Pallets.Council]);
 
       sudoer = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});

@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
+import {before, describe, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '@unique/test-utils/util';
 
 describe('integration test: Refungible functionality:', () => {
   let donor: IKeyringPair;
@@ -24,7 +24,7 @@ describe('integration test: Refungible functionality:', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
 
       donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);

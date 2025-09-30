@@ -1,6 +1,6 @@
-import {readFile, writeFile} from 'fs/promises';
-import path from 'path';
-import {makeNames, usingPlaygrounds} from '@unique/test-utils/util.js';
+import {readFile, writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {makeNames, usingPlaygrounds} from '@unique/test-utils/util';
 
 const {dirname} = makeNames(import.meta.url);
 

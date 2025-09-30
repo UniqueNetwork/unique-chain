@@ -284,6 +284,8 @@ macro_rules! start_node_using_chain_runtime {
 	};
 }
 
+//sc_service::Error has big size. Can't do anything about it for now.
+#[allow(clippy::result_large_err)]
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
@@ -461,8 +463,8 @@ pub fn run() -> Result<()> {
 				)
 				.map_err(|err| format!("Relay chain argument error: {err}"))?;
 
-				info!("Parachain id: {:?}", para_id);
-				info!("Parachain Account: {}", parachain_account);
+				info!("Parachain id: {para_id:?}");
+				info!("Parachain Account: {parachain_account}");
 				info!(
 					"Is collating: {}",
 					if config.role.is_authority() {

@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'ethers';
+import {before, describe} from "@unique/test-utils/util";
+import { NormalizedEvent } from "../../test-utils/eth/types.ts";
 
 describe('Fungible: Plain calls', () => {
   let donor: IKeyringPair;
@@ -575,88 +577,120 @@ describe('Fungible: Substrate calls', () => {
     });
   });
 
-  itEth.skip('Events emitted for approve()', async ({helper}) => {
-    // TODO: Refactor this
-    // const receiver = helper.eth.createAccount();
-    // const collection = await helper.ft.mintCollection(alice);
-    // await collection.mint(alice, 200n);
+  itEth('Events emitted for approve()', async ({helper}) => {
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.mint(alice, 200n);
+    
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', helper.web3!);
 
-    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft');
+    const events: NormalizedEvent[] = [];
+    contract.on('Approval', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    await collection.approveTokens(alice, {Ethereum: receiver.address}, 100n);
+    if(events.length == 0) await helper.wait.newBlocks(4);
 
-    // await collection.approveTokens(alice, {Ethereum: receiver.address}, 100n);
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
-
-    // expect(event.event).to.be.equal('Approval');
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.owner).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.spender).to.be.equal(receiver);
-    // expect(event.args.value).to.be.equal('100');
+    contract.off('Approval');
+    expect(events[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Approval',
+      args: {
+        owner: helper.address.substrateToEth(alice.address),
+        spender: receiver.address,
+        value: '100',
+      },
+    });
   });
 
-  itEth.skip('Events emitted for transferFrom()', async ({helper}) => {
-    // TODO: Refactor this
-    // const [bob] = await helper.arrange.createAccounts([10n], donor);
-    // const receiver = helper.eth.createAccount();
-    // const collection = await helper.ft.mintCollection(alice);
-    // await collection.mint(alice, 200n);
-    // await collection.approveTokens(alice, {Substrate: bob.address}, 100n);
+  itEth('Events emitted for transferFrom()', async ({helper}) => {
+    const [bob] = await helper.arrange.createAccounts([10n], donor);
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.mint(alice, 200n);
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', helper.web3!);
 
-    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft');
+    await collection.approveTokens(alice, {Substrate: bob.address}, 100n);
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    const transferEvents: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        transferEvents.push(event);
+    });
 
-    // await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address}, 51n);
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // let event = events[0];
+    const approvalEvents: NormalizedEvent[] = [];
+    contract.on('Approval', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        approvalEvents.push(event);
+    });
 
-    // expect(event.event).to.be.equal('Transfer');
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.to).to.be.equal(receiver);
-    // expect(event.args.value).to.be.equal('51');
+    await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address}, 51n);
+    if(transferEvents.length == 0) await helper.wait.newBlocks(4);
 
-    // event = events[1];
-    // expect(event.event).to.be.equal('Approval');
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.owner).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.spender).to.be.equal(helper.address.substrateToEth(bob.address));
-    // expect(event.args.value).to.be.equal('49');
+    contract.off('Approval');
+    contract.off('Transfer');
+
+    expect(transferEvents[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Transfer',
+      args: {
+        from: helper.address.substrateToEth(alice.address),
+        to: receiver.address,
+        value: '51',
+      },
+    });
+
+    expect(approvalEvents[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Approval',
+      args: {
+        owner: helper.address.substrateToEth(alice.address),
+        spender: helper.address.substrateToEth(bob.address),
+        value: '49',
+      },
+    });
   });
 
-  itEth.skip('Events emitted for transfer()', async ({helper}) => {
-    // TODO: Refactor this
-    // const receiver = helper.eth.createAccount();
-    // const collection = await helper.ft.mintCollection(alice);
-    // await collection.mint(alice, 200n);
+  itEth('Events emitted for transfer()', async ({helper}) => {
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.mint(alice, 200n);
 
-    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft');
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', helper.web3!);
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    const events: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // await collection.transfer(alice, {Ethereum:receiver}, 51n);
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
+    await collection.transfer(alice, {Ethereum: receiver.address}, 51n);
+    if(events.length == 0) await helper.wait.newBlocks(4);
 
-    // expect(event.event).to.be.equal('Transfer');
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.to).to.be.equal(receiver);
-    // expect(event.args.value).to.be.equal('51');
+    contract.off('Transfer');
+
+    expect(events[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Transfer',
+      args: {
+        from: helper.address.substrateToEth(alice.address),
+        to: receiver.address,
+        value: '51',
+      },
+    });
   });
 
   itEth('Events emitted for transferFromCross()', async ({helper}) => {

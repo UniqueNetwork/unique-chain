@@ -777,8 +777,8 @@ export interface OpalRuntimeOriginCaller extends Enum {
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
 
-/** @name OpalRuntimeRuntimeCommonFeeCoefficientCalculator */
-export interface OpalRuntimeRuntimeCommonFeeCoefficientCalculator extends Null {}
+/** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier */
+export interface OpalRuntimeRuntimeCommonFeeCoefficientApplier extends Null {}
 
 /** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
 export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
@@ -809,6 +809,41 @@ export interface OpalRuntimeRuntimeHoldReason extends Enum {
   readonly asFinancialCouncil: PalletCollectiveHoldReason;
   readonly type: 'StateTrieMigration' | 'CollatorSelection' | 'Preimage' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'FinancialCouncil';
 }
+
+/** @name OrmlOracleModuleCall */
+export interface OrmlOracleModuleCall extends Enum {
+  readonly isFeedValues: boolean;
+  readonly asFeedValues: {
+    readonly values: Vec<ITuple<[Bytes, u128]>>;
+  } & Struct;
+  readonly type: 'FeedValues';
+}
+
+/** @name OrmlOracleModuleError */
+export interface OrmlOracleModuleError extends Enum {
+  readonly isNoPermission: boolean;
+  readonly isAlreadyFeeded: boolean;
+  readonly type: 'NoPermission' | 'AlreadyFeeded';
+}
+
+/** @name OrmlOracleModuleEvent */
+export interface OrmlOracleModuleEvent extends Enum {
+  readonly isNewFeedData: boolean;
+  readonly asNewFeedData: {
+    readonly sender: AccountId32;
+    readonly values: Vec<ITuple<[Bytes, u128]>>;
+  } & Struct;
+  readonly type: 'NewFeedData';
+}
+
+/** @name OrmlOracleModuleTimestampedValue */
+export interface OrmlOracleModuleTimestampedValue extends Struct {
+  readonly value: u128;
+  readonly timestamp: u64;
+}
+
+/** @name OrmlUtilitiesOrderedSet */
+export interface OrmlUtilitiesOrderedSet extends Vec<AccountId32> {}
 
 /** @name OrmlVestingModuleCall */
 export interface OrmlVestingModuleCall extends Enum {
@@ -1018,6 +1053,18 @@ export interface PalletAppPromotionEvent extends Enum {
   readonly isSetAdmin: boolean;
   readonly asSetAdmin: AccountId32;
   readonly type: 'StakingRecalculation' | 'Stake' | 'Unstake' | 'SetAdmin';
+}
+
+/** @name PalletAssetTxPaymentEvent */
+export interface PalletAssetTxPaymentEvent extends Enum {
+  readonly isAssetTxFeePaid: boolean;
+  readonly asAssetTxFeePaid: {
+    readonly who: AccountId32;
+    readonly actualFee: u128;
+    readonly tip: u128;
+    readonly assetId: Option<StagingXcmV5Location>;
+  } & Struct;
+  readonly type: 'AssetTxFeePaid';
 }
 
 /** @name PalletBalancesAccountData */
@@ -1588,7 +1635,11 @@ export interface PalletConfigurationCall extends Enum {
   readonly asSetCollatorSelectionKickThreshold: {
     readonly threshold: Option<u32>;
   } & Struct;
-  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetAppPromotionConfigurationOverride' | 'SetCollatorSelectionDesiredCollators' | 'SetCollatorSelectionLicenseBond' | 'SetCollatorSelectionKickThreshold';
+  readonly isSetRelayBlockNumberChecks: boolean;
+  readonly asSetRelayBlockNumberChecks: {
+    readonly enabled: bool;
+  } & Struct;
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetAppPromotionConfigurationOverride' | 'SetCollatorSelectionDesiredCollators' | 'SetCollatorSelectionLicenseBond' | 'SetCollatorSelectionKickThreshold' | 'SetRelayBlockNumberChecks';
 }
 
 /** @name PalletConfigurationError */
@@ -2181,7 +2232,19 @@ export interface PalletForeignAssetsModuleCall extends Enum {
     readonly existingVersionedAssetId: XcmVersionedAssetId;
     readonly newVersionedAssetId: XcmVersionedAssetId;
   } & Struct;
-  readonly type: 'ForceRegisterForeignAsset' | 'ForceResetForeignAssetLocation';
+  readonly isForceSetForeignAssetConversionCoefficient: boolean;
+  readonly asForceSetForeignAssetConversionCoefficient: {
+    readonly conversionCoefficient: u128;
+  } & Struct;
+  readonly isAddOracleMember: boolean;
+  readonly asAddOracleMember: {
+    readonly accountId: AccountId32;
+  } & Struct;
+  readonly isRemoveOracleMember: boolean;
+  readonly asRemoveOracleMember: {
+    readonly accountId: AccountId32;
+  } & Struct;
+  readonly type: 'ForceRegisterForeignAsset' | 'ForceResetForeignAssetLocation' | 'ForceSetForeignAssetConversionCoefficient' | 'AddOracleMember' | 'RemoveOracleMember';
 }
 
 /** @name PalletForeignAssetsModuleError */
@@ -2189,7 +2252,12 @@ export interface PalletForeignAssetsModuleError extends Enum {
   readonly isForeignAssetAlreadyRegistered: boolean;
   readonly isBadForeignAssetId: boolean;
   readonly isForeignAssetNotFound: boolean;
-  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound';
+  readonly isForeignAssetIsNotFungible: boolean;
+  readonly isCantParseBalance: boolean;
+  readonly isFailedToFetchRate: boolean;
+  readonly isCantParseResponse: boolean;
+  readonly isOracleMembersCapacityExceeded: boolean;
+  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound' | 'ForeignAssetIsNotFungible' | 'CantParseBalance' | 'FailedToFetchRate' | 'CantParseResponse' | 'OracleMembersCapacityExceeded';
 }
 
 /** @name PalletForeignAssetsModuleEvent */
@@ -2206,7 +2274,12 @@ export interface PalletForeignAssetsModuleEvent extends Enum {
     readonly oldAssetId: XcmVersionedAssetId;
     readonly newAssetId: XcmVersionedAssetId;
   } & Struct;
-  readonly type: 'ForeignAssetRegistered' | 'MigrationStatus' | 'ForeignAssetMoved';
+  readonly isForeignAssetConversionCoefficientSet: boolean;
+  readonly asForeignAssetConversionCoefficientSet: {
+    readonly oldConversionCoefficient: u128;
+    readonly newConversionCoefficient: u128;
+  } & Struct;
+  readonly type: 'ForeignAssetRegistered' | 'MigrationStatus' | 'ForeignAssetMoved' | 'ForeignAssetConversionCoefficientSet';
 }
 
 /** @name PalletFungibleError */
@@ -3263,11 +3336,26 @@ export interface PalletSessionEvent extends Enum {
   readonly type: 'NewSession' | 'ValidatorDisabled' | 'ValidatorReenabled';
 }
 
-/** @name PalletSponsoringChargeTransactionPayment */
-export interface PalletSponsoringChargeTransactionPayment extends Compact<u128> {}
+/** @name PalletSponsoringChargeAssetTxPayment */
+export interface PalletSponsoringChargeAssetTxPayment extends Struct {
+  readonly tip: Compact<u128>;
+  readonly assetId: Option<StagingXcmV5Location>;
+}
 
 /** @name PalletSponsoringCheckNonce */
 export interface PalletSponsoringCheckNonce extends Compact<u32> {}
+
+/** @name PalletSponsoringEvent */
+export interface PalletSponsoringEvent extends Enum {
+  readonly isAssetTxFeePaid: boolean;
+  readonly asAssetTxFeePaid: {
+    readonly who: AccountId32;
+    readonly actualFee: u128;
+    readonly tip: u128;
+    readonly assetId: Option<StagingXcmV5Location>;
+  } & Struct;
+  readonly type: 'AssetTxFeePaid';
+}
 
 /** @name PalletStateTrieMigrationCall */
 export interface PalletStateTrieMigrationCall extends Enum {
@@ -3459,7 +3547,12 @@ export interface PalletTestUtilsCall extends Enum {
   readonly asBatchAll: {
     readonly calls: Vec<Call>;
   } & Struct;
-  readonly type: 'Enable' | 'SetTestValue' | 'SetTestValueAndRollback' | 'IncTestValue' | 'JustTakeFee' | 'BatchAll';
+  readonly isMintForeignAssets: boolean;
+  readonly asMintForeignAssets: {
+    readonly collectionId: u32;
+    readonly amount: u128;
+  } & Struct;
+  readonly type: 'Enable' | 'SetTestValue' | 'SetTestValueAndRollback' | 'IncTestValue' | 'JustTakeFee' | 'BatchAll' | 'MintForeignAssets';
 }
 
 /** @name PalletTestUtilsError */

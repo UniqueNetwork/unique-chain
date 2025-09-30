@@ -1,6 +1,7 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {blake2AsHex} from '@polkadot/util-crypto';
-import {readFileSync} from 'fs';
+import {readFileSync} from 'node:fs';
+import process from "node:process";
 
 async function main() {
   if(process.argv.length != 4) {

@@ -1,6 +1,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
 
 class Fract {
   static ZERO = new Fract(0n);
@@ -187,7 +187,7 @@ const hypothesisLinear = (a: Fract, b: Fract) => (x: Fract) => rpn(x, a, '*', b,
 async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>) {
   const alice = await privateKey('//Alice');
   const bob = await privateKey('//Bob');
-  const dataPoints = [];
+  const dataPoints: {x: Fract, y: Fract}[] = [];
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
@@ -240,7 +240,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
   const alice = await privateKey('//Alice');
   const caller = await helper.eth.createAccountWithBalance(alice);
   const receiver = helper.eth.createAccount();
-  const dataPoints = [];
+  const dataPoints: { x: Fract, y: Fract }[] = [];
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});

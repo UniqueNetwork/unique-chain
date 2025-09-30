@@ -133,12 +133,12 @@ You can launch the node in the dev mode where blocks are sealed automatically ea
 1. Install all needed dependencies
 ```
 cd tests
-yarn install
+deno install
 ```
 
 2. Run tests
 ```
-yarn test
+deno task test
 ```
 
 
@@ -152,7 +152,7 @@ cargo fmt
 
 ### Format tests
 ```bash
-pushd tests && yarn fix ; popd
+pushd tests && deno task fix ; popd
 ```
 
 ### Check code style in tests

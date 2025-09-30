@@ -1,25 +1,24 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describe, before, after, afterEach} from '@unique/test-utils/util';
 import {Event} from '@unique/test-utils';
-import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, clearCouncil, clearTechComm, initTechComm, ITechComms} from './util.js';
-import type {ICounselors} from './util.js';
+import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, clearCouncil, clearTechComm, initTechComm} from './util.ts';
+import type {ICounselors} from './util.ts';
 
-describeGov('Governance: Elect Sudo', () => {
+describe.ifRunGov('Governance: Elect Sudo', () => {
   let sudoer: IKeyringPair;
   let donor: IKeyringPair;
   let counselors: ICounselors;
-  let techComm: ITechComms;
 
   const moreThanHalfCouncilThreshold = 3;
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Council]);
+      requirePalletsOrSkip(helper, [Pallets.Council]);
 
       sudoer = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});
       counselors = await initCouncil(donor, sudoer);
-      techComm = await initTechComm(donor, sudoer);
+      await initTechComm(donor, sudoer);
     });
   });
 

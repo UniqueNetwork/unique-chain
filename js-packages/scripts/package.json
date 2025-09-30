@@ -9,17 +9,17 @@
   "type": "module",
   "version": "1.0.0",
   "main": "",
-  "devDependencies": {
-    "tsx": "4.19.3"
-  },
   "scripts": {
-    "benchMintingFee": "yarn tsx benchmarks/mintFee/benchmark.ts",
-    "loadTransfer": "yarn tsx transfer.nload.ts",
-    "generateEnv": "yarn tsx ./generateEnv.ts",
-    "proposeUpgrade": "yarn tsx ./proposeupgrade.ts",
-    "proposeFastTrack": "yarn tsx ./proposefasttrack.ts",
-    "councilDemocracyProposal": "yarn tsx ./councilproposal.ts",
-    "hrmpChannel": "yarn tsx ./hrmpchannel.ts",
-    "leaseStatus": "yarn tsx ./leaseStatus.ts"
+    "benchMintingFee": "deno --allow-env --allow-read --allow-net benchmarks/mintFee/index.ts",
+    "loadTransfer": "deno --allow-env --allow-net --allow-sys transfer.nload.ts",
+    "generateEnv": "deno --allow-env --allow-read --allow-net ./generateEnv.ts",
+    "proposeUpgrade": "deno --allow-env --allow-read --allow-net ./proposeupgrade.ts",
+    "proposeFastTrack": "deno --allow-env --allow-net ./proposefasttrack.ts",
+    "councilDemocracyProposal": "deno --allow-env --allow-net ./councilproposal.ts",
+    "hrmpChannel": "deno --allow-env --allow-net ./hrmpchannel.ts",
+    "leaseStatus": "deno --allow-env --allow-net ./leaseStatus.ts"
+  },
+  "exports": {
+    "./correctStateAfterMaintenance": "./correctStateAfterMaintenance.ts"
   }
 }

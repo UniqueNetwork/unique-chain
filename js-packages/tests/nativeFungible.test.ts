@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from '@unique/test-utils/util.js';
+import {before, describe, expect, itSub, usingPlaygrounds} from '@unique/test-utils/util';
 
 describe('Native fungible', () => {
   let root: IKeyringPair;
@@ -138,7 +138,7 @@ describe('Native fungible', () => {
     const balanceBobBefore = await helper.balance.getSubstrate(bob.address);
     await collection.transfer(alice, {Substrate: bob.address}, 100n);
     const balanceAliceAfter = await helper.balance.getSubstrate(alice.address);
-    const balanceBobAfter = await helper.balance.getSubstrate(bob.address);
+    const balanceBobAfter: bigint = await helper.balance.getSubstrate(bob.address);
     expect(balanceAliceBefore - balanceAliceAfter > 100n).to.be.true;
     expect(balanceBobAfter - balanceBobBefore === 100n).to.be.true;
   });
@@ -150,8 +150,8 @@ describe('Native fungible', () => {
 
     await collection.transferFrom(alice, {Substrate: alice.address}, {Substrate: bob.address}, 100n);
 
-    const balanceAliceAfter = await helper.balance.getSubstrate(alice.address);
-    const balanceBobAfter = await helper.balance.getSubstrate(bob.address);
+    const balanceAliceAfter: bigint = await helper.balance.getSubstrate(alice.address);
+    const balanceBobAfter: bigint = await helper.balance.getSubstrate(bob.address);
     expect(balanceAliceBefore - balanceAliceAfter > 100n).to.be.true;
     expect(balanceBobAfter - balanceBobBefore === 100n).to.be.true;
 

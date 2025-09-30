@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {UniqueHelper} from '@unique-nft/playgrounds/unique.js';
+import {before, describe, usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip, after, UniqueTestContext} from '@unique/test-utils/util';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique';
 
 async function getIdentities(helper: UniqueHelper) {
   const identities: [string, any][] = [];
@@ -37,14 +37,12 @@ async function getSubIdentityName(helper: UniqueHelper, address: string) {
   return ((await helper.getApi().query.identity.superOf(address)).toHuman() as any);
 }
 
-describe('Integration Test: Identities Manipulation', () => {
+describe.ifRunCollators('Integration Test: Identities Manipulation', () => {
   let superuser: IKeyringPair;
 
-  before(async function() {
-    if(!process.env.RUN_COLLATOR_TESTS) this.skip();
-
+  before(async function(this: UniqueTestContext) {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Identity]);
+      requirePalletsOrSkip(helper, [Pallets.Identity]);
       superuser = await privateKey('//Alice');
     });
   });
@@ -271,8 +269,6 @@ describe('Integration Test: Identities Manipulation', () => {
   });
 
   after(async function() {
-    if(!process.env.RUN_COLLATOR_TESTS) return;
-
     await usingPlaygrounds(async helper => {
       if(helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) return;
 

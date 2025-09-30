@@ -2,46 +2,34 @@
     "author": "",
     "license": "SEE LICENSE IN ../../LICENSE",
     "description": "Interfaces for interacting with contracts and contract ABIs",
-    "engines": {
-        "node": ">=20"
-    },
     "name": "@unique/tests",
     "type": "module",
     "version": "1.0.0",
     "main": "",
-    "devDependencies": {
-        "mocha": "^10.1.0",
-        "tsx": "4.19.3"
-    },
     "scripts": {
-        "setup": "yarn tsx ../test-utils/globalSetup.ts",
-        "setIdentities": "yarn tsx ../scripts/identitySetter.ts",
-        "checkRelayIdentities": "yarn tsx ../scripts/relayIdentitiesChecker.ts",
+        "setup": "deno --allow-env --allow-net --allow-read --sloppy-imports ../test-utils/globalSetup.ts",
+        "setIdentities": "deno ../scripts/identitySetter.ts",
+        "checkRelayIdentities": "deno ../scripts/relayIdentitiesChecker.ts",
         
-        "_test": "yarn setup && yarn mocha",
-        "_testParallel": "yarn setup && yarn mocha --parallel --jobs 128",
+        "_test": "deno task setup && deno test --allow-env --allow-net --allow-read",
+        "_testParallel": "deno task setup && deno test --allow-env --allow-net --allow-read --parallel",
 
-        "test": "yarn _test './**/*.*test.ts'",
-        "testParallel": "yarn _testParallel './**/*.test.ts'",
-        "testSequential": "yarn _test './**/*.seqtest.ts'",
+        "test": "deno task _test './**/*.*test.ts'",
+        "testParallel": "deno task _testParallel './**/*.test.ts'",
+        "testSequential": "deno task _test './**/*.seqtest.ts'",
 
-        "testSubParallel": "yarn _testParallel './*.test.ts' './sub/**/*.test.ts'",
-        "testSubSequential": "yarn _test './*.seqtest.ts' './sub/**/*.seqtest.ts'",
+        "testSubParallel": "deno task _testParallel './*.test.ts' './sub/**/*.test.ts'",
+        "testSubSequential": "deno task _test './*.seqtest.ts' './sub/**/*.seqtest.ts'",
 
-        "testEthParallel": "yarn _testParallel './eth/**/*.test.ts'",
-        "testEthSequential": "yarn _test './eth/**/*.seqtest.ts'",
+        "testEthParallel": "deno task _testParallel './eth/**/*.test.ts'",
+        "testEthSequential": "deno task _test './eth/**/*.seqtest.ts'",
 
-        "testGovernance": "RUN_GOV_TESTS=1 && yarn _test './**/sub/governance/*.*test.ts'",
-        "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test './sub/collator-selection/*.seqtest.ts'",
-        "testXcmUnique": "RUN_XCM_TESTS=1 yarn _test './**/xcm/unique.test.ts'",
-        "testXcmQuartz": "RUN_XCM_TESTS=1 yarn _test './**/xcm/quartz.test.ts'",
-        "load": "yarn _test './**/*.load.ts'"
-    },
-    "mocha": {
-        "timeout": 9999999,
-        "retries": 3,
-        "node-option": [
-            "import=tsx"
-        ]
+        "testGovernance": "RUN_GOV_TESTS=1 && deno task _test './**/sub/governance/*.*test.ts'",
+        "testCollators": "RUN_COLLATOR_TESTS=1 deno task _test './sub/collator-selection/*.seqtest.ts'",
+        "testXcmUnique": "RUN_XCM_TESTS=1 deno task _test './**/xcm/unique.test.ts'",
+        "testXcmQuartz": "RUN_XCM_TESTS=1 deno task _test './**/xcm/quartz.test.ts'",
+        "testOcwOpal": "RUN_OCW_TESTS=1 deno task _test './**/ocw/opal.test.ts'",
+        "testOcwQuartz": "RUN_OCW_TESTS=1 deno task _test './**/ocw/quartz.test.ts'",
+        "load": "deno task _test './**/*.load.ts'"
     }
 }

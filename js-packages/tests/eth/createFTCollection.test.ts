@@ -16,9 +16,9 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
-import {CollectionLimitField} from '@unique/test-utils/eth/types.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
+import {CollectionLimitField} from '@unique/test-utils/eth/types';
 
 const DECIMALS = 18;
 
@@ -27,7 +27,7 @@ describe('Create FT collection from EVM', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
+      requirePalletsOrSkip(helper, [Pallets.Fungible]);
       donor = await privateKey({url: import.meta.url});
     });
   });
@@ -124,7 +124,7 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
+      requirePalletsOrSkip(helper, [Pallets.Fungible]);
       donor = await privateKey({url: import.meta.url});
     });
   });

@@ -27,14 +27,42 @@ use core::ops::Deref;
 
 use derivative::Derivative;
 use frame_support::{
-	dispatch::DispatchResult, pallet_prelude::*, storage_alias, traits::EnsureOrigin, PalletId,
+	dispatch::DispatchResult,
+	pallet_prelude::*,
+	storage_alias,
+	traits::{
+		fungibles,
+		tokens::{
+			DepositConsequence, Fortitude, Precision, Preservation, Provenance, WithdrawConsequence,
+		},
+		ConstU128, EnsureOrigin,
+	},
+	PalletId,
 };
-use frame_system::pallet_prelude::*;
+use frame_system::{
+	offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer, SigningTypes},
+	pallet_prelude::*,
+};
+use lite_json::JsonValue;
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
 use parity_scale_codec::DecodeWithMemTracking;
-use sp_runtime::traits::AccountIdConversion;
+use sp_core::{crypto::KeyTypeId, U256};
+use sp_runtime::{
+	offchain::{
+		http,
+		storage_lock::{StorageLock, Time},
+		Duration,
+	},
+	traits::{AccountIdConversion, IdentifyAccount},
+	FixedPointNumber, FixedU128, MultiSigner,
+};
+#[cfg(not(feature = "std"))]
+use sp_std::alloc::{
+	format,
+	string::{String, ToString},
+};
 use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{v5::prelude::*, VersionedAssetId};
 use staging_xcm_executor::{
@@ -98,6 +126,41 @@ pub enum MigrationStatusV3ToV5 {
 	},
 }
 
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orcl");
+const LOCK_TIMEOUT_EXPIRATION: u64 = 30_000; // 30 seconds
+
+/// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrappers.
+/// We can use from supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
+/// the types with this pallet-specific identifier.
+pub mod crypto {
+	use sp_core::sr25519::Signature as Sr25519Signature;
+	use sp_runtime::{
+		app_crypto::{app_crypto, sr25519},
+		traits::Verify,
+		MultiSignature, MultiSigner,
+	};
+
+	use super::KEY_TYPE;
+	app_crypto!(sr25519, KEY_TYPE);
+
+	pub struct AuthId;
+
+	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for AuthId {
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+
+	// implemented for mock runtime in test
+	impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
+		for AuthId
+	{
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+}
+
 #[frame_support::pallet]
 pub mod module {
 	use frame_support::traits::BuildGenesisConfig;
@@ -112,7 +175,15 @@ pub mod module {
 		+ pallet_common::Config
 		+ pallet_fungible::Config
 		+ pallet_balances::Config
+		+ orml_oracle::Config
+		+ CreateSignedTransaction<orml_oracle::Call<Self>>
 	{
+		type AccountId32: From<Self::AccountId> + AsRef<[u8; 32]>;
+		type AuthorityId: AppCrypto<
+			<Self as SigningTypes>::Public,
+			<Self as SigningTypes>::Signature,
+		>;
+
 		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
@@ -130,6 +201,14 @@ pub mod module {
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
+
+		/// The conversion coefficient for foreign assets.
+		#[pallet::constant]
+		type ForeignAssetConversionCoefficientDefault: Get<FixedU128>;
+
+		#[pallet::constant]
+		/// 1 DOT in u128
+		type DotAccuracy: Get<u128>;
 	}
 
 	#[pallet::error]
@@ -142,6 +221,21 @@ pub mod module {
 
 		/// The specified foreign asset is not found.
 		ForeignAssetNotFound,
+
+		/// Only fungible assets could be converted to fee.
+		ForeignAssetIsNotFungible,
+
+		/// Failed to parse the balance received from currency exchange.
+		CantParseBalance,
+
+		/// Failed to fetch the exchange rate.
+		FailedToFetchRate,
+
+		/// Failed to parse the response from the exchange.
+		CantParseResponse,
+
+		/// Can't add more oracle members.
+		OracleMembersCapacityExceeded,
 	}
 
 	#[pallet::event]
@@ -160,6 +254,81 @@ pub mod module {
 			old_asset_id: Box<VersionedAssetId>,
 			new_asset_id: Box<VersionedAssetId>,
 		},
+
+		ForeignAssetConversionCoefficientSet {
+			old_conversion_coefficient: FixedU128,
+			new_conversion_coefficient: FixedU128,
+		},
+	}
+
+	fn fetch_rate<T: Config>() -> Result<FixedU128, Error<T>> {
+		let unq_storage_key = "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51512f6eaaf236595bff0193f47dc14ef9d7a3d484f8388e304ae0e53869d8443c8f31c951596896e9b942a2e924cc2cf2e99190c148ccde2019000000";
+		let dot_storage_key = "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51512f6eaaf236595bff0193f47dc14ef9d7a3d484f8388e304ae0e53869d8443c8f31c951596896e9b942a2e924cc2cf239b9d2792f8bd4c305000000";
+		let unique_amount_bytes = get_storage_value_from_hydration(unq_storage_key)?;
+		let unique_amount = parse_balance(unique_amount_bytes)?;
+
+		let dot_amount_bytes = get_storage_value_from_hydration(dot_storage_key)?;
+		let dot_amount = parse_balance(dot_amount_bytes)?;
+
+		Ok(FixedU128::from_rational(
+			dot_amount * 100_000_000,
+			unique_amount,
+		)) // DOT has 10 decimals, UNQ has 18
+	}
+
+	fn get_storage_value_from_hydration<T: Config>(storage_key: &str) -> Result<Vec<u8>, Error<T>> {
+		let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
+		let url = Pallet::<T>::currency_exchange_url()
+			.map(|v| {
+				String::from_utf8(v.to_vec()).unwrap_or("https://hydration.ibp.network".to_string())
+			})
+			.unwrap_or_else(|| "https://hydration.ibp.network".to_string());
+		let body = format!(
+			r#"{{"id":1, "jsonrpc":"2.0", "method": "state_getStorage", "params": ["{storage_key}"]}}"#
+		);
+
+		let request = http::Request::post(&url, vec![body.as_bytes().to_vec()])
+			.add_header("Content-Type", "application/json")
+			.deadline(deadline)
+			.send()
+			.map_err(|_| Error::FailedToFetchRate)?;
+
+		let response = request.wait().map_err(|_| Error::FailedToFetchRate)?;
+		let body = response.body().collect::<Vec<u8>>();
+		let body_str = sp_std::str::from_utf8(&body).map_err(|_| Error::CantParseResponse)?;
+		let val = lite_json::parse_json(body_str).map_err(|_| Error::CantParseResponse)?;
+		let storage_value_bytes = match val {
+			JsonValue::Object(obj) => {
+				let (_, v) = obj
+					.into_iter()
+					.find(|(k, _)| k.iter().copied().eq("result".chars()))
+					.ok_or(Error::CantParseResponse)?;
+				match v {
+					JsonValue::String(storage_value_hex) => {
+						hex::decode(storage_value_hex.iter().skip(2).collect::<String>())
+							.map_err(|_| Error::CantParseResponse)?
+					}
+					_ => return Err(Error::CantParseResponse),
+				}
+			}
+			_ => return Err(Error::CantParseResponse),
+		};
+
+		Ok(storage_value_bytes)
+	}
+
+	fn parse_balance<T>(storage_value_bytes: Vec<u8>) -> Result<u128, Error<T>> {
+		if storage_value_bytes.len() < 16 {
+			return Err(Error::CantParseBalance);
+		}
+		let mut unique_amount_bytes = storage_value_bytes;
+		unique_amount_bytes.truncate(16);
+		let value = u128::from_le_bytes(
+			unique_amount_bytes
+				.try_into()
+				.map_err(|_| Error::CantParseBalance)?,
+		);
+		Ok(value)
 	}
 
 	/// The corresponding collections of foreign assets.
@@ -198,11 +367,76 @@ pub mod module {
 		QueryKind = OptionQuery,
 	>;
 
+	/// The corresponding collections of foreign assets.
+	#[pallet::storage]
+	#[pallet::getter(fn foreign_asset_conversion_coefficient)]
+	pub type ForeignAssetConversionCoefficient<T: Config> = StorageValue<_, FixedU128, OptionQuery>;
+
+	#[pallet::storage]
+	pub type OracleMembers<T: Config> =
+		StorageValue<_, BoundedVec<T::AccountId, ConstU32<50>>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn currency_exchange_url)]
+	pub type CurrencyExchangeUrl<T: Config> =
+		StorageValue<_, BoundedVec<u8, ConstU32<200>>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn exchange_rate_update_interval)]
+	pub type ExchangeRateUpdateInterval<T: Config> =
+		StorageValue<Value = u128, QueryKind = ValueQuery, OnEmpty = ConstU128<100>>; // in blocks
+
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
+
+	impl<T: Config + pallet_balances_adapter::Config + orml_oracle::Config> Pallet<T> {
+		pub fn get_convertible_assets() -> Vec<staging_xcm::v5::AssetId> {
+			vec![staging_xcm::v5::AssetId(staging_xcm::v5::Location {
+				parents: 1,     // means go up one level (to relay chain)
+				interior: Here, // refers directly to relay chain’s native token
+			})]
+		}
+
+		pub fn convert_native_to_asset(
+			asset_id: &staging_xcm::v5::AssetId,
+			native_amount: u128,
+		) -> Option<u128>
+		where
+			T::OracleKey: TryFrom<Vec<u8>>,
+			T::OracleValue: Into<FixedU128>,
+		{
+			if !Self::get_convertible_assets().contains(asset_id) {
+				return None;
+			}
+			let conversion_coefficient = Self::foreign_asset_conversion_coefficient()
+				.unwrap_or_else(T::ForeignAssetConversionCoefficientDefault::get);
+			let native_decimals = <T as pallet_balances_adapter::Config>::Decimals::get();
+			let conversion_rate =
+				orml_oracle::Pallet::<T>::get(&T::OracleKey::try_from(b"DOT".to_vec()).ok()?)?;
+			let native_accuracy = 10u128.pow(native_decimals as u32);
+			let dot_accuracy = T::DotAccuracy::get();
+			let native_fee = FixedU128::checked_from_rational(native_amount, native_accuracy)?;
+			let result = conversion_coefficient
+				.const_checked_mul(native_fee)?
+				.const_checked_mul(conversion_rate.value.into())?;
+
+			if dot_accuracy != FixedU128::accuracy() {
+				Some(
+					result
+						.const_checked_mul(FixedU128::checked_from_rational(
+							dot_accuracy,
+							FixedU128::accuracy(),
+						)?)?
+						.into_inner(),
+				)
+			} else {
+				Some(result.into_inner())
+			}
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -300,6 +534,55 @@ pub mod module {
 
 			Ok(())
 		}
+
+		#[pallet::call_index(2)]
+		//TODO: add benchmark
+		#[pallet::weight(<T as Config>::WeightInfo::force_set_foreign_asset_conversion_coefficient())]
+		pub fn force_set_foreign_asset_conversion_coefficient(
+			origin: OriginFor<T>,
+			conversion_coefficient: FixedU128,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
+
+			let old_conversion_coefficient =
+				<ForeignAssetConversionCoefficient<T>>::get().unwrap_or(FixedU128::from(0));
+
+			if conversion_coefficient != 0.into() {
+				<ForeignAssetConversionCoefficient<T>>::set(Some(conversion_coefficient));
+			}
+
+			Self::deposit_event(Event::<T>::ForeignAssetConversionCoefficientSet {
+				old_conversion_coefficient,
+				new_conversion_coefficient: conversion_coefficient,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_oracle_member())]
+		pub fn add_oracle_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
+			OracleMembers::<T>::mutate(|members| {
+				members
+					.try_push(account_id)
+					.map_err(|_| Error::<T>::OracleMembersCapacityExceeded)
+			})?;
+			Ok(())
+		}
+
+		#[pallet::call_index(4)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_oracle_member())]
+		pub fn remove_oracle_member(
+			origin: OriginFor<T>,
+			account_id: T::AccountId,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
+			OracleMembers::<T>::mutate(|members| {
+				members.retain(|x| *x != account_id);
+			});
+			Ok(())
+		}
 	}
 
 	#[pallet::genesis_config]
@@ -315,7 +598,13 @@ pub mod module {
 	}
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
+	where
+		T: Config,
+		T::OracleKey: From<BoundedVec<u8, ConstU32<3>>>,
+		T::OracleValue: From<FixedU128>,
+		<T as SigningTypes>::Public: From<MultiSigner>,
+	{
 		fn on_runtime_upgrade() -> Weight {
 			if Self::on_chain_storage_version() < 1_u16 {
 				let put_version_weight = T::DbWeight::get().writes(1);
@@ -331,6 +620,250 @@ pub mod module {
 				Weight::zero()
 			}
 		}
+
+		fn offchain_worker(block_number: BlockNumberFor<T>) {
+			let block_number: U256 = block_number.into();
+			let interval = Self::exchange_rate_update_interval();
+			if block_number.as_u128() % interval != 1 {
+				return;
+			}
+			let oracles = OracleMembers::<T>::get()
+				.into_iter()
+				.flat_map(|account_id: T::AccountId| {
+					[
+						MultiSigner::Ed25519(
+							(*T::AccountId32::as_ref(&T::AccountId32::from(account_id.clone())))
+								.into(),
+						)
+						.into(),
+						MultiSigner::Sr25519(
+							(*T::AccountId32::as_ref(&T::AccountId32::from(account_id))).into(),
+						)
+						.into(),
+					]
+				})
+				.collect::<Vec<<T as SigningTypes>::Public>>();
+			let signer = Signer::<T, T::AuthorityId>::any_account().with_filter(oracles);
+			if !signer.can_sign() {
+				Signer::<T, T::AuthorityId>::keystore_accounts().for_each(|account| {
+					log::info!(
+						"No signer is available for exchange rate offchain worker {:?}",
+						account.public.into_account()
+					);
+				});
+				return;
+			}
+			let mut lock = StorageLock::<Time>::with_deadline(
+				b"oracle_worker::lock",
+				Duration::from_millis(LOCK_TIMEOUT_EXPIRATION),
+			);
+			if let Ok(_guard) = lock.try_lock() {
+				match fetch_rate::<T>() {
+					Ok(rate) => {
+						let scaled_rate = T::OracleValue::from(rate);
+						let key =
+							BoundedVec::<u8, ConstU32<3>>::truncate_from("DOT".as_bytes().to_vec())
+								.into();
+						let values = BoundedVec::truncate_from(vec![(key, scaled_rate)]);
+						let call = orml_oracle::Call::<T>::feed_values { values };
+						// Use any available signer to submit a signed extrinsic
+						if let Some((_account, result)) =
+							signer.send_signed_transaction(|_acct| call.clone())
+						{
+							if result.is_ok() {
+								log::debug!("Signed tx successfully submitted");
+							} else {
+								log::error!("Signed tx submission failed");
+							}
+						} else {
+							log::error!("No local account available for signing");
+						}
+					}
+					Err(e) => log::error!("Failed to fetch rate: {e:?}"),
+				}
+			};
+		}
+	}
+
+	// TODO: check if collection is fungible
+	impl<T: Config> fungibles::Inspect<<T as frame_system::Config>::AccountId> for Pallet<T> {
+		type AssetId = staging_xcm::v5::AssetId;
+		type Balance = u128;
+
+		fn total_issuance(asset: Self::AssetId) -> Self::Balance {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Zero::zero();
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Zero::zero();
+			};
+			let collection = dispatch.as_dyn();
+			collection
+				.total_pieces(TokenId::default())
+				.unwrap_or_else(Zero::zero)
+		}
+
+		fn minimum_balance(_asset: Self::AssetId) -> Self::Balance {
+			Zero::zero()
+		}
+
+		fn balance(
+			asset: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+		) -> Self::Balance {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Zero::zero();
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Zero::zero();
+			};
+			let collection = dispatch.as_dyn();
+			collection.balance(T::CrossAccountId::from_sub(who.clone()), TokenId::default())
+		}
+
+		fn total_balance(
+			asset: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+		) -> Self::Balance {
+			Pallet::<T>::balance(asset, who)
+		}
+
+		fn reducible_balance(
+			asset: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+			_preservation: Preservation,
+			_: Fortitude,
+		) -> Self::Balance {
+			Pallet::<T>::balance(asset, who)
+		}
+
+		fn can_deposit(
+			asset: Self::AssetId,
+			_who: &<T as frame_system::Config>::AccountId,
+			_amount: Self::Balance,
+			_provenance: Provenance,
+		) -> DepositConsequence {
+			if <ForeignAssetToCollection<T>>::get(asset).is_some() {
+				DepositConsequence::Success
+			} else {
+				DepositConsequence::UnknownAsset
+			}
+		}
+
+		fn can_withdraw(
+			asset: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+			amount: Self::Balance,
+		) -> WithdrawConsequence<Self::Balance> {
+			if Pallet::<T>::balance(asset, who) >= amount {
+				WithdrawConsequence::Success
+			} else {
+				WithdrawConsequence::BalanceLow
+			}
+		}
+
+		fn asset_exists(asset: Self::AssetId) -> bool {
+			<ForeignAssetToCollection<T>>::get(asset).is_some()
+		}
+	}
+
+	impl<T: Config> fungibles::Balanced<<T as frame_system::Config>::AccountId> for Pallet<T> {
+		type OnDropCredit = fungibles::DecreaseIssuance<T::AccountId, Self>;
+		type OnDropDebt = fungibles::IncreaseIssuance<T::AccountId, Self>;
+
+		fn done_deposit(
+			_asset_id: Self::AssetId,
+			_who: &<T as frame_system::Config>::AccountId,
+			_amount: Self::Balance,
+		) {
+		}
+
+		fn done_withdraw(
+			_asset_id: Self::AssetId,
+			_who: &<T as frame_system::Config>::AccountId,
+			_amount: Self::Balance,
+		) {
+		}
+	}
+
+	impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
+		fn handle_raw_dust(_: Self::AssetId, _: Self::Balance) {}
+		fn handle_dust(_: fungibles::Dust<T::AccountId, Self>) {
+			defensive!("`decrease_balance` and `increase_balance` have non-default impls; nothing else calls this; qed");
+		}
+		fn write_balance(
+			_: Self::AssetId,
+			_: &T::AccountId,
+			_: Self::Balance,
+		) -> Result<Option<Self::Balance>, DispatchError> {
+			defensive!("write_balance is not used if other functions are impl'd");
+			Err(DispatchError::Unavailable)
+		}
+		fn set_total_issuance(_asset_id: Self::AssetId, _amount: Self::Balance) {
+			defensive!("set_total_issuance shouldn't be used");
+		}
+		fn decrease_balance(
+			asset: Self::AssetId,
+			who: &T::AccountId,
+			amount: Self::Balance,
+			precision: Precision,
+			_preservation: Preservation,
+			_: Fortitude,
+		) -> Result<Self::Balance, DispatchError> {
+			ensure!(
+				precision == Precision::Exact,
+				DispatchError::Other("Only Exact precision is supported")
+			);
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Err(DispatchError::Other("Asset is not registered"));
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Err(DispatchError::Other("Failed to dispatch collection"));
+			};
+			let collection = dispatch.as_dyn();
+			let xcm_ext = collection.xcm_extensions().ok_or(DispatchError::Other(
+				"xcm_extensions method not implemented",
+			))?;
+			let from = T::CrossAccountId::from_sub(who.clone());
+
+			xcm_ext
+				.burn_item(from.clone(), TokenId::default(), amount)
+				.map(|_| collection.balance(from, TokenId::default()))
+				.map_err(|_| DispatchError::Other("Fungible item deposit failed"))
+		}
+		fn increase_balance(
+			asset: Self::AssetId,
+			who: &T::AccountId,
+			amount: Self::Balance,
+			precision: Precision,
+		) -> Result<Self::Balance, DispatchError> {
+			ensure!(
+				precision == Precision::Exact,
+				DispatchError::Other("Only Exact precision is supported")
+			);
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Err(DispatchError::Other("Asset is not registered"));
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Err(DispatchError::Other("Failed to dispatch collection"));
+			};
+			let collection = dispatch.as_dyn();
+			let xcm_ext = collection.xcm_extensions().ok_or(DispatchError::Other(
+				"xcm_extensions method not implemented",
+			))?;
+			let to = T::CrossAccountId::from_sub(who.clone());
+			xcm_ext
+				.create_item(
+					&Self::pallet_account(),
+					to.clone(),
+					CreateItemData::Fungible(CreateFungibleData { value: amount }),
+					&ZeroBudget,
+				)
+				.map(|_| collection.balance(to, TokenId::default()))
+				.map_err(|_| DispatchError::Other("Fungible item deposit failed"))
+		}
+
+		// TODO: #13196 implement deactivate/reactivate once we have inactive balance tracking.
 	}
 }
 
@@ -875,7 +1408,7 @@ impl WeightTrader for FreeForAll {
 		payment: AssetsInHolding,
 		_xcm: &XcmContext,
 	) -> Result<AssetsInHolding, XcmError> {
-		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
+		log::trace!(target: "fassets::weight", "buy_weight weight: {weight:?}, payment: {payment:?}");
 		Ok(payment)
 	}
 }

@@ -16,14 +16,14 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
-import {itEth} from '@unique/test-utils/eth/util.js';
-import {main as correctState} from '@unique/scripts/correctStateAfterMaintenance.js';
+import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, describe, before, afterEach, after} from '@unique/test-utils/util';
+import {itEth} from '@unique/test-utils/eth/util';
+import {main as correctState} from '@unique/scripts/correctStateAfterMaintenance';
 import type {FrameSupportTokensMiscIdAmount} from '@polkadot/types/lookup';
 import type {Vec} from '@polkadot/types-codec';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
-  return (await api.query.maintenance.enabled()).toJSON() as boolean;
+  return (await api.query.maintenance.enabled()).toPrimitive();
 }
 
 describe('Integration Test: Maintenance Functionality', () => {
@@ -33,7 +33,7 @@ describe('Integration Test: Maintenance Functionality', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Maintenance]);
+      requirePalletsOrSkip(helper, [Pallets.Maintenance]);
       superuser = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});
       [bob] = await helper.arrange.createAccounts([10000n], donor);
@@ -227,7 +227,7 @@ describe('Integration Test: Maintenance Functionality', () => {
 
     before(async function() {
       await usingPlaygrounds(async (helper, privateKey) => {
-        requirePalletsOrSkip(this, helper, [Pallets.Maintenance]);
+        requirePalletsOrSkip(helper, [Pallets.Maintenance]);
         superuser = await privateKey('//Alice');
       });
     });

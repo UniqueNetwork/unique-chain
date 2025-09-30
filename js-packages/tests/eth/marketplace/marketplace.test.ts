@@ -15,15 +15,15 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {readFile} from 'fs/promises';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util.js';
-import {makeNames} from '@unique/test-utils/util.js';
+import {readFile} from 'node:fs/promises';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util';
+import {before, beforeEach, describe, makeNames} from '@unique/test-utils/util';
 
 const {dirname} = makeNames(import.meta.url);
 const EVM_ABI_DIR = `${dirname}/../../../evm-abi`;
 
 describe('Matcher contract usage', () => {
-  const PRICE = 2000n;
+  const PRICE: bigint = 2000n;
   let donor: IKeyringPair;
   let alice: IKeyringPair;
   let aliceMirror: string;
@@ -88,7 +88,8 @@ describe('Matcher contract usage', () => {
     {
       const sellerBalanceBeforePurchase = await helper.balance.getSubstrate(seller.address);
       await helper.eth.sendEVM(alice, await matcher.getAddress(), (await matcher.buy.populateTransaction(await evmCollection.getAddress(), token.tokenId)).data, PRICE.toString());
-      expect(await helper.balance.getSubstrate(seller.address) - sellerBalanceBeforePurchase === PRICE);
+      const sellerBalanceAfterPurchase: bigint = await helper.balance.getSubstrate(seller.address);
+      expect(sellerBalanceAfterPurchase - sellerBalanceBeforePurchase === PRICE);
     }
 
     // Token is transferred to evm account of alice
@@ -193,7 +194,8 @@ describe('Matcher contract usage', () => {
     {
       const sellerBalanceBeforePurchase = await helper.balance.getSubstrate(seller.address);
       await helper.eth.sendEVM(alice, await matcher.getAddress(), (await matcher.buy.populateTransaction(await evmCollection.getAddress(), token.tokenId)).data, PRICE.toString());
-      expect(await helper.balance.getSubstrate(seller.address) - sellerBalanceBeforePurchase === PRICE);
+      const sellerBalanceAfterPurchase: bigint = await helper.balance.getSubstrate(seller.address);
+      expect(sellerBalanceAfterPurchase - sellerBalanceBeforePurchase === PRICE);
     }
 
     // Token is transferred to evm account of alice

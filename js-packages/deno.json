@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "workspace": [
+    "./evm-abi",
+    "./types",
+    "./test-utils",
+    "./playgrounds",
+    "./scripts",
+    "./tests"
+  ],
+  "imports": {
+    "@std/testing/bdd": "jsr:@std/testing@^1.0.15/bdd",
+    "@std/testing/unstable-bdd": "jsr:@std/testing@^1.0.15/unstable-bdd",
+    "@unique/scripts/correctStateAfterMaintenance": "npm:@unique/scripts/correctStateAfterMaintenance"
+  },
+  "compilerOptions": {
+    "checkJs": false,
+    "strict": true,
+    "noImplicitAny": false
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-explicit-any"]
+    }
+  }
+}

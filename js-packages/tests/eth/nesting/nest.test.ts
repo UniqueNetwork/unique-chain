@@ -1,8 +1,9 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract, HDNodeWallet} from 'ethers';
 
-import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
+import {before, describe} from "@unique/test-utils/util";
 
 const createNestingCollection = async (
   helper: EthUniqueHelper,

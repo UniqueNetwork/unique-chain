@@ -16,15 +16,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::marker::PhantomData;
-
 use frame_support::{
 	pallet,
-	traits::Get,
+	traits::{ConstBool, Get},
 	weights::{Weight, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 };
 pub use pallet::*;
 use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
+use polkadot_core_primitives::BlockNumber as RelayChainBlockNumber;
 use scale_info::TypeInfo;
 use smallvec::smallvec;
 use sp_arithmetic::{
@@ -32,6 +31,12 @@ use sp_arithmetic::{
 	traits::{BaseArithmetic, Unsigned},
 };
 use sp_core::U256;
+#[cfg(not(feature = "std"))]
+use sp_std::alloc::{
+	format,
+	string::{String, ToString},
+};
+use sp_std::{marker::PhantomData, prelude::*};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -45,6 +50,7 @@ mod pallet {
 	use frame_system::{ensure_root, pallet_prelude::*};
 	use parity_scale_codec::Codec;
 	use sp_arithmetic::{traits::AtLeast32BitUnsigned, FixedPointOperand, Permill};
+	use sp_core::U256;
 
 	use super::*;
 	pub use crate::weights::WeightInfo;
@@ -185,10 +191,14 @@ mod pallet {
 		OnEmpty = T::DefaultCollatorSelectionKickThreshold,
 	>;
 
+	#[pallet::storage]
+	pub type RelayBlockNumberChecks<T: Config> =
+		StorageValue<Value = bool, QueryKind = ValueQuery, OnEmpty = ConstBool<true>>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::set_weight_to_fee_coefficient_override())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_weight_to_fee_coefficient_override())]
 		pub fn set_weight_to_fee_coefficient_override(
 			origin: OriginFor<T>,
 			coeff: Option<u64>,
@@ -203,7 +213,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::set_min_gas_price_override())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_min_gas_price_override())]
 		pub fn set_min_gas_price_override(
 			origin: OriginFor<T>,
 			coeff: Option<u64>,
@@ -221,7 +231,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::set_app_promotion_configuration_override())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_app_promotion_configuration_override())]
 		pub fn set_app_promotion_configuration_override(
 			origin: OriginFor<T>,
 			configuration: AppPromotionConfiguration<BlockNumberFor<T>>,
@@ -234,7 +244,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::WeightInfo::set_collator_selection_desired_collators())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_collator_selection_desired_collators())]
 		pub fn set_collator_selection_desired_collators(
 			origin: OriginFor<T>,
 			max: Option<u32>,
@@ -256,7 +266,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(T::WeightInfo::set_collator_selection_license_bond())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_collator_selection_license_bond())]
 		pub fn set_collator_selection_license_bond(
 			origin: OriginFor<T>,
 			amount: Option<<T as Config>::Balance>,
@@ -272,7 +282,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(T::WeightInfo::set_collator_selection_kick_threshold())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_collator_selection_kick_threshold())]
 		pub fn set_collator_selection_kick_threshold(
 			origin: OriginFor<T>,
 			threshold: Option<BlockNumberFor<T>>,
@@ -286,6 +296,21 @@ mod pallet {
 			Self::deposit_event(Event::NewCollatorKickThreshold {
 				length_in_blocks: threshold,
 			});
+			Ok(())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_collator_selection_kick_threshold())]
+		pub fn set_relay_block_number_checks(
+			origin: OriginFor<T>,
+			enabled: bool,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			if enabled {
+				<RelayBlockNumberChecks<T>>::kill();
+			} else {
+				<RelayBlockNumberChecks<T>>::set(false);
+			}
 			Ok(())
 		}
 	}
@@ -347,4 +372,18 @@ pub struct AppPromotionConfiguration<BlockNumber> {
 	pub interval_income: Option<Perbill>,
 	/// Maximum allowable number of stakers calculated per call of the `app-promotion::PayoutStakers` extrinsic.
 	pub max_stakers_per_calculation: Option<u8>,
+}
+
+pub struct CheckAssociatedRelayNumber<T>(PhantomData<T>);
+impl<T: Config> cumulus_pallet_parachain_system::CheckAssociatedRelayNumber
+	for CheckAssociatedRelayNumber<T>
+{
+	fn check_associated_relay_number(
+		current: RelayChainBlockNumber,
+		previous: RelayChainBlockNumber,
+	) {
+		if <RelayBlockNumberChecks<T>>::get() {
+			cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases::check_associated_relay_number(current, previous)
+		}
+	}
 }

@@ -16,8 +16,8 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
-import type {IEvent} from '@unique-nft/playgrounds/types.js';
+import {before, describe, itSub, usingPlaygrounds, expect} from '@unique/test-utils/util';
+import type {IEvent} from '@unique-nft/playgrounds/types';
 
 describe('Create Item event ', () => {
   let alice: IKeyringPair;

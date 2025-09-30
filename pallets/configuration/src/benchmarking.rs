@@ -146,4 +146,17 @@ mod benchmarks {
 
 		Ok(())
 	}
+
+	#[benchmark]
+	fn set_relay_block_number_checks() -> Result<(), BenchmarkError> {
+		#[block]
+		{
+			assert_ok!(<Pallet<T>>::set_relay_block_number_checks(
+				RawOrigin::Root.into(),
+				false
+			));
+		}
+
+		Ok(())
+	}
 }

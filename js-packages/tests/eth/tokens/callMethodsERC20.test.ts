@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
+import {CreateCollectionData} from '@unique/test-utils/eth/types';
 
 [
   {mode: 'ft' as const, requiredPallets: []},
@@ -28,7 +28,7 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
     before(async function() {
       await usingEthPlaygrounds(async (helper, privateKey) => {
-        requirePalletsOrSkip(this, helper, testCase.requiredPallets);
+        requirePalletsOrSkip(helper, testCase.requiredPallets);
         donor = await privateKey({url: import.meta.url});
       });
     });

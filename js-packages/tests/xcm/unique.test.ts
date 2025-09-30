@@ -15,14 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import config from '../config.js';
-import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingRelayPlaygrounds, usingPolkadotAssetHubPlaygrounds} from '@unique/test-utils/util.js';
+import config from '../config.ts';
+import {itSub, describe, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingRelayPlaygrounds, usingPolkadotAssetHubPlaygrounds, before} from '@unique/test-utils/util';
 import {hexToString} from '@polkadot/util';
-import {ASSET_HUB_PALLET_ASSETS, ASTAR_DECIMALS, POLKADOT_ASSETHUB_CHAIN, SAFE_XCM_VERSION, SENDBACK_AMOUNT, SENDER_BUDGET, SENDTO_AMOUNT, UNIQUE_CHAIN, UNQ_DECIMALS, USDT_ASSET_ID, USDT_DECIMALS, XcmTestHelper} from './xcm.types.js';
+import {ASSET_HUB_PALLET_ASSETS, ASTAR_DECIMALS, POLKADOT_ASSETHUB_CHAIN, SAFE_XCM_VERSION, SENDBACK_AMOUNT, SENDER_BUDGET, SENDTO_AMOUNT, UNIQUE_CHAIN, UNQ_DECIMALS, USDT_ASSET_ID, USDT_DECIMALS, XcmTestHelper} from './xcm.types.ts';
 
 const testHelper = new XcmTestHelper;
 
-describeXCM('[XCM] Integration test: Exchanging tokens with Relay', () => {
+describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Relay', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
   let dotDerivativeCollectionId: number;
@@ -94,7 +94,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Relay', () => {
   });
 });
 
-describeXCM('[XCM] Integration test: Exchanging tokens with AssetHub', () => {
+describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with AssetHub', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
   let usdtDerivativeCollectionId: number;
@@ -235,7 +235,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with AssetHub', () => {
   });
 });
 
-describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
+describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -320,7 +320,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   });
 });
 
-describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
+describe.ifRunXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   let alice: IKeyringPair;
 
   let randomAccountUnique: IKeyringPair;
@@ -386,7 +386,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   });
 });
 
-describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
+describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Astar', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -487,7 +487,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   });
 });
 
-describeXCM('[XCM] Integration test: Exchanging tokens with HydraDx', () => {
+describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with HydraDx', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -547,7 +547,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with HydraDx', () => {
 
 // These tests are relevant only when
 // the the corresponding foreign assets are not registered
-describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
+describe.ifRunXcm('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let alice: IKeyringPair;
 
   before(async () => {

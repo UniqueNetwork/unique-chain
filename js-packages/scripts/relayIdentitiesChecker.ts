@@ -3,19 +3,20 @@
 //
 // Checks and reports the differences between identities and sub-identities on two chains.
 //
-// Usage: `yarn checkRelayIdentities [relay-1 WS URL] [relay-2 WS URL]`
-// Example: `yarn checkRelayIdentities wss://polkadot-rpc.dwellir.com wss://kusama-rpc.dwellir.com`
+// Usage: `deno task checkRelayIdentities [relay-1 WS URL] [relay-2 WS URL]`
+// Example: `deno task checkRelayIdentities wss://polkadot-rpc.dwellir.com wss://kusama-rpc.dwellir.com`
 
 import {encodeAddress} from '@polkadot/keyring';
-import {usingPlaygrounds} from '@unique/test-utils/util.js';
-import {getIdentities, getSubs, getSupers, constructSubInfo} from './identitySetter.js';
+import {usingPlaygrounds} from '@unique/test-utils/util';
+import {getIdentities, getSubs, getSupers, constructSubInfo} from './identitySetter.ts';
+import process from "node:process";
 
 const relay1Url = process.argv[2] ?? 'ws://localhost:9844';
 const relay2Url = process.argv[3] ?? 'ws://localhost:9844';
 
-async function pullIdentities(relayUrl: string): Promise<[any[], any[]]> {
-  const identities: any[] = [];
-  const subs: any[] = [];
+async function pullIdentities(relayUrl: string): Promise<[[string, any][], [string, any][]]> {
+  const identities: [string, any][] = [];
+  const subs: [string, any][] = [];
 
   await usingPlaygrounds(async helper => {
     try {
@@ -31,7 +32,7 @@ async function pullIdentities(relayUrl: string): Promise<[any[], any[]]> {
       // iterate over every sub-identity
       for(const [key, value] of await getSubs(helper)) {
         // only get subs of the identities interesting to us
-        if(identities.find((x: any) => x[0] == key) == -1) continue;
+        if(!identities.some(([k, _]: [string, any]) => k == key)) continue;
         subs.push(constructSubInfo(key, value, supersOfSubs));
       }
     } catch (error) {
@@ -79,7 +80,7 @@ const checkRelayIdentities = async (): Promise<void> => {
     console.log(`Sub-identities with conflicting information:\t${Object.entries(inequalIdentities).length}`);
     console.log();
 
-    const inequalSubIdentities = [];
+    const inequalSubIdentities: [any, any][] = [];
     let matchesFound = 0;
     for(const address of matchingAddresses) {
       const sub1 = subIdentitiesOnRelay1.find(([key1, _value1]) => address === encodeAddress(key1));

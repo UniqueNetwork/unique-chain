@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
-import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
+import {before, describe, itSub, Pallets, usingPlaygrounds, expect} from '@unique/test-utils/util';
+import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique';
 
 describe('Integration Test: Access Rights to Token Properties', () => {
   let alice: IKeyringPair;
@@ -35,7 +35,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
     expect(propertyRights).to.be.empty;
   });
 
-  async function testSetsAccessRightsToProperties(collection: UniqueNFTCollection | UniqueRFTCollection) {
+  async function tetsAccessRightsToProperties(collection: UniqueNFTCollection | UniqueRFTCollection) {
     await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {mutable: true}}]))
       .to.be.fulfilled;
 
@@ -52,11 +52,11 @@ describe('Integration Test: Access Rights to Token Properties', () => {
   }
 
   itSub('Sets access rights to properties of a collection (NFT)', async ({helper}) =>  {
-    await testSetsAccessRightsToProperties(await helper.nft.mintCollection(alice));
+    await tetsAccessRightsToProperties(await helper.nft.mintCollection(alice));
   });
 
   itSub.ifWithPallets('Sets access rights to properties of a collection (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
-    await testSetsAccessRightsToProperties(await helper.rft.mintCollection(alice));
+    await tetsAccessRightsToProperties(await helper.rft.mintCollection(alice));
   });
 
   async function testChangesAccessRightsToProperty(collection: UniqueNFTCollection | UniqueRFTCollection) {
@@ -109,7 +109,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
   });
 
   async function testPreventFromAddingTooManyPossibleProperties(collection: UniqueNFTCollection | UniqueRFTCollection) {
-    const constitution = [];
+    const constitution: {key: string, permission: any}[] = [];
     for(let i = 0; i < 65; i++) {
       constitution.push({
         key: 'property_' + i,

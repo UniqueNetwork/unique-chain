@@ -35,6 +35,9 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn force_register_foreign_asset() -> Weight;
 	fn force_reset_foreign_asset_location() -> Weight;
+	fn add_oracle_member() -> Weight;
+	fn remove_oracle_member() -> Weight;
+	fn force_set_foreign_asset_conversion_coefficient() -> Weight;
 }
 
 /// Weights for pallet_foreign_assets using the Substrate node and recommended hardware.
@@ -78,6 +81,15 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
+	fn force_set_foreign_asset_conversion_coefficient() -> Weight{
+		Weight::default()
+	}
+	fn add_oracle_member() -> Weight {
+		Weight::default()
+	}
+	fn remove_oracle_member() -> Weight {
+		Weight::default()
+	}
 }
 
 // For backwards compatibility and tests
@@ -119,6 +131,15 @@ impl WeightInfo for () {
 		Weight::from_parts(17_376_000, 4087)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(3_u64))
+	}
+	fn force_set_foreign_asset_conversion_coefficient() -> Weight{
+		Weight::default()
+	}
+	fn add_oracle_member() -> Weight {
+		Weight::default()
+	}
+	fn remove_oracle_member() -> Weight {
+		Weight::default()
 	}
 }
 

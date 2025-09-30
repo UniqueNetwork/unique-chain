@@ -16,11 +16,12 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
-import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from '@unique/test-utils/eth/types.js';
-import {CollectionFlag} from '@unique-nft/playgrounds/types.js';
-import type {IEthCrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
+import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from '@unique/test-utils/eth/types';
+import {CollectionFlag} from '@unique-nft/playgrounds/types';
+import type {IEthCrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types';
+import {Buffer} from "node:buffer";
 
 const DECIMALS = 18;
 const CREATE_COLLECTION_DATA_DEFAULTS_ARRAY = [
@@ -48,7 +49,7 @@ describe('Create collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
     });
   });
@@ -56,7 +57,7 @@ describe('Create collection from EVM', () => {
   describe('Fungible collection', () => {
     before(async function() {
       await usingEthPlaygrounds((helper) => {
-        requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
+        requirePalletsOrSkip(helper, [Pallets.Fungible]);
         return Promise.resolve();
       });
     });
@@ -179,7 +180,7 @@ describe('Create collection from EVM', () => {
   describe('Nonfungible collection', () => {
     before(async function() {
       await usingEthPlaygrounds((helper) => {
-        requirePalletsOrSkip(this, helper, [Pallets.NFT]);
+        requirePalletsOrSkip(helper, [Pallets.NFT]);
         return Promise.resolve();
       });
     });
@@ -255,7 +256,7 @@ describe('Create collection from EVM', () => {
   describe('Create RFT collection from EVM', () => {
     before(async function() {
       await usingEthPlaygrounds((helper) => {
-        requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+        requirePalletsOrSkip(helper, [Pallets.ReFungible]);
         return Promise.resolve();
       });
     });

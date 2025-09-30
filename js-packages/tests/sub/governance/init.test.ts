@@ -1,10 +1,10 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describe, before, after} from '@unique/test-utils/util';
 import {Event} from '@unique/test-utils';
-import {democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, clearCouncil, clearTechComm, clearFellowship} from './util.js';
-import type {ICounselors, ITechComms} from './util.js';
+import {democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, clearCouncil, clearTechComm, clearFellowship} from './util.ts';
+import type {ICounselors, ITechComms} from './util.ts';
 
-describeGov('Governance: Initialization', () => {
+describe.ifRunGov('Governance: Initialization', () => {
   let donor: IKeyringPair;
   let sudoer: IKeyringPair;
   let counselors: ICounselors;
@@ -16,7 +16,7 @@ describeGov('Governance: Initialization', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Democracy, Pallets.Council, Pallets.TechnicalCommittee]);
+      requirePalletsOrSkip(helper, [Pallets.Democracy, Pallets.Council, Pallets.TechnicalCommittee]);
 
       const councilMembers = await helper.council.membership.getMembers();
       const techcommMembers = await helper.technicalCommittee.membership.getMembers();

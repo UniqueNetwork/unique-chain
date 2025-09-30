@@ -1,9 +1,10 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {blake2AsHex} from '@polkadot/util-crypto';
+import process from "node:process";
 
 async function main() {
   if(process.argv.length != 4) {
-    console.log('Usage: yarn councilDemocracyProposal <CHAIN_URL> <ENCODED_PROPOSAL>');
+    console.log('Usage: deno task councilDemocracyProposal <CHAIN_URL> <ENCODED_PROPOSAL>');
     process.exit(1);
   }
 

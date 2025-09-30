@@ -23,22 +23,27 @@ local relay = {
             m.simplifyGenesisName(),
             {
                 _genesis+: {
-                            configuration+: {
-                                config+: {
-                                    async_backing_params+: {
-										allowed_ancestry_len: 3,
-										max_candidate_depth: 4,
-									},
-                                    validation_upgrade_cooldown: 200,
-                                    validation_upgrade_delay: 100,
-                                    minimum_validation_upgrade_delay: 15,
-                                    minimum_backing_votes: 2,
-                                    needed_approvals: 2,
-                                    scheduler_params+: {
-                                      lookahead: 3,
-                                    },
-								},
+					configuration+: {
+						config+: {
+							async_backing_params+: {
+								allowed_ancestry_len: 3,
+								max_candidate_depth: 4,
 							},
+							validation_upgrade_cooldown: 200,
+							validation_upgrade_delay: 100,
+							minimum_validation_upgrade_delay: 15,
+							minimum_backing_votes: 2,
+							needed_approvals: 2,
+							scheduler_params+: {
+								lookahead: 3,
+							},
+							executor_params: [
+                                { MaxMemoryPages: 8192 },
+                                { PvfExecTimeout: [ "Backing", 2500 ] },
+                                { PvfExecTimeout: [ "Approval", 15000 ] }
+                            ],
+						},
+					},
 				},
 			},
             m.unsimplifyGenesisName(),

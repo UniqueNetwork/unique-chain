@@ -1,8 +1,9 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingKusamaAssetHubPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadotAssetHubPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
+import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingKusamaAssetHubPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadotAssetHubPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util';
 import {DevAcalaHelper, DevAstarHelper, DevHydraDxHelper, DevMoonbeamHelper, DevRelayHelper, DevUniqueHelper, DevWestmintHelper, Event} from '@unique/test-utils';
-import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm/index.js';
-import {IEvent} from '@unique-nft/playgrounds/types.js';
+import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm';
+import {IEvent} from '@unique-nft/playgrounds/types';
+import process from "node:process";
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const POLKADOT_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_ID || 1000);
@@ -627,7 +628,7 @@ export class XcmTestHelper {
 
     const sendMaliciousProgram = async () => {
       // eslint-disable-next-line require-await
-      await usingPlaygrounds(async (helper) => {
+      await usingPlaygrounds((helper) => {
         const moreThanOtherChainHas = 2n * otherChainBalance;
 
         maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
@@ -661,7 +662,7 @@ export class XcmTestHelper {
     messageHash = null;
     const sendGoodProgram = async () => {
       // eslint-disable-next-line require-await
-      await usingPlaygrounds(async (helper) => {
+      await usingPlaygrounds((helper) => {
 
         maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
           randomAccount.addressRaw,

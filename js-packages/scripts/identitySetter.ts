@@ -4,13 +4,14 @@
 // Pulls identities and sub-identities from a chain and then makes a preimage to later force upload them into another.
 // Only changed or previously non-existent data are inserted.
 //
-// Usage: `yarn setIdentities [relay WS URL] [parachain WS URL] [user key]
-// Example: `yarn setIdentities wss://polkadot-rpc.dwellir.com ws://localhost:9944 escape pattern miracle train sudden cart adapt embark wedding alien lamp mesh`
+// Usage: `deno task setIdentities [relay WS URL] [parachain WS URL] [user key]
+// Example: `deno task setIdentities wss://polkadot-rpc.dwellir.com ws://localhost:9944 escape pattern miracle train sudden cart adapt embark wedding alien lamp mesh`
 
 import {encodeAddress} from '@polkadot/keyring';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, Pallets} from '@unique/test-utils/util.js';
-import {ChainHelperBase} from '@unique-nft/playgrounds/unique.js';
+import {usingPlaygrounds, Pallets} from '@unique/test-utils/util';
+import {ChainHelperBase} from '@unique-nft/playgrounds/unique';
+import process from "node:process";
 
 const relayUrl = process.argv[2] ?? 'ws://localhost:9844';
 const paraUrl = process.argv[3] ?? 'ws://localhost:9944';
@@ -74,7 +75,7 @@ export function constructSubInfo(identityAccount: string, subQuery: any, supers:
   ];
 }
 
-export async function getSubs(helper: ChainHelperBase) {
+export async function getSubs(helper: ChainHelperBase): Promise<[string, any][]> {
   return (await helper.getApi().query.identity.subsOf.entries()).map(([key, value]) => [extractAccountId(key), value as any]);
 }
 

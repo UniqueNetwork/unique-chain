@@ -3,20 +3,19 @@
 
 /* eslint-disable function-call-argument-newline */
 
-import {readFile} from 'fs/promises';
+import {readFile} from 'node:fs/promises';
 
-import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, JsonRpcProvider} from 'ethers';
+import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, JsonRpcProvider, ContractRunner} from 'ethers';
 
-// @ts-ignore
 import solc from 'solc';
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {ArrangeGroup, DevUniqueHelper} from '@unique/test-utils/index.js';
+import {ArrangeGroup, DevUniqueHelper} from '@unique/test-utils';
 
-import type {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types.js';
-import {CollectionMode, CreateCollectionData} from './types.js';
+import type {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types.ts';
+import {CollectionMode, CreateCollectionData} from './types.ts';
 
 // Native contracts ABI
 import collectionHelpersAbi from '@unique-nft/evm-abi/abi/collectionHelpers.json' with {type: 'json'};
@@ -30,9 +29,10 @@ import refungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleDeprecate
 import refungibleTokenAbi from '@unique-nft/evm-abi/abi/reFungibleToken.json' with {type: 'json'};
 import refungibleTokenDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleTokenDeprecated.json' with {type: 'json'};
 import contractHelpersAbi from '@unique-nft/evm-abi/abi/contractHelpers.json' with {type: 'json'};
-import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
+import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types';
+import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
-import {waitParams} from './util.js';
+import {waitParams} from './util.ts';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -129,7 +129,7 @@ class NativeContractGroup extends EthGroupBase {
     return new Contract(address, collectionHelpersAbi, signer);
   }
 
-  collection(address: string, mode: TCollectionMode, signer: HDNodeWallet, mergeDeprecated = false): Contract {
+  collection(address: string, mode: TCollectionMode, signer: ContractRunner, mergeDeprecated = false): Contract {
     let abi;
     if(address === this.helper.ethAddress.fromCollectionId(0)) {
       abi = nativeFungibleAbi;
@@ -155,7 +155,7 @@ class NativeContractGroup extends EthGroupBase {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, signer, mergeDeprecated);
   }
 
-  rftToken(address: string, signer?: HDNodeWallet, mergeDeprecated = false) {
+  rftToken(address: string, signer?: ContractRunner, mergeDeprecated = false) {
     const abi = mergeDeprecated ? [...refungibleTokenAbi, ...refungibleTokenDeprecatedAbi] : refungibleTokenAbi;
     return new Contract(address, abi, signer);
   }
@@ -615,8 +615,6 @@ export class EthUniqueHelper extends DevUniqueHelper {
     this.ethContract = new ContractGroup(this);
     this.ethProperty = new EthPropertyGroup(this);
     this.arrange = new EthArrangeGroup(this);
-    // @ts-ignore
-    super.arrange = this.arrange;
   }
 
   getWeb3(): JsonRpcProvider {

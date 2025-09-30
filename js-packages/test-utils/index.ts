@@ -1,25 +1,26 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import '@unique-nft/opal-testnet-types/augment-api.js';
-import '@unique-nft/opal-testnet-types/augment-types.js';
-import '@unique-nft/opal-testnet-types/types-lookup.js';
+import '@unique-nft/opal-testnet-types/augment-api.ts';
+import '@unique-nft/opal-testnet-types/augment-types.ts';
+import '@unique-nft/opal-testnet-types/types-lookup.ts';
 
 import {stringToU8a} from '@polkadot/util';
 import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from '@unique-nft/playgrounds/unique.js';
-import {UniqueHelper, ChainHelperBase, HelperGroup} from '@unique-nft/playgrounds/unique.js';
+import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from '@unique-nft/playgrounds/unique';
+import {UniqueHelper, ChainHelperBase, HelperGroup} from '@unique-nft/playgrounds/unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
-import * as defs from '@unique-nft/opal-testnet-types/definitions.js';
-import type {IKeyringPair} from '@polkadot/types/types';
+import * as defs from '@unique-nft/opal-testnet-types/definitions.ts';
+import type {AnyJson, IKeyringPair} from '@polkadot/types/types';
 import type {EventRecord} from '@polkadot/types/interfaces';
-import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
+import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types';
 import type {FrameSystemEventRecord, XcmV3TraitsError, StagingXcmV5TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
-import {spawnSync} from 'child_process';
-import {AcalaHelper, AstarHelper, MoonbeamHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
-import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.js';
-import type {ICollectiveGroup, IFellowshipGroup} from './governance.js';
+import {Buffer} from "node:buffer";
+import {spawnSync} from 'node:child_process';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.ts';
+import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.ts';
+import type {ICollectiveGroup, IFellowshipGroup} from './governance.ts';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -579,6 +580,13 @@ export class DevUniqueHelper extends UniqueHelper {
           extrinsic: {},
           payload: {},
         },
+        ChargeAssetTxPayment: {
+          extrinsic: {
+            tip: 'Compact<u128>',
+            assetId: 'Option<StagingXcmV3MultiLocation>'
+          },
+          payload: {}
+        }
       },
       rpc: {
         unique: defs.unique.rpc,
@@ -601,6 +609,7 @@ export class DevUniqueHelper extends UniqueHelper {
     await this.api.isReadyOrError;
     this.network = await UniqueHelper.detectNetwork(this.api);
     this.wsEndpoint = wsEndpoint;
+    this.wsProvider = wsProvider;
   }
   getSudo<T extends DevUniqueHelper>() {
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -616,7 +625,7 @@ export class DevRelayHelper extends RelayHelper {
     options.helperBase = options.helperBase ?? DevRelayHelper;
 
     super(logger, options);
-    this.wait = new WaitGroup(this);
+    this.wait = new WaitGroup(this as ChainHelperBase);
   }
 
   getSudo() {
@@ -736,7 +745,7 @@ export class ArrangeGroup {
     const wait = new WaitGroup(this.helper);
     const ss58Format = this.helper.chain.getChainProperties().ss58Format;
     const tokenNominal = this.helper.balance.getOneTokenNominal();
-    const transactions = [];
+    const transactions: Promise<unknown>[] = [];
     const accounts: IKeyringPair[] = [];
     for(const balance of balances) {
       const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
@@ -801,7 +810,7 @@ export class ArrangeGroup {
         }
       }
 
-      const fullfilledAccounts = [];
+      const fullfilledAccounts: IKeyringPair[] = [];
       await Promise.allSettled(transactions);
       for(const account of accounts) {
         const accountBalance = await this.helper.balance.getSubstrate(account.address);
@@ -919,7 +928,7 @@ export class ArrangeGroup {
       return scheduledId;
     }
 
-    const ids = [];
+    const ids: string[] = [];
     for(let i = 0; i < num; i++) {
       ids.push(makeId(this.scheduledIdSlider));
       this.scheduledIdSlider += 1;
@@ -1333,16 +1342,18 @@ class WaitGroup {
     const initialBlocksCount = blocksCount;
 
     timeout = timeout ?? blocksCount * 60_000;
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
+    const promise = new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
         if(blocksCount > 0) {
           blocksCount--;
         } else {
           unsubscribe();
           resolve();
         }
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
 
     try {
@@ -1369,11 +1380,11 @@ class WaitGroup {
 
     let currentSessionIndex = -1;
     while(currentSessionIndex < expectedSessionIndex) {
-      // eslint-disable-next-line no-async-promise-executor
-      currentSessionIndex = await this.withTimeout(new Promise(async (resolve) => {
-        await this.newBlocks(1);
-        const res = await (this.helper as DevUniqueHelper).session.getIndex();
-        resolve(res);
+      currentSessionIndex = await this.withTimeout(new Promise((resolve, reject) => {
+        this.newBlocks(1)
+        .then(() => (this.helper as DevUniqueHelper).session.getIndex())
+        .then(resolve)
+        .catch(reject);
       }), blockTimeout, 'The chain has stopped producing blocks!');
     }
 
@@ -1383,15 +1394,18 @@ class WaitGroup {
   async forParachainBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     let lastBlock = null;
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
-        lastBlock = data.number.toNumber();
-        if(lastBlock >= blockNumber) {
+    const promise = new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
+        const newlastBlock = data.number.toNumber();
+        if(newlastBlock >= blockNumber) {
           unsubscribe();
           resolve();
         }
-      });
+        lastBlock = newlastBlock;
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
 
     try {
@@ -1406,16 +1420,18 @@ class WaitGroup {
   async forRelayBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     let lastBlock = null;
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
-        lastBlock = data.value.relayParentNumber.toNumber();
-        if(lastBlock >= blockNumber) {
-          // @ts-ignore
+    const promise = new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().query.parachainSystem.validationData((data: any) => {
+        const newlastBlock = data.value.relayParentNumber.toNumber();
+        if(newlastBlock >= blockNumber) {
           unsubscribe();
           resolve();
         }
-      });
+        lastBlock = newlastBlock;
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
 
     try {
@@ -1430,33 +1446,35 @@ class WaitGroup {
   noScheduledTasks() {
     const api = this.helper.getApi();
 
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async resolve => {
-      const unsubscribe = await api.rpc.chain.subscribeNewHeads(async () => {
+    return new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      api.rpc.chain.subscribeNewHeads(async () => {
         const areThereScheduledTasks = await api.query.scheduler.lookup.entries();
 
         if(areThereScheduledTasks.length == 0) {
           unsubscribe();
           resolve();
         }
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
-
-    return promise;
   }
 
   parachainBlockMultiplesOf(val: bigint) {
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async resolve => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
+    return new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
         if(data.number.toBigInt() % val == 0n) {
           console.log(`from waiter: ${data.number.toBigInt()}`);
           unsubscribe();
           resolve();
         }
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
+
     });
-    return promise;
   }
 
   event<T extends IEventHelper>(
@@ -1464,9 +1482,9 @@ class WaitGroup {
     eventHelper: T,
     filter: (_: any) => boolean = () => true,
   ): any {
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<T | null>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
+    const promise = new Promise<T | null>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
         const blockNumber = header.number.toJSON();
         const blockHash = header.hash;
         const eventIdStr = `${eventHelper.section()}.${eventHelper.method()}`;
@@ -1493,7 +1511,9 @@ class WaitGroup {
           unsubscribe();
           resolve(null);
         }
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
     return promise;
   }
@@ -1571,7 +1591,7 @@ class TestUtilGroup {
     await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValueAndRollback', [testVal], true);
   }
 
-  async testValue(blockIdx?: number) {
+  async testValue(blockIdx?: number): Promise<AnyJson> {
     const api = blockIdx
       ? await this.helper.getApi().at(await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockIdx]))
       : this.helper.getApi();

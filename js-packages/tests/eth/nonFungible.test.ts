@@ -14,12 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
+import {before, describe} from "@unique/test-utils/util";
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'ethers';
-import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
-import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types';
+import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types';
+import {Buffer} from "node:buffer";
 
 describe('Check ERC721 token URI for NFT', () => {
   let donor: IKeyringPair;
@@ -965,130 +967,162 @@ describe('NFT: Substrate calls', () => {
     });
   });
 
-  itEth.skip('Events emitted for mint()', async ({helper}) => {
-    // TODO: Refactor this
-    // const collection = await helper.nft.mintCollection(alice, {});
-    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+  itEth('Events emitted for mint()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {});
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', helper.web3!);
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    const events: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // const {tokenId} = await collection.mintToken(alice);
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
+    const {tokenId} = await collection.mintToken(alice);
+    if(events.length == 0) await helper.wait.newBlocks(4);
+    contract.off('Transfer');
 
-    // expect(event.event).to.be.equal('Transfer');
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
-    // expect(event.args.to).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.tokenId).to.be.equal(tokenId.toString());
+    expect(events[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Transfer',
+      args: {
+        from: '0x0000000000000000000000000000000000000000',
+        to: helper.address.substrateToEth(alice.address),
+        tokenId: tokenId.toString(),
+      },
+    });
   });
 
-  itEth.skip('Events emitted for burn()', async ({helper}) => {
-    // TODO: Refactor this
-    // const collection = await helper.nft.mintCollection(alice, {});
-    // const token = await collection.mintToken(alice);
+  itEth('Events emitted for burn()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {});
+    const token = await collection.mintToken(alice);
 
-    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', helper.web3!);
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    const events: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // await token.burn(alice);
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
+    await token.burn(alice);
+    if(events.length == 0) await helper.wait.newBlocks(4);
+    contract.off('Transfer');
 
-    // expect(event.event).to.be.equal('Transfer');
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.to).to.be.equal('0x0000000000000000000000000000000000000000');
-    // expect(event.args.tokenId).to.be.equal(token.tokenId.toString());
+    expect(events[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Transfer',
+      args: {
+        from: helper.address.substrateToEth(alice.address),
+        to: '0x0000000000000000000000000000000000000000',
+        tokenId: token.tokenId.toString(),
+      },
+    });
   });
 
-  itEth.skip('Events emitted for approve()', async ({helper}) => {
-    // TODO: Refactor this
-    // const receiver = helper.eth.createAccount();
+  itEth('Events emitted for approve()', async ({helper}) => {
+    const receiver = helper.eth.createAccount();
 
-    // const collection = await helper.nft.mintCollection(alice, {});
-    // const token = await collection.mintToken(alice);
+    const collection = await helper.nft.mintCollection(alice, {});
+    const token = await collection.mintToken(alice);
 
-    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', helper.web3!);
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    const events: NormalizedEvent[] = [];
+    contract.on('Approval', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // await token.approve(alice, {Ethereum: receiver.address});
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
+    await token.approve(alice, {Ethereum: receiver.address});
+    if(events.length == 0) await helper.wait.newBlocks(4);
+    contract.off('Approval');
 
-    // expect(event.event).to.be.equal('Approval');
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.owner).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.approved).to.be.equal(receiver);
-    // expect(event.args.tokenId).to.be.equal(token.tokenId.toString());
+    expect(events[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Approval',
+      args: {
+        owner: helper.address.substrateToEth(alice.address),
+        approved: receiver.address,
+        tokenId: token.tokenId.toString(),
+      },
+    });
   });
 
-  itEth.skip('Events emitted for transferFrom()', async ({helper}) => {
-    // TODO: Refactor this
-    // const [bob] = await helper.arrange.createAccounts([10n], donor);
-    // const receiver = helper.eth.createAccount();
+  itEth('Events emitted for transferFrom()', async ({helper}) => {
+    const [bob] = await helper.arrange.createAccounts([10n], donor);
+    const receiver = helper.eth.createAccount();
 
-    // const collection = await helper.nft.mintCollection(alice, {});
-    // const token = await collection.mintToken(alice);
-    // await token.approve(alice, {Substrate: bob.address});
+    const collection = await helper.nft.mintCollection(alice, {});
+    const token = await collection.mintToken(alice);
+    await token.approve(alice, {Substrate: bob.address});
 
-    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', helper.web3!);
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    const events: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address});
+    await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address});
 
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
+    if(events.length == 0) await helper.wait.newBlocks(4);
+    contract.off('Transfer');
 
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.to).to.be.equal(receiver);
-    // expect(event.args.tokenId).to.be.equal(`${token.tokenId}`);
+    expect(events[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Transfer',
+      args: {
+        from: helper.address.substrateToEth(alice.address),
+        to: receiver.address,
+        tokenId: token.tokenId.toString(),
+      },
+    });
   });
 
-  itEth.skip('Events emitted for transfer()', async ({helper}) => {
-    // TODO: Refactor this
-    // const receiver = helper.eth.createAccount();
+  itEth('Events emitted for transfer()', async ({helper}) => {
+    const receiver = helper.eth.createAccount();
 
-    // const collection = await helper.nft.mintCollection(alice, {});
-    // const token = await collection.mintToken(alice);
+    const collection = await helper.nft.mintCollection(alice, {});
+    const token = await collection.mintToken(alice);
 
-    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', helper.web3!);
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    const events: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // await token.transfer(alice, {Ethereum: receiver.address});
+    await token.transfer(alice, {Ethereum: receiver.address});
 
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
+    if(events.length == 0) await helper.wait.newBlocks(4);
+    contract.off('Transfer');
 
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.to).to.be.equal(receiver);
-    // expect(event.args.tokenId).to.be.equal(`${token.tokenId}`);
+    expect(events[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Transfer',
+      args: {
+        from: helper.address.substrateToEth(alice.address),
+        to: receiver.address,
+        tokenId: token.tokenId.toString(),
+      },
+    });
   });
 });
 

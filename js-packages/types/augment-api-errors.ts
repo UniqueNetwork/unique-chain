@@ -811,13 +811,33 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       BadForeignAssetId: AugmentedError<ApiType>;
       /**
+       * Failed to parse the balance received from currency exchange.
+       **/
+      CantParseBalance: AugmentedError<ApiType>;
+      /**
+       * Failed to parse the response from the exchange.
+       **/
+      CantParseResponse: AugmentedError<ApiType>;
+      /**
+       * Failed to fetch the exchange rate.
+       **/
+      FailedToFetchRate: AugmentedError<ApiType>;
+      /**
        * The foreign asset is already registered.
        **/
       ForeignAssetAlreadyRegistered: AugmentedError<ApiType>;
       /**
+       * Only fungible assets could be converted to fee.
+       **/
+      ForeignAssetIsNotFungible: AugmentedError<ApiType>;
+      /**
        * The specified foreign asset is not found.
        **/
       ForeignAssetNotFound: AugmentedError<ApiType>;
+      /**
+       * Can't add more oracle members.
+       **/
+      OracleMembersCapacityExceeded: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -994,6 +1014,20 @@ declare module '@polkadot/api-base/types/errors' {
        * Not Nonfungible item data used to mint in Nonfungible collection.
        **/
       NotNonfungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    oracle: {
+      /**
+       * Feeder has already fed at this block
+       **/
+      AlreadyFeeded: AugmentedError<ApiType>;
+      /**
+       * Sender does not have permission
+       **/
+      NoPermission: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

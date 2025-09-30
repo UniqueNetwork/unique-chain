@@ -63,6 +63,7 @@ use crate::{
 };
 
 parameter_types! {
+	pub const TokenLocation: Location = Here.into_location();
 	pub const RelayLocation: Location = Location::parent();
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub UniversalLocation: InteriorLocation = (
@@ -76,6 +77,8 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 	pub const MessageQueueServiceWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4); // TODO
 }
+
+pub type Version = u32;
 
 /// Type for specifying how a `Location` can be converted into an `AccountId`. This is used
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM

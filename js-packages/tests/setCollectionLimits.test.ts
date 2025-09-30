@@ -16,8 +16,8 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
-import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types.js';
+import {before, describe, itSub, usingPlaygrounds, expect} from '@unique/test-utils/util';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types';
 
 const accountTokenOwnershipLimit = 0;
 const sponsoredDataSize = 0;

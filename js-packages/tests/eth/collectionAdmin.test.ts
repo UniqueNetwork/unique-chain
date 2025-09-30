@@ -14,12 +14,11 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect} from 'chai';
-import {Pallets} from '@unique/test-utils/util.js';
-import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types.js';
-import {usingEthPlaygrounds, itEth, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
+import {before, describe, Pallets} from '@unique/test-utils/util';
+import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types';
+import {usingEthPlaygrounds, itEth, waitParams, expect} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
+import {CreateCollectionData} from '@unique/test-utils/eth/types';
 import {Contract} from 'ethers';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {

@@ -1,8 +1,8 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {xxhashAsHex} from '@polkadot/util-crypto';
 import type {u32} from '@polkadot/types-codec';
-import {usingPlaygrounds, expect} from '@unique/test-utils/util.js';
-import {UniqueHelper} from '@unique-nft/playgrounds/unique.js';
+import {usingPlaygrounds, expect} from '@unique/test-utils/util';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique';
 import {DevUniqueHelper} from '@unique/test-utils';
 
 export const democracyLaunchPeriod = 35;
@@ -224,7 +224,8 @@ export async function clearFellowship(sudoer: IKeyringPair) {
 
 export async function clearFellowshipReferenda(sudoer: IKeyringPair) {
   await usingPlaygrounds(async (helper) => {
-    const proposalsCount = (await helper.getApi().query.fellowshipReferenda.referendumCount()) as u32;
+    const result: unknown = await helper.getApi().query.fellowshipReferenda.referendumCount();
+    const proposalsCount = result as u32;
     for(let i = 0; i < proposalsCount.toNumber(); i++) {
       await helper.getSudo().fellowship.referenda.cancel(sudoer, i);
     }

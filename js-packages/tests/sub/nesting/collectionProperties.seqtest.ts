@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '@unique/test-utils/util.js';
+import {before, describe, itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '@unique/test-utils/util';
 
 describe('Integration Test: Collection Properties with sudo', () => {
   let superuser: IKeyringPair;
@@ -36,8 +36,8 @@ describe('Integration Test: Collection Properties with sudo', () => {
   ].map(testSuite => describe(`${testSuite.mode.toUpperCase()}`, () => {
     before(async function() {
       // eslint-disable-next-line require-await
-      await usingPlaygrounds(async helper => {
-        requirePalletsOrSkip(this, helper, testSuite.requiredPallets);
+      await usingPlaygrounds(helper => {
+        requirePalletsOrSkip(helper, testSuite.requiredPallets);
       });
     });
 

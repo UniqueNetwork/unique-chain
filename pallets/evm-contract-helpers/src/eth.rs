@@ -414,10 +414,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 			return None;
 		}
 
-		let sponsor = match <Pallet<T>>::get_sponsor(contract_address) {
-			Some(sponsor) => sponsor,
-			None => return None,
-		};
+		let sponsor = <Pallet<T>>::get_sponsor(contract_address)?;
 
 		if mode == SponsoringModeT::Allowlisted
 			&& !<Pallet<T>>::allowed(contract_address, *who.as_eth())

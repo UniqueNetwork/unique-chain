@@ -15,11 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import os from 'os';
+import os from 'node:os';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds} from '@unique/test-utils/util.js';
-import {UniqueHelper} from '@unique-nft/playgrounds/unique.js';
-import * as notReallyCluster from 'cluster'; // https://github.com/nodejs/node/issues/42271#issuecomment-1063415346
+import {usingPlaygrounds} from '@unique/test-utils/util';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique';
+import * as notReallyCluster from 'node:cluster';
+import { setInterval, } from 'node:timers/promises';
+import process from "node:process"; // https://github.com/nodejs/node/issues/42271#issuecomment-1063415346
 const cluster = notReallyCluster as unknown as notReallyCluster.Cluster;
 
 async function findUnusedAddress(helper: UniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>, seedAddition = ''): Promise<IKeyringPair> {
@@ -135,8 +137,11 @@ if(cluster.isMaster) {
   usingPlaygrounds(async (helper, privateKey) => {
     await distributeBalance(await privateKey(process.env.WORKER_NAME as string), helper, privateKey, 400n * 10n ** 22n, 10);
   });
-  const interval = setInterval(() => {
-    flushCounterToMaster();
-  }, 100);
-  interval.unref();
+  const interval = setInterval(100, undefined, { ref: false });
+
+  (async () => {
+    for await (const _ of interval) {
+      flushCounterToMaster();
+    }
+  })();
 }

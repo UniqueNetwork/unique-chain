@@ -23,8 +23,10 @@ export interface IPhasicEvent {
   event: IEvent;
 }
 
+export type ITransactionStatus = 'Fail' | 'Success';
+
 export interface ITransactionResult {
-  status: 'Fail' | 'Success';
+  status: ITransactionStatus;
   result: {
       dispatchError: any,
       events: IPhasicEvent[];
@@ -55,7 +57,7 @@ export interface IUniqueHelperLog {
   executedAt: number;
   executionTime: number;
   type: 'extrinsic' | 'rpc';
-  status: 'Fail' | 'Success';
+  status: ITransactionStatus;
   call: string;
   params: any[];
   moduleError?: string;

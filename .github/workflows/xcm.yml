@@ -175,9 +175,10 @@ jobs:
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - uses: actions/setup-node@v4.0.2
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
+          deno-version: v2.x
+          cache: true
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@v1.2
@@ -232,7 +233,7 @@ jobs:
         id: alive1
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
-          yarn
+          deno install
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -242,7 +243,7 @@ jobs:
         id: hrmp
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
-          yarn tsx createHrmp.ts ${{matrix.network}}
+          deno --allow-env --allow-net createHrmp.ts ${{matrix.network}}
 
       - name: Run XCM tests
         working-directory: js-packages/tests
@@ -250,7 +251,7 @@ jobs:
         if: ${{ !cancelled() && steps.hrmp.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
-          NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter tap
+          NOW=$(date +%s) && deno task ${{ matrix.runtest }}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 

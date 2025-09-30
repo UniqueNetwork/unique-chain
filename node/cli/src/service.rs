@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//sc_service::Error has big size. Can't do anything about it for now.
+#![allow(clippy::result_large_err)]
+
 // std
 use std::{
 	collections::BTreeMap,
@@ -51,7 +54,7 @@ use fp_rpc::EthereumRuntimeRPCApi;
 use futures::{
 	stream::select,
 	task::{Context, Poll},
-	Stream, StreamExt,
+	FutureExt, Stream, StreamExt,
 };
 use jsonrpsee::RpcModule;
 use polkadot_primitives::UpgradeGoAhead;
@@ -64,6 +67,7 @@ use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager, TransactionPool};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
+use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -562,6 +566,19 @@ where
 		}
 	});
 
+	let offchain_workers = sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+		runtime_api_provider: client.clone(),
+		keystore: Some(params.keystore_container.keystore()),
+		offchain_db: backend.offchain_storage(),
+		transaction_pool: Some(OffchainTransactionPoolFactory::new(
+			transaction_pool.clone(),
+		)),
+		network_provider: Arc::new(network.clone()),
+		is_validator: validator,
+		enable_http_requests: true,
+		custom_extensions: move |_| vec![],
+	})?;
+
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		rpc_builder,
 		client: client.clone(),
@@ -639,6 +656,13 @@ where
 			},
 		)?;
 	}
+	task_manager.spawn_handle().spawn(
+		"offchain-workers-runner",
+		"offchain-work",
+		offchain_workers
+			.run(client.clone(), task_manager.spawn_handle())
+			.boxed(),
+	);
 
 	Ok((task_manager, client))
 }
@@ -905,6 +929,26 @@ where
 
 	let select_chain = maybe_select_chain;
 
+	let offchain_workers = sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+		runtime_api_provider: client.clone(),
+		keystore: Some(keystore_container.keystore()),
+		offchain_db: backend.offchain_storage(),
+		transaction_pool: Some(OffchainTransactionPoolFactory::new(
+			transaction_pool.clone(),
+		)),
+		network_provider: Arc::new(network.clone()),
+		is_validator: config.role.is_authority(),
+		enable_http_requests: true,
+		custom_extensions: move |_| vec![],
+	})?;
+	task_manager.spawn_handle().spawn(
+		"offchain-workers-runner",
+		"offchain-work",
+		offchain_workers
+			.run(client.clone(), task_manager.spawn_handle())
+			.boxed(),
+	);
+
 	if collator {
 		let block_import = FrontierBlockImport::new(client.clone(), client.clone());
 
@@ -990,7 +1034,7 @@ where
 					{
 						Ok(info) => info.new_validation_code.is_some(),
 						Err(e) => {
-							log::error!("Failed to collect collation info: {:?}", e);
+							log::error!("Failed to collect collation info: {e:?}");
 							false
 						},
 					};

@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itSub, expect, usingPlaygrounds} from '@unique/test-utils/util.js';
+import {itSub, expect, usingPlaygrounds, describe} from '@unique/test-utils/util';
+import { it } from "@std/testing/bdd";
 
 describe('Connection smoke test', () => {
   itSub('Connection can be established', async ({helper}) => {
@@ -23,10 +24,7 @@ describe('Connection smoke test', () => {
   });
 
   it('Cannot connect to 255.255.255.255', async () => {
-    await expect((async () => {
-      await usingPlaygrounds(async helper => {
-        await helper.callRpc('api.rpc.system.health');
-      }, 'ws://255.255.255.255:9944');
-    })()).to.be.eventually.rejected;
+    await expect(usingPlaygrounds(() => {
+    }, 'ws://255.255.255.255:9944')).to.be.rejected;
   });
 });

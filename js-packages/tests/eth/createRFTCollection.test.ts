@@ -16,9 +16,9 @@
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
-import {CollectionLimitField} from '@unique/test-utils/eth/types.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
+import {CollectionLimitField} from '@unique/test-utils/eth/types';
 
 
 describe('Create RFT collection from EVM', () => {
@@ -26,7 +26,7 @@ describe('Create RFT collection from EVM', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
       donor = await privateKey({url: import.meta.url});
     });
   });
@@ -156,7 +156,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
       donor = await privateKey({url: import.meta.url});
       nominal = helper.balance.getOneTokenNominal();
     });

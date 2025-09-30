@@ -39,7 +39,8 @@ import type {
   TNetworks,
   IEthCrossAccountId,
   IPhasicEvent,
-} from './types.js';
+  ITransactionStatus,
+} from './types.ts';
 import type {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import {HDNodeWallet} from 'ethers';
 
@@ -146,7 +147,7 @@ const nesting = {
 };
 
 class UniqueUtil {
-  static transactionStatus = {
+  static readonly transactionStatus : {NOT_READY: 'NotReady', FAIL: ITransactionStatus, SUCCESS: ITransactionStatus} = {
     NOT_READY: 'NotReady',
     FAIL: 'Fail',
     SUCCESS: 'Success',
@@ -198,7 +199,7 @@ class UniqueUtil {
       throw Error(`Unable to create collection! Status: ${status}`);
     }
 
-    let collectionId = null;
+    let collectionId: number | null = null;
     creationResult.result.events.forEach(({event: {data, method, section}}) => {
       if((section === 'common') && (method === 'CollectionCreated')) {
         collectionId = parseInt(data[0].toString(), 10);
@@ -261,7 +262,7 @@ class UniqueUtil {
   }
 
   static findCollectionInEvents(events: { event: IEvent }[], collectionId: number, expectedSection: string, expectedMethod: string): boolean {
-    let eventId = null;
+    let eventId: number | null = null;
     events.forEach(({event: {data, method, section}}) => {
       if((section === expectedSection) && (method === expectedMethod)) {
         eventId = parseInt(data[0].toString(), 10);
@@ -342,7 +343,7 @@ class UniqueEventHelper {
     if(!type) return this.toHuman(data);
     if(['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
     if(['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
-    if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
+    if(Object.hasOwn(type, 'sub')) return this.extractSub(data, type.sub);
     return this.toHuman(data);
   }
 
@@ -424,6 +425,7 @@ export class ChainHelperBase {
   forcedNetwork: TNetworks | null;
   network: TNetworks | null;
   wsEndpoint: string | null;
+  wsProvider: WsProvider | null;
   chainLog: IUniqueHelperLog[];
   children: ChainHelperBase[];
   address: AddressGroup;
@@ -440,6 +442,7 @@ export class ChainHelperBase {
     this.forcedNetwork = null;
     this.network = null;
     this.wsEndpoint = null;
+    this.wsProvider = null;
     this.chainLog = [];
     this.children = [];
     this.address = new AddressGroup(this);
@@ -505,14 +508,21 @@ export class ChainHelperBase {
       child.clearApi();
     }
 
-    if(this.api === null) return;
-    await this.api.disconnect();
+    if(this.api != null) {
+      const api = this.api;
+      await api.disconnect();
+    }
+    if (this.wsProvider != null) {
+      const wsProvider = this.wsProvider;
+      await wsProvider.disconnect();
+    }
     this.clearApi();
   }
 
   clearApi() {
     this.api = null;
     this.network = null;
+    this.wsProvider = null;
   }
 
   static async detectNetwork(api: ApiPromise): Promise<TNetworks> {
@@ -527,31 +537,36 @@ export class ChainHelperBase {
 
   static async detectNetworkByWsEndpoint(wsEndpoint: string): Promise<TNetworks> {
     if(!wsEndpoint) throw new Error('wsEndpoint was not set');
-    const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
+    const provider = new WsProvider(wsEndpoint);
+    const api = new ApiPromise({provider});
     await api.isReady;
 
     const network = await this.detectNetwork(api);
 
-    await api.disconnect();
+    api.disconnect();
+    await new Promise((resolve) => api.on('disconnected', resolve));
+    provider.disconnect();
+    await new Promise((resolve) => provider.on('disconnected', resolve));
 
     return network;
   }
 
   static async createConnection(wsEndpoint: string, listeners?: IApiListeners, network?: TNetworks | null): Promise<{
     api: ApiPromise;
+    provider: WsProvider,
     network: TNetworks;
   }> {
     if(typeof network === 'undefined' || network === null) network = 'opal';
     if(!wsEndpoint) throw new Error('wsEndpoint was not set');
     const supportedRPC = {
       opal: {
-        unique: require('@unique-nft/opal-testnet-types/definitions').unique.rpc,
+        unique: require('@unique-nft/opal-testnet-types/definitions.ts').unique.rpc,
       },
       quartz: {
-        unique: require('@unique-nft/quartz-mainnet-types/definitions').unique.rpc,
+        unique: require('@unique-nft/quartz-mainnet-types/definitions.ts').unique.rpc,
       },
       unique: {
-        unique: require('@unique-nft/unique-mainnet-types/definitions').unique.rpc,
+        unique: require('@unique-nft/unique-mainnet-types/definitions.ts').unique.rpc,
       },
       rococo: {},
       westend: {},
@@ -561,23 +576,23 @@ export class ChainHelperBase {
       karura: {},
       westmint: {},
     };
-    if(!supportedRPC.hasOwnProperty(network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
+    if(!Object.hasOwn(supportedRPC, network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
     const rpc = supportedRPC[network] as any;
 
     // TODO: investigate how to replace rpc in runtime
     // api._rpcCore.addUserInterfaces(rpc);
-
-    const api = new ApiPromise({provider: new WsProvider(wsEndpoint), rpc});
+    const provider = new WsProvider(wsEndpoint);
+    const api = new ApiPromise({provider, rpc});
 
     await api.isReadyOrError;
 
     if(typeof listeners === 'undefined') listeners = {};
     for(const event of ['connected', 'disconnected', 'error', 'ready', 'decorated']) {
-      if(!listeners.hasOwnProperty(event) || typeof listeners[event as TApiAllowedListeners] === 'undefined') continue;
+      if(!Object.hasOwn(listeners, event) || typeof listeners[event as TApiAllowedListeners] === 'undefined') continue;
       api.on(event as ApiInterfaceEvents, listeners[event as TApiAllowedListeners] as (...args: any[]) => any);
     }
 
-    return {api, network};
+    return {api, provider, network};
   }
 
   getTransactionStatus(data: { events: { event: IEvent }[], status: any }) {
@@ -610,15 +625,16 @@ export class ChainHelperBase {
   getFeePaid(data: { events: { event: IEvent }[], status: any }) {
     const {events, status} = data;
     if(status.isInBlock || status.isFinalized) {
-      const withdrawEvent = events.find(({event: {section, method, data}}) => section === 'balances' && method === 'Withdraw');
-      if(withdrawEvent) {
-        return BigInt(withdrawEvent.event.data[1]);
+      const fee = events.find(({event: {section, method}}) => section === 'balances' && method === 'Withdraw')?.event.data[1] ?? 
+        events.find(({event: {section, method}}) => section === 'charging' && method === 'AssetTxFeePaid')?.event.data[1];
+      if(fee) {
+        return BigInt(fee);
       }
     }
     return null;
   }
 
-  async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
+  async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions & { assetId: any }> | null = null, label = 'transaction'): Promise<ITransactionResult> {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
@@ -628,52 +644,53 @@ export class ChainHelperBase {
       let nonce = await this.chain.getNonce(sender.address);
       options.nonce = nonce++;
     }
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
-      try {
-        const unsub = await sign((result: any) => {
-          const status = this.getTransactionStatus(result);
-          if(status === this.transactionStatus.SUCCESS) {
-            if(!result.status.isFinalized) {
-              return;
-            }
-            const fee = this.getFeePaid(result);
-            this.logger.log(`${label} successful`);
-            unsub();
-            //resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
-            resolve({result, status, blockHash: result.status.toHuman().Finalized, fee});
-          } else if(status === this.transactionStatus.FAIL) {
-            let moduleError = null;
-
-            if(result.hasOwnProperty('dispatchError')) {
-              const dispatchError = result['dispatchError'];
-
-              if(dispatchError) {
-                if(dispatchError.isModule) {
-                  const modErr = dispatchError.asModule;
-                  const errorMeta = dispatchError.registry.findMetaError(modErr);
-
-                  moduleError = `${errorMeta.section}.${errorMeta.name}`;
-                } else if(dispatchError.isToken) {
-                  moduleError = `Token: ${dispatchError.asToken}`;
-                } else {
-                  // May be [object Object] in case of unhandled non-unit enum
-                  moduleError = `Misc: ${dispatchError.toHuman()}`;
-                }
-              } else {
-                this.logger.log(result, this.logger.level.ERROR);
-              }
-            }
-
-            this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
-            unsub();
-            reject({status, moduleError, result});
+    return new Promise((resolve, reject) => {
+      let unsub: any = null;
+      sign((result: any) => {
+        const status = this.getTransactionStatus(result);
+        if(status === this.transactionStatus.SUCCESS) {
+          if(!result.status.isFinalized) {
+            return;
           }
-        });
-      } catch (e) {
+          const fee = this.getFeePaid(result);
+          this.logger.log(`${label} successful`);
+          if (unsub != null)
+            unsub();
+          resolve({result, status, blockHash: result.status.toHuman().Finalized, fee: fee!});
+        } else if(status === this.transactionStatus.FAIL) {
+          let moduleError: string | null = null;
+
+          if(Object.hasOwn(result, 'dispatchError')) {
+            const dispatchError = result['dispatchError'];
+
+            if(dispatchError) {
+              if(dispatchError.isModule) {
+                const modErr = dispatchError.asModule;
+                const errorMeta = dispatchError.registry.findMetaError(modErr);
+
+                moduleError = `${errorMeta.section}.${errorMeta.name}`;
+              } else if(dispatchError.isToken) {
+                moduleError = `Token: ${dispatchError.asToken}`;
+              } else {
+                // May be [object Object] in case of unhandled non-unit enum
+                moduleError = `Misc: ${dispatchError.toHuman()}`;
+              }
+            } else {
+              this.logger.log(result, this.logger.level.ERROR);
+            }
+          }
+
+          this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
+          if (unsub != null)
+            unsub();
+          reject({status, moduleError, result});
+        }
+      }).then(unsubFn => {
+        unsub = unsubFn;
+      }).catch(e => {
         this.logger.log(e, this.logger.level.ERROR);
         reject(e);
-      }
+      });
     });
   }
 
@@ -757,7 +774,7 @@ export class ChainHelperBase {
         throw Error(errorEvent.method + ': ' + extrinsic);
     }
     catch (e) {
-      if(!(e as object).hasOwnProperty('status')) throw e;
+      if(!Object.hasOwn(e as object, 'status')) throw e;
       result = e as ITransactionResult;
     }
 
@@ -834,7 +851,7 @@ export class ChainHelperBase {
 
     const startTime = (new Date()).getTime();
     let result;
-    let error = null;
+    let error: unknown = null;
     const log = {
       type: this.chainLogType.RPC,
       call: rpc,
@@ -851,7 +868,7 @@ export class ChainHelperBase {
     const endTime = (new Date()).getTime();
 
     log.executedAt = endTime;
-    log.status = (error === null ? this.transactionStatus.SUCCESS : this.transactionStatus.FAIL) as 'Fail' | 'Success';
+    log.status = error === null ? this.transactionStatus.SUCCESS : this.transactionStatus.FAIL;
     log.executionTime = endTime - startTime;
 
     this.chainLog.push(log);
@@ -878,11 +895,11 @@ export class ChainHelperBase {
 
   async fetchPhasicEventsFromBlock(blockHash: string) {
     const apiAt = await this.getApi().at(blockHash);
-    const eventRecords = (await apiAt.query.system.events()).toArray();
+    const result: any = await apiAt.query.system.events;
+    const eventRecords = result.toArray();
     return this.eventHelper.extractPhasicEvents(eventRecords);
   }
 }
-
 
 export class HelperGroup<T extends ChainHelperBase> {
   helper: T;
@@ -891,7 +908,6 @@ export class HelperGroup<T extends ChainHelperBase> {
     this.helper = uniqueHelper;
   }
 }
-
 
 class CollectionGroup extends HelperGroup<UniqueHelper> {
   /**
@@ -1924,7 +1940,7 @@ class NFTGroup extends NFTnRFT {
    * @returns array of newly created tokens
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { properties?: IProperty[] }[]): Promise<UniqueNFToken[]> {
-    const rawTokens = [];
+    const rawTokens: {NFT: any}[] = [];
     for(const token of tokens) {
       const raw = {NFT: {properties: token.properties}};
       rawTokens.push(raw);
@@ -2089,7 +2105,7 @@ class RFTGroup extends NFTnRFT {
    * @returns array of newly created RFT tokens
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { pieces: bigint, properties?: IProperty[] }[]): Promise<UniqueRFToken[]> {
-    const rawTokens = [];
+    const rawTokens: { ReFungible: any }[] = [];
     for(const token of tokens) {
       const raw = {ReFungible: {pieces: token.pieces, properties: token.properties}};
       rawTokens.push(raw);
@@ -2248,7 +2264,7 @@ class FTGroup extends CollectionGroup {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, tokens: { value: bigint }[], owner: ICrossAccountId): Promise<boolean> {
-    const rawTokens = [];
+    const rawTokens: { Fungible: any}[] = [];
     for(const token of tokens) {
       const raw = {Fungible: {Value: token.value}};
       rawTokens.push(raw);

@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '@unique/test-utils/util.js';
+import {before, describe, itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '@unique/test-utils/util';
 
 describe('Integration Test: Collection Properties', () => {
   let alice: IKeyringPair;
@@ -40,8 +40,8 @@ describe('Integration Test: Collection Properties', () => {
   ].map(testSuite => describe(`${testSuite.mode.toUpperCase()}`, () => {
     before(async function() {
       // eslint-disable-next-line require-await
-      await usingPlaygrounds(async helper => {
-        requirePalletsOrSkip(this, helper, testSuite.requiredPallets);
+      await usingPlaygrounds(helper => {
+        requirePalletsOrSkip(helper, testSuite.requiredPallets);
       });
     });
 
@@ -251,8 +251,8 @@ describe('Negative Integration Test: Collection Properties', () => {
   ].map(testSuite => describe(`${testSuite.mode.toUpperCase()}`, () => {
     before(async function() {
       // eslint-disable-next-line require-await
-      await usingPlaygrounds(async helper => {
-        requirePalletsOrSkip(this, helper, testSuite.requiredPallets);
+      await usingPlaygrounds(helper => {
+        requirePalletsOrSkip(helper, testSuite.requiredPallets);
       });
     });
 
@@ -291,7 +291,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     itSub('Fails to set more properties than it is allowed', async ({helper}) =>  {
       const collection = await helper[testSuite.mode].mintCollection(alice);
 
-      const propertiesToBeSet = [];
+      const propertiesToBeSet: {key: string, value: string}[] = [];
       for(let i = 0; i < 65; i++) {
         propertiesToBeSet.push({
           key: 'electron_' + i,

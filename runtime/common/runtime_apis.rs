@@ -532,7 +532,7 @@ macro_rules! impl_common_runtime_apis {
 					Vec<frame_benchmarking::BenchmarkList>,
 					Vec<frame_support::traits::StorageInfo>,
 				) {
-					use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+					use frame_benchmarking::{list_benchmark, BenchmarkList};
 					use frame_support::traits::StorageInfoTrait;
 					use pallet_xcm::benchmarking::Pallet as PalletXcmBenchmarks;
 
@@ -577,7 +577,7 @@ macro_rules! impl_common_runtime_apis {
 				fn dispatch_benchmark(
 					config: frame_benchmarking::BenchmarkConfig
 				) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-					use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark};
+					use frame_benchmarking::{BenchmarkBatch, add_benchmark};
 					use sp_storage::TrackedStorageKey;
 					use pallet_xcm::benchmarking::Pallet as PalletXcmBenchmarks;
 
@@ -720,6 +720,56 @@ macro_rules! impl_common_runtime_apis {
 
 				fn preset_names() -> Vec<sp_genesis_builder::PresetId> {
 					vec![]
+				}
+			}
+
+			impl xcm_runtime_apis::fees::XcmPaymentApi<Block> for Runtime {
+				fn query_acceptable_payment_assets(xcm_version: staging_xcm::Version) -> Result<Vec<staging_xcm::VersionedAssetId>, xcm_runtime_apis::fees::Error> {
+					let native_token = $crate::config::xcm::TokenLocation::get();
+					// We accept the native token to pay fees.
+					let mut acceptable_assets = vec![staging_xcm::v5::AssetId(native_token.clone())];
+					// We also accept all assets in a pool with the native token.
+					let assets_in_pool_with_native = ForeignAssets::get_convertible_assets().into_iter();
+					acceptable_assets.extend(assets_in_pool_with_native);
+					PolkadotXcm::query_acceptable_payment_assets(xcm_version, acceptable_assets)
+				}
+
+				fn query_weight_to_asset_fee(weight: $crate::Weight, asset: staging_xcm::VersionedAssetId) -> Result<u128, xcm_runtime_apis::fees::Error> {
+					use frame_support::weights::WeightToFee;
+
+					let native_asset = $crate::config::xcm::TokenLocation::get();
+					let fee_in_native = pallet_configuration::WeightToFee::<Runtime, u128>::weight_to_fee(&weight);
+					let latest_asset_id: Result<staging_xcm::v5::AssetId, ()> = asset.clone().try_into();
+					match latest_asset_id {
+						Ok(asset_id) if asset_id.0 == native_asset => {
+							// for native token
+							Ok(fee_in_native)
+						},
+						Ok(asset_id) => {
+							let assets_in_pool_with_this_asset = ForeignAssets::get_convertible_assets();
+							if assets_in_pool_with_this_asset
+								.into_iter()
+								.map(|asset_id| asset_id.0)
+								.any(|location| location == native_asset) {
+								ForeignAssets::convert_native_to_asset(&asset_id, fee_in_native).ok_or(xcm_runtime_apis::fees::Error::AssetNotFound)
+							} else {
+								log::trace!(target: "staging_xcm::xcm_runtime_apis", "query_weight_to_asset_fee - unhandled asset_id: {asset_id:?}!");
+								Err(xcm_runtime_apis::fees::Error::AssetNotFound)
+							}
+						},
+						Err(_) => {
+							log::trace!(target: "staging_xcm::xcm_runtime_apis", "query_weight_to_asset_fee - failed to convert asset: {asset:?}!");
+							Err(xcm_runtime_apis::fees::Error::VersionedConversionFailed)
+						}
+					}
+				}
+
+				fn query_xcm_weight(message: staging_xcm::VersionedXcm<()>) -> Result<$crate::Weight, xcm_runtime_apis::fees::Error> {
+					$crate::PolkadotXcm::query_xcm_weight(message)
+				}
+
+				fn query_delivery_fees(destination: staging_xcm::VersionedLocation, message: staging_xcm::VersionedXcm<()>) -> Result<staging_xcm::VersionedAssets, xcm_runtime_apis::fees::Error> {
+					$crate::PolkadotXcm::query_delivery_fees(destination, message)
 				}
 			}
 		}
