@@ -666,7 +666,7 @@ pub mod module {
 			Ok(())
 		}
 
-		#[pallet::call_index(4)]
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as Config>::WeightInfo::remove_oracle_member())]
 		pub fn remove_oracle_member(
 			origin: OriginFor<T>,
