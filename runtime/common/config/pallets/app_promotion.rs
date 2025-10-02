@@ -23,7 +23,7 @@ use up_common::{
 use super::AppPromotionDailyRate;
 use crate::{
 	runtime_common::config::pallets::{RelayChainBlockNumberProvider, TreasuryAccountId},
-	Balances, BlockNumber, EvmContractHelpers, Maintenance, Runtime, RuntimeEvent, Unique,
+	Balances, BlockNumber, EvmContractHelpers, Maintenance, Runtime, Unique,
 };
 
 parameter_types! {
@@ -47,7 +47,6 @@ impl pallet_app_promotion::Config for Runtime {
 	type PendingInterval = PendingInterval;
 	type Nominal = Nominal;
 	type IntervalIncome = AppPromotionDailyRate;
-	type RuntimeEvent = RuntimeEvent;
 	type FreezeIdentifier = HoldAndFreezeIdentifier;
 	type IsMaintenanceModeEnabled = MaintenanceMode;
 }

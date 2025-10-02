@@ -421,13 +421,10 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::Config + TypeInfo
+		frame_system::Config<RuntimeEvent: From<Event<Self>>> + pallet_evm_coder_substrate::Config + pallet_evm::Config + TypeInfo
 	{
 		/// Weight information for functions of this pallet.
 		type WeightInfo: WeightInfo;
-
-		/// Events compatible with [`frame_system::Config::Event`].
-		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Handler of accounts and payment.
 		type Currency: Balanced<Self::AccountId> + Inspect<Self::AccountId>;
@@ -500,7 +497,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Helper function that handles deposit events
 		pub fn deposit_event(event: Event<T>) {
-			let event = <T as Config>::RuntimeEvent::from(event);
+			let event = T::RuntimeEvent::from(event);
 			let event = event.into();
 			<frame_system::Pallet<T>>::deposit_event(event)
 		}

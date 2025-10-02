@@ -63,7 +63,6 @@ impl Convert<AccountId, Location> for AccountIdToLocation {
 }
 
 impl orml_vesting::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Currency = pallet_balances::Pallet<Runtime>;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureSigned<AccountId>;
@@ -73,7 +72,6 @@ impl orml_vesting::Config for Runtime {
 }
 
 impl orml_xtokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = CollectionId;
 	type CurrencyIdConvert = CurrencyIdConvert<Self>;

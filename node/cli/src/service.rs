@@ -27,6 +27,7 @@ use std::{
 	time::Duration,
 };
 
+use cumulus_client_bootnodes::{start_bootnode_tasks, StartBootnodeTasksParams};
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_collator::service::CollatorService;
 use cumulus_client_consensus_aura::collators::lookahead::{
@@ -232,6 +233,8 @@ fn ethereum_parachain_inherent() -> (sp_timestamp::InherentDataProvider, Paracha
 			relay_chain_state,
 			downward_messages: Default::default(),
 			horizontal_messages: Default::default(),
+			relay_parent_descendants: Default::default(),
+			collator_peer_id: None,
 		},
 	)
 }
@@ -418,7 +421,12 @@ where
 	let backend = params.backend.clone();
 	let mut task_manager = params.task_manager;
 
-	let (relay_chain_interface, collator_key) = build_relay_chain_interface(
+	let relay_chain_fork_id = polkadot_config.chain_spec.fork_id().map(ToString::to_string);
+	let parachain_fork_id = parachain_config.chain_spec.fork_id().map(ToString::to_string);
+	let advertise_non_global_ips = parachain_config.network.allow_non_globals_in_dht;
+	let parachain_public_addresses = parachain_config.network.public_addresses.clone();
+
+	let (relay_chain_interface, collator_key, relay_chain_network, paranode_rx) = build_relay_chain_interface(
 		polkadot_config,
 		&parachain_config,
 		telemetry_worker_handle,
@@ -446,6 +454,9 @@ where
 			import_queue: params.import_queue,
 			// Aura is sybil-resistant, collator-selection is generally too.
 			sybil_resistance_level: CollatorSybilResistance::Resistant,
+			metrics: sc_network::NetworkWorker::<Block, Hash>::register_notification_metrics(
+				parachain_config.prometheus_config.as_ref().map(|config| &config.registry),
+			),
 		})
 		.await?;
 
@@ -587,7 +598,7 @@ where
 		config: parachain_config,
 		keystore: params.keystore_container.keystore(),
 		backend: backend.clone(),
-		network,
+		network: network.clone(),
 		sync_service: sync_service.clone(),
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
@@ -635,7 +646,24 @@ where
 		relay_chain_slot_duration,
 		recovery_handle: Box::new(overseer_handle.clone()),
 		sync_service,
+		prometheus_registry: prometheus_registry.as_ref(),
 	})?;
+
+	start_bootnode_tasks(StartBootnodeTasksParams {
+		embedded_dht_bootnode: collator_options.embedded_dht_bootnode,
+		dht_bootnode_discovery: collator_options.dht_bootnode_discovery,
+		para_id,
+		task_manager: &mut task_manager,
+		relay_chain_interface: relay_chain_interface.clone(),
+		relay_chain_fork_id,
+		relay_chain_network,
+		request_receiver: paranode_rx,
+		parachain_network: network,
+		advertise_non_global_ips,
+		parachain_genesis_hash: client.chain_info().genesis_hash,
+		parachain_fork_id,
+		parachain_public_addresses,
+	});
 
 	if validator {
 		start_consensus(

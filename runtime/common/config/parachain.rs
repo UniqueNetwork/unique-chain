@@ -18,7 +18,7 @@ use cumulus_pallet_parachain_system::{
 	consensus_hook::UnincludedSegmentCapacity, RelayChainStateProof,
 };
 use cumulus_primitives_core::AggregateMessageOrigin;
-use frame_support::{parameter_types, traits::EnqueueWithOrigin, weights::Weight};
+use frame_support::{parameter_types, traits::{ConstU32, EnqueueWithOrigin}, weights::Weight};
 use up_common::constants::*;
 
 use crate::{MessageQueue, Runtime, RuntimeEvent, XcmpQueue};
@@ -42,6 +42,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type CheckAssociatedRelayNumber = pallet_configuration::CheckAssociatedRelayNumber<Self>;
 	type ConsensusHook = ConsensusHookWrapper;
 	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
+	type RelayParentOffset = ConstU32<0>;
 }
 
 impl staging_parachain_info::Config for Runtime {}

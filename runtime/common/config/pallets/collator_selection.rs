@@ -47,6 +47,8 @@ impl pallet_session::Config for Runtime {
 	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Self>; // ();
+	type Currency = Balances;
+	type KeyDeposit = ();
 }
 
 parameter_types! {
@@ -70,7 +72,6 @@ parameter_types! {
 }
 
 impl pallet_collator_selection::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type Currency = Balances;
 	// We allow root only to execute privileged collator selection operations.

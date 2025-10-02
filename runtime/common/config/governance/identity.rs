@@ -2,7 +2,7 @@ use frame_support::parameter_types;
 use up_common::constants::{MILLIUNIQUE, UNIQUE};
 
 use crate::{
-	runtime_common::config::governance, Balance, Balances, Runtime, RuntimeEvent, Treasury,
+	runtime_common::config::governance, Balance, Balances, Runtime, Treasury,
 };
 
 parameter_types! {
@@ -16,7 +16,6 @@ parameter_types! {
 }
 
 impl pallet_identity::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type BasicDeposit = BasicDeposit;
 	type FieldDeposit = FieldDeposit;

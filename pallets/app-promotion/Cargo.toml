@@ -66,4 +66,4 @@ up-data-structs = { workspace = true }
 ################################################################################
 # Other
 
-log = { version = "0.4.20", default-features = false }
+log = { version = "0.4.28", default-features = false }

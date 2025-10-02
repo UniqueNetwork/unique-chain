@@ -145,9 +145,6 @@ pub mod pallet {
 
 		// The relay block number provider
 		type RelayBlockNumberProvider: BlockNumberProvider<BlockNumber = BlockNumberFor<Self>>;
-
-		/// Events compatible with [`frame_system::Config::Event`].
-		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 	}
 
 	#[pallet::pallet]

@@ -38,7 +38,7 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Balances, Runtime, RuntimeCall, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
+	Balances, Runtime, RuntimeCall, DECIMALS, TOKEN_SYMBOL, VERSION,
 };
 
 #[cfg(feature = "foreign-assets")]
@@ -63,7 +63,6 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type WeightInfo = pallet_common::weights::SubstrateWeight<Self>;
-	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type PropertySizeLimitUpgradePriceDefault = PropertySizeLimitUpgradePriceDefault;
@@ -78,7 +77,6 @@ impl pallet_common::Config for Runtime {
 }
 
 impl pallet_structure::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 	type WeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
@@ -176,7 +174,6 @@ parameter_types! {
 }
 
 impl pallet_configuration::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type DefaultWeightToFeeCoefficient = ConstU64<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
 	type DefaultMinGasPrice = ConstU64<{ up_common::constants::MIN_GAS_PRICE }>;
@@ -190,8 +187,6 @@ impl pallet_configuration::Config for Runtime {
 }
 
 impl pallet_maintenance::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-
 	type RuntimeCall = RuntimeCall;
 
 	#[cfg(feature = "governance")]

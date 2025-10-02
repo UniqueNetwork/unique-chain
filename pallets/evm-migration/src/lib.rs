@@ -26,7 +26,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{pallet_prelude::*, traits::IsType};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use pallet_evm::{Pallet as PalletEvm, PrecompileHandle};
 	use sp_core::{H160, H256};
@@ -38,8 +38,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_evm::Config {
 		/// Weights
 		type WeightInfo: WeightInfo;
-		/// The overarching event type.
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
 
 	type SelfWeightOf<T> = <T as Config>::WeightInfo;

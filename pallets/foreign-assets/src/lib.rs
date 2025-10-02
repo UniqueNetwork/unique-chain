@@ -184,9 +184,6 @@ pub mod module {
 			<Self as SigningTypes>::Signature,
 		>;
 
-		/// The overarching event type.
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
 		/// Origin for force registering of a foreign asset.
 		type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 

@@ -37,8 +37,6 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config + pallet_common::Config + pallet_foreign_assets::Config
 	{
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
 		/// The overarching call type.
 		type RuntimeCall: Parameter
 			+ Dispatchable<

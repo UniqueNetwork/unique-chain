@@ -334,7 +334,7 @@ up-rpc = { workspace = true }
 evm-coder = { workspace = true }
 fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
-num_enum = { version = "0.7.0", default-features = false }
+num_enum = { version = "0.7.4", default-features = false }
 pallet-base-fee = { workspace = true }
 pallet-charge-transaction = { workspace = true }
 pallet-ethereum = { workspace = true }

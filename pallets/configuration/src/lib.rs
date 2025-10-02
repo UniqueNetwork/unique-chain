@@ -31,11 +31,6 @@ use sp_arithmetic::{
 	traits::{BaseArithmetic, Unsigned},
 };
 use sp_core::U256;
-#[cfg(not(feature = "std"))]
-use sp_std::alloc::{
-	format,
-	string::{String, ToString},
-};
 use sp_std::{marker::PhantomData, prelude::*};
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -57,9 +52,6 @@ mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// Overarching event type.
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
 		type Balance: Parameter
 			+ Member
 			+ AtLeast32BitUnsigned

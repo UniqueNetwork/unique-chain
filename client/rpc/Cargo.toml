@@ -7,8 +7,8 @@ version = "0.1.4"
 [dependencies]
 jsonrpsee = { workspace = true }
 parity-scale-codec = { workspace = true }
-trie-db = { version = "0.27.1", default-features = false }
-zstd = { version = "0.12.4", default-features = false }
+trie-db = { version = "0.30.0", default-features = false }
+zstd = { version = "0.13.3", default-features = false }
 
 app-promotion-rpc = { workspace = true }
 up-common = { workspace = true }

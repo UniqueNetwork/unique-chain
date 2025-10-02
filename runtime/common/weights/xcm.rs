@@ -375,5 +375,9 @@ impl<T: frame_system::Config> pallet_xcm::WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
+
+	fn weigh_message() -> Weight {
+		Weight::default()
+	}
 }
 

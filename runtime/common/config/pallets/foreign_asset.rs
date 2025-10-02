@@ -27,7 +27,7 @@ use crate::{
 		},
 		generic,
 	},
-	FeeCoefficientApplier, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, TxExtension,
+	FeeCoefficientApplier, RelayNetwork, Runtime, RuntimeCall, TxExtension,
 	UncheckedExtrinsic,
 };
 
@@ -53,8 +53,6 @@ impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
 }
 
 impl pallet_foreign_assets::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-
 	#[cfg(feature = "governance")]
 	type ManagerOrigin = EitherOfDiverse<
 		governance::RootOrFinancialCouncilMember,
@@ -109,7 +107,6 @@ parameter_types! {
 }
 
 impl orml_oracle::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type OnNewData = ();
 	type CombineData = DefaultCombineData<Self, MinimumCount, ExpiresIn, ()>;
 	type Time = crate::Timestamp;

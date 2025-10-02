@@ -415,6 +415,16 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    session: {
+      /**
+       * The amount to be held when setting keys.
+       **/
+      keyDeposit: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     stateTrieMigration: {
       /**
        * Maximal number of bytes that a key can have.

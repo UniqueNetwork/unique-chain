@@ -17,7 +17,7 @@ use crate::{
 		ethereum::{precompiles::UniquePrecompiles, sponsoring::EvmSponsorshipHandler},
 		DealWithFees,
 	},
-	Aura, Balances, ChainId, Runtime, RuntimeEvent,
+	Aura, Balances, ChainId, Runtime,
 };
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
@@ -88,7 +88,6 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesType = UniquePrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type OnMethodCall = (
 		pallet_evm_migration::OnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
@@ -108,7 +107,6 @@ impl pallet_evm::Config for Runtime {
 }
 
 impl pallet_evm_migration::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_evm_migration::weights::SubstrateWeight<Self>;
 }
 
@@ -117,7 +115,6 @@ parameter_types! {
 }
 
 impl pallet_ethereum::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	// Space for revert reason. Ethereum transactions are not cheap, and overall size is much less
@@ -138,7 +135,6 @@ parameter_types! {
 }
 
 impl pallet_evm_contract_helpers::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type ContractAddress = HelpersContractAddress;
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }

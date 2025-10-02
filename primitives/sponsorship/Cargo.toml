@@ -4,7 +4,7 @@ name = "up-sponsorship"
 version = "0.1.0"
 
 [dependencies]
-impl-trait-for-tuples = "0.2.2"
+impl-trait-for-tuples = "0.2.3"
 
 [features]
 default = ["std"]
