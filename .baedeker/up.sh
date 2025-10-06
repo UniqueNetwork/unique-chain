@@ -3,6 +3,8 @@ set -e
 BDK_DIR=$(dirname $(readlink -f "$0"))
 
 RUST_LOG=info \
+CHAINQL_WORKERS=2 \
+CHAINQL_KEYS_CHUNK_SIZE=20000 \
 baedeker \
 --spec=docker \
 -J$BDK_DIR/vendor/ \
