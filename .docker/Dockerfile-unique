@@ -18,6 +18,8 @@ RUN cd unique-chain && \
 FROM ubuntu:24.04 
 LABEL maintainer="Unique.Network"
 
+RUN apt -y update && apt install -y --no-install-recommends ca-certificates
+
 COPY --from=builder /workdir/unique-chain/unique-collator /bin/unique-collator
 COPY --from=builder /workdir/unique-chain/wasm /wasm
 ENTRYPOINT ["/bin/unique-collator"]

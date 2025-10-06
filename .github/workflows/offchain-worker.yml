@@ -143,7 +143,7 @@ jobs:
             .baedeker/ocw-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.target.outputs.name }}'}}, for_chain = false)
-      #      snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.runtime.outputs.name }}'}})
+
       - name: Upload network config
         uses: actions/upload-artifact@v4
         with:
