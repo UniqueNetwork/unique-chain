@@ -77,8 +77,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3.2.0
         with:
-          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Check and pull polkadot image
         id: polkadot
@@ -87,8 +87,8 @@ jobs:
           registry: registry.hub.docker.com
           organization: parity
           repository: polkadot
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          login: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
 
       - name: Prepare latest
@@ -101,8 +101,8 @@ jobs:
           dockerfile: .docker/Dockerfile-unique
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime,session-test-timings
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          dockerhub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - uses: denoland/setup-deno@v2
         with:

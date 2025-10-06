@@ -11,22 +11,20 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   prepare-execution-marix:
-
     name: Prepare execution matrix
 
-    runs-on: [ ci ]
+    runs-on: [ci]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
     steps:
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2.3.0
@@ -44,8 +42,8 @@ jobs:
     needs: prepare-execution-marix
 
     # The type of runner that the job will run on
-    runs-on: [ ci ]
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    runs-on: [ci]
+    continue-on-error: true #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     name: ${{ matrix.network }}-try-runtime
     strategy:
@@ -59,9 +57,9 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
-      # Prepare SHA  
+      # Prepare SHA
       - name: Prepare SHA
         uses: ./.github/actions/prepare
 
@@ -92,8 +90,8 @@ jobs:
           args: |
             --build-arg NETWORK=${{ matrix.network }}
             --build-arg REPLICA_FROM=${{ matrix.replica_from_address }}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          dockerhub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
@@ -166,11 +164,11 @@ jobs:
         run: cat './try-runtime-logs.${{ matrix.network }}/try-runtime.log'
 
       - name: Stop running containers
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: docker compose -f ".docker/docker-compose.try-runtime.yml" down
 
       - name: Remove builder cache
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: |
           docker builder prune -f -a
           docker system prune -f

@@ -78,8 +78,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3.2.0
         with:
-          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Check and pull polkadot image
         id: polkadot
@@ -88,8 +88,8 @@ jobs:
           registry: registry.hub.docker.com
           organization: parity
           repository: polkadot
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          login: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
 
       - name: Check and pull acala image
@@ -99,8 +99,8 @@ jobs:
           registry: registry.hub.docker.com
           organization: acala
           repository: ${{ matrix.acala_repository }}
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          login: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           tag: ${{ matrix.acala_version }}
 
       - name: Check and pull MOONBEAM image
@@ -110,8 +110,8 @@ jobs:
           registry: registry.hub.docker.com
           organization: moonbeamfoundation
           repository: moonbeam
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          login: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           tag: ${{ matrix.moonbeam_version }}
 
       - name: Check and pull ASSETHUB image
@@ -121,8 +121,8 @@ jobs:
           registry: registry.hub.docker.com
           organization: parity
           repository: polkadot-parachain
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          login: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           tag: ${{ matrix.assethub_version }}
 
       - name: Check and pull ASTAR image
@@ -132,8 +132,8 @@ jobs:
           registry: registry.hub.docker.com
           organization: staketechnologies
           repository: astar-collator
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          login: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           tag: ${{ matrix.astar_version }}
 
       - name: Check and pull HYDRADX image
@@ -143,13 +143,13 @@ jobs:
           registry: registry.hub.docker.com
           organization: galacticcouncil
           repository: hydra-dx
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          login: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           tag: ${{ env.HYDRADX_BUILD_BRANCH }}
 
-      - name: Prepare target runtime
+      - name: Prepare target ${{ matrix.network }}
         uses: ./.github/actions/buildContainer
-        id: runtime
+        id: target
         with:
           container: uniquenetwork/ci-xcm-local
           tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
@@ -157,23 +157,23 @@ jobs:
           dockerfile: .docker/Dockerfile-unique
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          dockerhub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Prepare target node
-        uses: ./.github/actions/buildContainer
-        id: node
-        with:
-          container: uniquenetwork/ci-xcm-local
-          tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
-          context: .docker
-          dockerfile: Dockerfile-unique-release
-          args: |
-            --build-arg FEATURES=${{ matrix.network }}-runtime
-            --build-arg CODE_VERSION=${{ env.NODE_BRANCH}}
-            --build-arg CODE_HASH=${{ env.NODE_HASH}}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+      # - name: Prepare target node
+      #   uses: ./.github/actions/buildContainer
+      #   id: node
+      #   with:
+      #     container: uniquenetwork/ci-xcm-local
+      #     tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
+      #     context: .docker
+      #     dockerfile: Dockerfile-unique-release
+      #     args: |
+      #       --build-arg FEATURES=${{ matrix.network }}-runtime
+      #       --build-arg CODE_VERSION=${{ env.NODE_BRANCH}}
+      #       --build-arg CODE_HASH=${{ env.NODE_HASH}}
+      #     dockerhub_username: ${{ secrets.DOCKER_HUB_USERNAME}}
+      #     dockerhub_token: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - uses: denoland/setup-deno@v2
         with:
@@ -213,8 +213,8 @@ jobs:
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, for_chain = false)
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.runtime.outputs.name }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.target.outputs.name }}'}}, for_chain = false)
+#            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.runtime.outputs.name }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'${{ steps.acala.outputs.image }}:${{ steps.acala.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})

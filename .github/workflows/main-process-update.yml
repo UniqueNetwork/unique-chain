@@ -69,8 +69,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3.2.0
         with:
-          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Check and pull polkadot image
         id: polkadot
@@ -79,8 +79,8 @@ jobs:
           registry: registry.hub.docker.com
           organization: parity
           repository: polkadot
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          login: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
 
       - name: Prepare mainnet
@@ -96,12 +96,12 @@ jobs:
             --build-arg FEATURES=${{ matrix.network }}-runtime
             --build-arg CODE_VERSION=${{ env.MAINNET_BRANCH}}
             --build-arg CODE_HASH=${{ env.MAINNET_HASH}}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          dockerhub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Prepare target runtime
+      - name: Prepare target ${{ matrix.network }}
         uses: ./.github/actions/buildContainer
-        id: runtime
+        id: target
         with:
           container: uniquenetwork/ci-main-process
           tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
@@ -109,30 +109,30 @@ jobs:
           dockerfile: .docker/Dockerfile-unique
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          dockerhub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Extract wasms
         uses: ./.github/actions/extractDocker
         id: wasms
         with:
-          image: ${{ steps.runtime.outputs.name }}
+          image: ${{ steps.target.outputs.name }}
           directory: /wasm
 
-      - name: Prepare target node
-        uses: ./.github/actions/buildContainer
-        id: node
-        with:
-          container: uniquenetwork/ci-main-process
-          tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
-          context: .docker
-          dockerfile: Dockerfile-unique-release
-          args: |
-            --build-arg FEATURES=${{ matrix.network }}-runtime
-            --build-arg CODE_VERSION=${{ env.NODE_BRANCH}}
-            --build-arg CODE_HASH=${{ env.NODE_HASH}}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+      # - name: Prepare target node
+      #   uses: ./.github/actions/buildContainer
+      #   id: node
+      #   with:
+      #     container: uniquenetwork/ci-main-process
+      #     tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
+      #     context: .docker
+      #     dockerfile: Dockerfile-unique-release
+      #     args: |
+      #       --build-arg FEATURES=${{ matrix.network }}-runtime
+      #       --build-arg CODE_VERSION=${{ env.NODE_BRANCH}}
+      #       --build-arg CODE_HASH=${{ env.NODE_HASH}}
+      #     dockerhub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
+      #     dockerhub_token: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - uses: denoland/setup-deno@v2
         with:
@@ -194,7 +194,7 @@ jobs:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
           inputs: |
-            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, leave = 1, for_chain = false)
+            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.target.outputs.name }}'}}, leave = 1, for_chain = false)
             ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, for_chain = false)
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
@@ -216,7 +216,7 @@ jobs:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
           inputs: |
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.target.outputs.name }}'}}, for_chain = false)
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Ensure network is alive
@@ -241,12 +241,12 @@ jobs:
 
       ### temporary solution!!!!!!! ###
       ### TODO: delete this step after release v10140080 or put it into a nicer script
-      - name: wait 100 blocks for runtime and restart all parachain nodes
-        if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
-        run: |
-          sleep 660
-          echo "Restarting parachain nodes"
-          for i in `docker ps -f name=relay-unique-node -q`; do docker restart $i; done
+      # - name: wait 100 blocks for runtime and restart all parachain nodes
+      #   if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
+      #   run: |
+      #     sleep 660
+      #     echo "Restarting parachain nodes"
+      #     for i in `docker ps -f name=relay-unique-node -q`; do docker restart $i; done
 
       - name: Ensure network is alive
         working-directory: js-packages/tests
