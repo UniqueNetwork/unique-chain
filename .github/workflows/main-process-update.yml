@@ -152,6 +152,9 @@ jobs:
         run: |
           . "$HOME/.cargo/env"
           chainql -e "cql.chain(\"${{ matrix.fork_source }}\").latest._preloadKeys._raw" > .baedeker/vendor/dump.json
+        env:
+          CHAINQL_WORKERS: 2
+          CHAINQL_KEYS_CHUNK_SIZE: 20000
 
       - name: Start network
         uses: UniqueNetwork/baedeker-action@v1.2
