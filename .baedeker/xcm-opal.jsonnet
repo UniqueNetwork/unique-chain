@@ -46,6 +46,9 @@ local relay = {
             bin: $.bin,
             wantedKeys: 'relay',
             expectedDataPath: '/parity',
+            extraArgs: [
+                '--network-backend=libp2p',
+			],
         },
         for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
     },
@@ -74,6 +77,9 @@ local opal = {
 				'--increase-future-pool',
 				'--pool-type=fork-aware',
 			],
+            extraArgsInternalParent: [
+                '--network-backend=libp2p',
+            ]
 		},
 		for name in ['alice', 'bob', 'charlie']
 	},
@@ -93,6 +99,9 @@ local assethub = {
             wantedKeys: 'para',
             parentConnection: 'internal-samedir',
             expectedDataPath: '/parity',
+            extraArgsInternalParent: [
+                '--network-backend=libp2p',
+            ]
         },
         for name in ['alice', 'bob']
     },

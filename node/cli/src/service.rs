@@ -421,21 +421,28 @@ where
 	let backend = params.backend.clone();
 	let mut task_manager = params.task_manager;
 
-	let relay_chain_fork_id = polkadot_config.chain_spec.fork_id().map(ToString::to_string);
-	let parachain_fork_id = parachain_config.chain_spec.fork_id().map(ToString::to_string);
+	let relay_chain_fork_id = polkadot_config
+		.chain_spec
+		.fork_id()
+		.map(ToString::to_string);
+	let parachain_fork_id = parachain_config
+		.chain_spec
+		.fork_id()
+		.map(ToString::to_string);
 	let advertise_non_global_ips = parachain_config.network.allow_non_globals_in_dht;
 	let parachain_public_addresses = parachain_config.network.public_addresses.clone();
 
-	let (relay_chain_interface, collator_key, relay_chain_network, paranode_rx) = build_relay_chain_interface(
-		polkadot_config,
-		&parachain_config,
-		telemetry_worker_handle,
-		&mut task_manager,
-		collator_options.clone(),
-		hwbench.clone(),
-	)
-	.await
-	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
+	let (relay_chain_interface, collator_key, relay_chain_network, paranode_rx) =
+		build_relay_chain_interface(
+			polkadot_config,
+			&parachain_config,
+			telemetry_worker_handle,
+			&mut task_manager,
+			collator_options.clone(),
+			hwbench.clone(),
+		)
+		.await
+		.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
@@ -455,7 +462,10 @@ where
 			// Aura is sybil-resistant, collator-selection is generally too.
 			sybil_resistance_level: CollatorSybilResistance::Resistant,
 			metrics: sc_network::NetworkWorker::<Block, Hash>::register_notification_metrics(
-				parachain_config.prometheus_config.as_ref().map(|config| &config.registry),
+				parachain_config
+					.prometheus_config
+					.as_ref()
+					.map(|config| &config.registry),
 			),
 		})
 		.await?;

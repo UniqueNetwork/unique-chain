@@ -120,21 +120,23 @@ impl ApplyFeeCoefficient<Runtime> for FeeCoefficientApplier {
 	}
 }
 
-pub type TxExtension = (
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	pallet_charge_transaction::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	maintenance::CheckMaintenance,
-	identity::DisableIdentityCalls,
-	pallet_charge_transaction::ChargeAssetTxPayment<Runtime, FeeCoefficientApplier>,
-	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
-	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
-	cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim<Runtime>,
-	frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
-);
+pub type TxExtension = cumulus_pallet_weight_reclaim::StorageWeightReclaim<
+	Runtime,
+	(
+		frame_system::CheckSpecVersion<Runtime>,
+		frame_system::CheckTxVersion<Runtime>,
+		frame_system::CheckGenesis<Runtime>,
+		frame_system::CheckEra<Runtime>,
+		pallet_charge_transaction::CheckNonce<Runtime>,
+		frame_system::CheckWeight<Runtime>,
+		maintenance::CheckMaintenance,
+		identity::DisableIdentityCalls,
+		pallet_charge_transaction::ChargeAssetTxPayment<Runtime, FeeCoefficientApplier>,
+		//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+		pallet_ethereum::FakeTransactionFinalizer<Runtime>,
+		frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
+	),
+>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<

@@ -1,9 +1,7 @@
 use frame_support::parameter_types;
 use up_common::constants::{MILLIUNIQUE, UNIQUE};
 
-use crate::{
-	runtime_common::config::governance, Balance, Balances, Runtime, Treasury,
-};
+use crate::{runtime_common::config::governance, Balance, Balances, Runtime, Treasury};
 
 parameter_types! {
 	// These do not matter as we forbid non-gov operations with the identity pallet

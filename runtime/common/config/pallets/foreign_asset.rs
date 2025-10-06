@@ -27,8 +27,7 @@ use crate::{
 		},
 		generic,
 	},
-	FeeCoefficientApplier, RelayNetwork, Runtime, RuntimeCall, TxExtension,
-	UncheckedExtrinsic,
+	FeeCoefficientApplier, RelayNetwork, Runtime, RuntimeCall, TxExtension, UncheckedExtrinsic,
 };
 
 parameter_types! {
@@ -159,7 +158,7 @@ where
 			// so the actual block number is `n`.
 			.saturating_sub(30);
 		let tip = 0;
-		let tx_ext: TxExtension = (
+		let tx_ext: TxExtension = cumulus_pallet_weight_reclaim::StorageWeightReclaim::new((
 			frame_system::CheckSpecVersion::<Runtime>::new(),
 			frame_system::CheckTxVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
@@ -173,9 +172,8 @@ where
 			),
 			//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 			pallet_ethereum::FakeTransactionFinalizer::<Runtime>::new(),
-			cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim::<Runtime>::new(),
 			frame_metadata_hash_extension::CheckMetadataHash::<Runtime>::new(false),
-		);
+		));
 		let raw_payload = generic::SignedPayload::new(call, tx_ext)
 			.map_err(|e| {
 				log::warn!("Unable to create signed payload: Invalid : {e:?}");

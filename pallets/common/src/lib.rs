@@ -421,7 +421,10 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config<RuntimeEvent: From<Event<Self>>> + pallet_evm_coder_substrate::Config + pallet_evm::Config + TypeInfo
+		frame_system::Config<RuntimeEvent: From<Event<Self>>>
+		+ pallet_evm_coder_substrate::Config
+		+ pallet_evm::Config
+		+ TypeInfo
 	{
 		/// Weight information for functions of this pallet.
 		type WeightInfo: WeightInfo;

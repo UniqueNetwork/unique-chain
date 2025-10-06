@@ -430,3 +430,7 @@ impl OnChargeAssetTransaction<Runtime> for TxFeeFungiblesAdapter {
 		Ok((converted_fee, converted_tip))
 	}
 }
+
+impl cumulus_pallet_weight_reclaim::Config for Runtime {
+	type WeightInfo = ();
+}
