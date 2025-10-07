@@ -1575,7 +1575,7 @@ export interface PalletCommonError extends Enum {
   readonly isAddressIsNotEthMirror: boolean;
   readonly isAddressIsZero: boolean;
   readonly isUnsupportedOperation: boolean;
-  readonly isNotSufficientFounds: boolean;
+  readonly isNotSufficientFunds: boolean;
   readonly isUserIsNotAllowedToNest: boolean;
   readonly isSourceCollectionIsNotAllowedToNest: boolean;
   readonly isCollectionFieldSizeExceeded: boolean;
@@ -1590,7 +1590,8 @@ export interface PalletCommonError extends Enum {
   readonly isUserIsNotCollectionAdmin: boolean;
   readonly isFungibleItemsHaveNoId: boolean;
   readonly isNotFungibleDataUsedToMintFungibleCollectionToken: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsNotEthMirror' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin' | 'FungibleItemsHaveNoId' | 'NotFungibleDataUsedToMintFungibleCollectionToken';
+  readonly isCollectionTokensPropertiesLimitDowngrade: boolean;
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsNotEthMirror' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFunds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin' | 'FungibleItemsHaveNoId' | 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'CollectionTokensPropertiesLimitDowngrade';
 }
 
 /** @name PalletCommonEvent */
@@ -2273,6 +2274,16 @@ export interface PalletForeignAssetsModuleCall extends Enum {
     readonly existingVersionedAssetId: XcmVersionedAssetId;
     readonly newVersionedAssetId: XcmVersionedAssetId;
   } & Struct;
+  readonly isForceSetForeignAssetReserveOverride: boolean;
+  readonly asForceSetForeignAssetReserveOverride: {
+    readonly versionedAssetId: XcmVersionedAssetId;
+    readonly versionedReserveOverride: Option<XcmVersionedLocation>;
+  } & Struct;
+  readonly isForceSetForeignAssetSuspension: boolean;
+  readonly asForceSetForeignAssetSuspension: {
+    readonly versionedAssetId: XcmVersionedAssetId;
+    readonly isSuspended: bool;
+  } & Struct;
   readonly isForceSetForeignAssetConversionCoefficient: boolean;
   readonly asForceSetForeignAssetConversionCoefficient: {
     readonly conversionCoefficient: u128;
@@ -2285,20 +2296,25 @@ export interface PalletForeignAssetsModuleCall extends Enum {
   readonly asRemoveOracleMember: {
     readonly accountId: AccountId32;
   } & Struct;
-  readonly type: 'ForceRegisterForeignAsset' | 'ForceResetForeignAssetLocation' | 'ForceSetForeignAssetConversionCoefficient' | 'AddOracleMember' | 'RemoveOracleMember';
+  readonly isUpdateCurrencyExchangeUrl: boolean;
+  readonly asUpdateCurrencyExchangeUrl: {
+    readonly url: Bytes;
+  } & Struct;
+  readonly type: 'ForceRegisterForeignAsset' | 'ForceResetForeignAssetLocation' | 'ForceSetForeignAssetReserveOverride' | 'ForceSetForeignAssetSuspension' | 'ForceSetForeignAssetConversionCoefficient' | 'AddOracleMember' | 'RemoveOracleMember' | 'UpdateCurrencyExchangeUrl';
 }
 
 /** @name PalletForeignAssetsModuleError */
 export interface PalletForeignAssetsModuleError extends Enum {
   readonly isForeignAssetAlreadyRegistered: boolean;
   readonly isBadForeignAssetId: boolean;
+  readonly isBadLocation: boolean;
   readonly isForeignAssetNotFound: boolean;
   readonly isForeignAssetIsNotFungible: boolean;
   readonly isCantParseBalance: boolean;
   readonly isFailedToFetchRate: boolean;
   readonly isCantParseResponse: boolean;
   readonly isOracleMembersCapacityExceeded: boolean;
-  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound' | 'ForeignAssetIsNotFungible' | 'CantParseBalance' | 'FailedToFetchRate' | 'CantParseResponse' | 'OracleMembersCapacityExceeded';
+  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'BadLocation' | 'ForeignAssetNotFound' | 'ForeignAssetIsNotFungible' | 'CantParseBalance' | 'FailedToFetchRate' | 'CantParseResponse' | 'OracleMembersCapacityExceeded';
 }
 
 /** @name PalletForeignAssetsModuleEvent */
@@ -2315,12 +2331,22 @@ export interface PalletForeignAssetsModuleEvent extends Enum {
     readonly oldAssetId: XcmVersionedAssetId;
     readonly newAssetId: XcmVersionedAssetId;
   } & Struct;
+  readonly isForeignAssetReserveOverride: boolean;
+  readonly asForeignAssetReserveOverride: {
+    readonly assetId: XcmVersionedAssetId;
+    readonly reserveOverride: Option<XcmVersionedLocation>;
+  } & Struct;
+  readonly isForeignAssetSuspensionSet: boolean;
+  readonly asForeignAssetSuspensionSet: {
+    readonly assetId: XcmVersionedAssetId;
+    readonly isSuspended: bool;
+  } & Struct;
   readonly isForeignAssetConversionCoefficientSet: boolean;
   readonly asForeignAssetConversionCoefficientSet: {
     readonly oldConversionCoefficient: u128;
     readonly newConversionCoefficient: u128;
   } & Struct;
-  readonly type: 'ForeignAssetRegistered' | 'MigrationStatus' | 'ForeignAssetMoved' | 'ForeignAssetConversionCoefficientSet';
+  readonly type: 'ForeignAssetRegistered' | 'MigrationStatus' | 'ForeignAssetMoved' | 'ForeignAssetReserveOverride' | 'ForeignAssetSuspensionSet' | 'ForeignAssetConversionCoefficientSet';
 }
 
 /** @name PalletFungibleError */
@@ -3966,7 +3992,12 @@ export interface PalletUniqueCall extends Enum {
     readonly collectionId: u32;
     readonly itemId: u32;
   } & Struct;
-  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'ApproveFrom' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'SetAllowanceForAll' | 'ForceRepairCollection' | 'ForceRepairItem';
+  readonly isUpgradeTokensPropertiesLimit: boolean;
+  readonly asUpgradeTokensPropertiesLimit: {
+    readonly collectionId: u32;
+    readonly newLimit: UpDataStructsPropertySizeLimit;
+  } & Struct;
+  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'ApproveFrom' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'SetAllowanceForAll' | 'ForceRepairCollection' | 'ForceRepairItem' | 'UpgradeTokensPropertiesLimit';
 }
 
 /** @name PalletUniqueError */
@@ -5714,13 +5745,6 @@ export interface UpDataStructsNestingPermissions extends Struct {
 /** @name UpDataStructsOwnerRestrictedSet */
 export interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
 
-/** @name UpDataStructsProperties */
-export interface UpDataStructsProperties extends Struct {
-  readonly map: UpDataStructsPropertiesMapBoundedVec;
-  readonly consumedSpace: u32;
-  readonly reserved: u32;
-}
-
 /** @name UpDataStructsPropertiesMapBoundedVec */
 export interface UpDataStructsPropertiesMapBoundedVec extends BTreeMap<Bytes, Bytes> {}
 
@@ -5753,6 +5777,14 @@ export interface UpDataStructsPropertyScope extends Enum {
   readonly type: 'None' | 'Rmrk';
 }
 
+/** @name UpDataStructsPropertySizeLimit */
+export interface UpDataStructsPropertySizeLimit extends Enum {
+  readonly isDefault: boolean;
+  readonly isExtended: boolean;
+  readonly isMax: boolean;
+  readonly type: 'Default' | 'Extended' | 'Max';
+}
+
 /** @name UpDataStructsRpcCollection */
 export interface UpDataStructsRpcCollection extends Struct {
   readonly owner: AccountId32;
@@ -5773,6 +5805,13 @@ export interface UpDataStructsRpcCollection extends Struct {
 export interface UpDataStructsRpcCollectionFlags extends Struct {
   readonly foreign: bool;
   readonly erc721metadata: bool;
+}
+
+/** @name UpDataStructsSpaceMeteredProperties */
+export interface UpDataStructsSpaceMeteredProperties extends Struct {
+  readonly map: UpDataStructsPropertiesMapBoundedVec;
+  readonly consumedSpace: u32;
+  readonly reserved: u32;
 }
 
 /** @name UpDataStructsSponsoringRateLimit */

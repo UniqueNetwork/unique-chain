@@ -227,6 +227,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionTokenPrefixLimitExceeded: AugmentedError<ApiType>;
       /**
+       * A downgrade of the token property size limit is attempted.
+       **/
+      CollectionTokensPropertiesLimitDowngrade: AugmentedError<ApiType>;
+      /**
        * This address is not set as sponsor, use setCollectionSponsor first.
        **/
       ConfirmSponsorshipFail: AugmentedError<ApiType>;
@@ -265,7 +269,7 @@ declare module '@polkadot/api-base/types/errors' {
       /**
        * Insufficient funds to perform an action
        **/
-      NotSufficientFounds: AugmentedError<ApiType>;
+      NotSufficientFunds: AugmentedError<ApiType>;
       /**
        * Tried to enable permissions which are only permitted to be disabled
        **/
@@ -810,6 +814,10 @@ declare module '@polkadot/api-base/types/errors' {
        * The given asset ID could not be converted into the current XCM version.
        **/
       BadForeignAssetId: AugmentedError<ApiType>;
+      /**
+       * The given location could not be converted into the current XCM version.
+       **/
+      BadLocation: AugmentedError<ApiType>;
       /**
        * Failed to parse the balance received from currency exchange.
        **/

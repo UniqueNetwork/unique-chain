@@ -757,6 +757,8 @@ declare module '@polkadot/api-base/types/events' {
        * The foreign asset registered.
        **/
       ForeignAssetRegistered: AugmentedEvent<ApiType, [collectionId: u32, assetId: XcmVersionedAssetId], { collectionId: u32, assetId: XcmVersionedAssetId }>;
+      ForeignAssetReserveOverride: AugmentedEvent<ApiType, [assetId: XcmVersionedAssetId, reserveOverride: Option<XcmVersionedLocation>], { assetId: XcmVersionedAssetId, reserveOverride: Option<XcmVersionedLocation> }>;
+      ForeignAssetSuspensionSet: AugmentedEvent<ApiType, [assetId: XcmVersionedAssetId, isSuspended: bool], { assetId: XcmVersionedAssetId, isSuspended: bool }>;
       /**
        * The migration status.
        **/

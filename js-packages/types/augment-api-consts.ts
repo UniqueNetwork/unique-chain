@@ -106,6 +106,18 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       contractAddress: H160 & AugmentedConst<ApiType>;
       /**
+       * Default price to upgrade property size limit.
+       **/
+      propertySizeLimitUpgradePriceDefault: u128 & AugmentedConst<ApiType>;
+      /**
+       * Price to upgrade property size limit to extended.
+       **/
+      propertySizeLimitUpgradePriceExtended: u128 & AugmentedConst<ApiType>;
+      /**
+       * Price to upgrade property size limit to maximum.
+       **/
+      propertySizeLimitUpgradePriceMax: u128 & AugmentedConst<ApiType>;
+      /**
        * Generic const
        **/
       [key: string]: Codec;
