@@ -166,10 +166,7 @@ mod benchmarks {
 		let url = create_data::<200>();
 
 		#[extrinsic_call]
-		_(
-			RawOrigin::Root,
-			url,
-		);
+		_(RawOrigin::Root, url);
 
 		Ok(())
 	}
