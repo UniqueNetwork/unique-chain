@@ -5738,7 +5738,7 @@ export default {
    * Lookup733: pallet_common::pallet::Error<T>
    **/
   PalletCommonError: {
-    _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'CantDestroyNotEmptyCollection', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsNotEthMirror', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFunds', 'UserIsNotAllowedToNest', 'SourceCollectionIsNotAllowedToNest', 'CollectionFieldSizeExceeded', 'NoSpaceForProperty', 'PropertyLimitReached', 'PropertyKeyIsTooLong', 'InvalidCharacterInPropertyKey', 'EmptyPropertyKey', 'CollectionIsExternal', 'CollectionIsInternal', 'ConfirmSponsorshipFail', 'UserIsNotCollectionAdmin', 'FungibleItemsHaveNoId', 'NotFungibleDataUsedToMintFungibleCollectionToken']
+    _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'CantDestroyNotEmptyCollection', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsNotEthMirror', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFounds', 'UserIsNotAllowedToNest', 'SourceCollectionIsNotAllowedToNest', 'CollectionFieldSizeExceeded', 'NoSpaceForProperty', 'PropertyLimitReached', 'PropertyKeyIsTooLong', 'InvalidCharacterInPropertyKey', 'EmptyPropertyKey', 'CollectionIsExternal', 'CollectionIsInternal', 'ConfirmSponsorshipFail', 'UserIsNotCollectionAdmin', 'FungibleItemsHaveNoId', 'NotFungibleDataUsedToMintFungibleCollectionToken']
   },
   /**
    * Lookup735: pallet_fungible::pallet::Error<T>
@@ -5956,56 +5956,56 @@ export default {
     }
   },
   /**
-   * Lookup798: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup797: cumulus_pallet_weight_reclaim::StorageWeightReclaim<T, S>
+   **/
+  CumulusPalletWeightReclaimStorageWeightReclaim: '(FrameSystemExtensionsCheckSpecVersion,FrameSystemExtensionsCheckTxVersion,FrameSystemExtensionsCheckGenesis,Era,PalletSponsoringCheckNonce,FrameSystemExtensionsCheckWeight,OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance,OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls,PalletSponsoringChargeAssetTxPayment,PalletEthereumFakeTransactionFinalizer,FrameMetadataHashExtensionCheckMetadataHash)',
+  /**
+   * Lookup799: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup799: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+   * Lookup800: frame_system::extensions::check_tx_version::CheckTxVersion<T>
    **/
   FrameSystemExtensionsCheckTxVersion: 'Null',
   /**
-   * Lookup800: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup801: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup803: pallet_sponsoring::CheckNonce<T>
+   * Lookup804: pallet_sponsoring::CheckNonce<T>
    **/
   PalletSponsoringCheckNonce: 'Compact<u32>',
   /**
-   * Lookup804: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup805: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup805: opal_runtime::runtime_common::maintenance::CheckMaintenance
+   * Lookup806: opal_runtime::runtime_common::maintenance::CheckMaintenance
    **/
   OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
   /**
-   * Lookup806: opal_runtime::runtime_common::identity::DisableIdentityCalls
+   * Lookup807: opal_runtime::runtime_common::identity::DisableIdentityCalls
    **/
   OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls: 'Null',
   /**
-   * Lookup807: pallet_sponsoring::ChargeAssetTxPayment<opal_runtime::Runtime, opal_runtime::runtime_common::FeeCoefficientApplier>
+   * Lookup808: pallet_sponsoring::ChargeAssetTxPayment<opal_runtime::Runtime, opal_runtime::runtime_common::FeeCoefficientApplier>
    **/
   PalletSponsoringChargeAssetTxPayment: {
     tip: 'Compact<u128>',
     assetId: 'Option<StagingXcmV5Location>'
   },
   /**
-   * Lookup808: opal_runtime::Runtime
+   * Lookup809: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
-   * Lookup809: opal_runtime::runtime_common::FeeCoefficientApplier
+   * Lookup810: opal_runtime::runtime_common::FeeCoefficientApplier
    **/
   OpalRuntimeRuntimeCommonFeeCoefficientApplier: 'Null',
   /**
-   * Lookup810: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+   * Lookup811: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null',
-  /**
-   * Lookup811: cumulus_primitives_storage_weight_reclaim::allow_deprecated::StorageWeightReclaim<T>
-   **/
-  CumulusPrimitivesStorageWeightReclaimAllowDeprecatedStorageWeightReclaim: 'Null',
   /**
    * Lookup812: frame_metadata_hash_extension::CheckMetadataHash<T>
    **/

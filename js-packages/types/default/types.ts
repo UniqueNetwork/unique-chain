@@ -5,6 +5,7 @@ import type { Data } from '@polkadot/types';
 import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, i64, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { Vote } from '@polkadot/types/interfaces/elections';
+import type { Era } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
@@ -185,6 +186,9 @@ export interface CumulusPalletParachainSystemUnincludedSegmentUsedBandwidth exte
   readonly hrmpOutgoing: BTreeMap<u32, CumulusPalletParachainSystemUnincludedSegmentHrmpChannelUpdate>;
 }
 
+/** @name CumulusPalletWeightReclaimStorageWeightReclaim */
+export interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[FrameSystemExtensionsCheckSpecVersion, FrameSystemExtensionsCheckTxVersion, FrameSystemExtensionsCheckGenesis, Era, PalletSponsoringCheckNonce, FrameSystemExtensionsCheckWeight, OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance, OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer, FrameMetadataHashExtensionCheckMetadataHash]> {}
+
 /** @name CumulusPalletXcmCall */
 export interface CumulusPalletXcmCall extends Null {}
 
@@ -282,9 +286,6 @@ export interface CumulusPrimitivesParachainInherentHashedMessage extends Struct 
   readonly sentAt: u32;
   readonly msgHash: H256;
 }
-
-/** @name CumulusPrimitivesStorageWeightReclaimAllowDeprecatedStorageWeightReclaim */
-export interface CumulusPrimitivesStorageWeightReclaimAllowDeprecatedStorageWeightReclaim extends Null {}
 
 /** @name EthbloomBloom */
 export interface EthbloomBloom extends U8aFixed {}
@@ -1574,7 +1575,7 @@ export interface PalletCommonError extends Enum {
   readonly isAddressIsNotEthMirror: boolean;
   readonly isAddressIsZero: boolean;
   readonly isUnsupportedOperation: boolean;
-  readonly isNotSufficientFunds: boolean;
+  readonly isNotSufficientFounds: boolean;
   readonly isUserIsNotAllowedToNest: boolean;
   readonly isSourceCollectionIsNotAllowedToNest: boolean;
   readonly isCollectionFieldSizeExceeded: boolean;
@@ -1589,7 +1590,7 @@ export interface PalletCommonError extends Enum {
   readonly isUserIsNotCollectionAdmin: boolean;
   readonly isFungibleItemsHaveNoId: boolean;
   readonly isNotFungibleDataUsedToMintFungibleCollectionToken: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsNotEthMirror' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFunds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin' | 'FungibleItemsHaveNoId' | 'NotFungibleDataUsedToMintFungibleCollectionToken';
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsNotEthMirror' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin' | 'FungibleItemsHaveNoId' | 'NotFungibleDataUsedToMintFungibleCollectionToken';
 }
 
 /** @name PalletCommonEvent */

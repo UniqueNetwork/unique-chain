@@ -9,6 +9,7 @@ import type { Data } from '@polkadot/types';
 import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Set, Struct, Text, U256, U8aFixed, Vec, bool, i64, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { Vote } from '@polkadot/types/interfaces/elections';
+import type { Era } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
@@ -6146,7 +6147,7 @@ declare module '@polkadot/types/lookup' {
     readonly isAddressIsNotEthMirror: boolean;
     readonly isAddressIsZero: boolean;
     readonly isUnsupportedOperation: boolean;
-    readonly isNotSufficientFunds: boolean;
+    readonly isNotSufficientFounds: boolean;
     readonly isUserIsNotAllowedToNest: boolean;
     readonly isSourceCollectionIsNotAllowedToNest: boolean;
     readonly isCollectionFieldSizeExceeded: boolean;
@@ -6161,7 +6162,7 @@ declare module '@polkadot/types/lookup' {
     readonly isUserIsNotCollectionAdmin: boolean;
     readonly isFungibleItemsHaveNoId: boolean;
     readonly isNotFungibleDataUsedToMintFungibleCollectionToken: boolean;
-    readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsNotEthMirror' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFunds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin' | 'FungibleItemsHaveNoId' | 'NotFungibleDataUsedToMintFungibleCollectionToken';
+    readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsNotEthMirror' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin' | 'FungibleItemsHaveNoId' | 'NotFungibleDataUsedToMintFungibleCollectionToken';
   }
 
   /** @name PalletFungibleError (735) */
@@ -6417,44 +6418,44 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
   }
 
-  /** @name FrameSystemExtensionsCheckSpecVersion (798) */
+  /** @name CumulusPalletWeightReclaimStorageWeightReclaim (797) */
+  interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[FrameSystemExtensionsCheckSpecVersion, FrameSystemExtensionsCheckTxVersion, FrameSystemExtensionsCheckGenesis, Era, PalletSponsoringCheckNonce, FrameSystemExtensionsCheckWeight, OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance, OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer, FrameMetadataHashExtensionCheckMetadataHash]> {}
+
+  /** @name FrameSystemExtensionsCheckSpecVersion (799) */
   type FrameSystemExtensionsCheckSpecVersion = Null;
 
-  /** @name FrameSystemExtensionsCheckTxVersion (799) */
+  /** @name FrameSystemExtensionsCheckTxVersion (800) */
   type FrameSystemExtensionsCheckTxVersion = Null;
 
-  /** @name FrameSystemExtensionsCheckGenesis (800) */
+  /** @name FrameSystemExtensionsCheckGenesis (801) */
   type FrameSystemExtensionsCheckGenesis = Null;
 
-  /** @name PalletSponsoringCheckNonce (803) */
+  /** @name PalletSponsoringCheckNonce (804) */
   interface PalletSponsoringCheckNonce extends Compact<u32> {}
 
-  /** @name FrameSystemExtensionsCheckWeight (804) */
+  /** @name FrameSystemExtensionsCheckWeight (805) */
   type FrameSystemExtensionsCheckWeight = Null;
 
-  /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance (805) */
+  /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance (806) */
   type OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance = Null;
 
-  /** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls (806) */
+  /** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls (807) */
   type OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls = Null;
 
-  /** @name PalletSponsoringChargeAssetTxPayment (807) */
+  /** @name PalletSponsoringChargeAssetTxPayment (808) */
   interface PalletSponsoringChargeAssetTxPayment extends Struct {
     readonly tip: Compact<u128>;
     readonly assetId: Option<StagingXcmV5Location>;
   }
 
-  /** @name OpalRuntimeRuntime (808) */
+  /** @name OpalRuntimeRuntime (809) */
   type OpalRuntimeRuntime = Null;
 
-  /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier (809) */
+  /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier (810) */
   type OpalRuntimeRuntimeCommonFeeCoefficientApplier = Null;
 
-  /** @name PalletEthereumFakeTransactionFinalizer (810) */
+  /** @name PalletEthereumFakeTransactionFinalizer (811) */
   type PalletEthereumFakeTransactionFinalizer = Null;
-
-  /** @name CumulusPrimitivesStorageWeightReclaimAllowDeprecatedStorageWeightReclaim (811) */
-  type CumulusPrimitivesStorageWeightReclaimAllowDeprecatedStorageWeightReclaim = Null;
 
   /** @name FrameMetadataHashExtensionCheckMetadataHash (812) */
   interface FrameMetadataHashExtensionCheckMetadataHash extends Struct {
