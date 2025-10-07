@@ -676,7 +676,7 @@ pub mod module {
 			Ok(())
 		}
 
-		#[pallet::call_index(5)]
+		#[pallet::call_index(7)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_currency_exchange_url())]
 		pub fn update_currency_exchange_url(
 			origin: OriginFor<T>,
