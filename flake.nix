@@ -81,7 +81,12 @@
               bashInteractive
             ];
 
-            environment.PROTOC = "${pkgs.protobuf}/bin/protoc";
+            environment = {
+                PROTOC = "${pkgs.protobuf}/bin/protoc";
+                # https://github.com/tikv/jemallocator/issues/108
+                NIX_CFLAGS_COMPILE = "-U_FORTIFY_SOURCE";
+                NIX_HARDENING_ENABLE = "";
+            };
           };
           formatter = pkgs.nixfmt-rfc-style;
         };
