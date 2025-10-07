@@ -1631,7 +1631,7 @@ impl<const MAX_SPACE_LIMIT: u32> SpaceMeteredProperties<MAX_SPACE_LIMIT> {
 	pub fn with_space_limit_ref(&mut self, space_limit: u32) -> SpaceLimitedProperties<&mut Self> {
 		SpaceLimitedProperties {
 			properties: self,
-			space_limit,
+			space_limit: space_limit.min(MAX_SPACE_LIMIT),
 		}
 	}
 
