@@ -18,11 +18,7 @@ use cumulus_pallet_parachain_system::{
 	consensus_hook::UnincludedSegmentCapacity, RelayChainStateProof,
 };
 use cumulus_primitives_core::AggregateMessageOrigin;
-use frame_support::{
-	parameter_types,
-	traits::EnqueueWithOrigin,
-	weights::Weight,
-};
+use frame_support::{parameter_types, traits::EnqueueWithOrigin, weights::Weight};
 use up_common::constants::*;
 
 use crate::{MessageQueue, Runtime, RuntimeEvent, XcmpQueue};
