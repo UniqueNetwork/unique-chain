@@ -27,10 +27,14 @@ use up_common::constants::*;
 
 use crate::{MessageQueue, Runtime, RuntimeEvent, XcmpQueue};
 
+/// Build with an offset of 1 behind the relay chain best block.
+const RELAY_PARENT_OFFSET: u32 = 1;
+
 parameter_types! {
 	pub const RelayMsgOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+	pub const RelayParentOffset: u32 = RELAY_PARENT_OFFSET;
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -46,19 +50,19 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type CheckAssociatedRelayNumber = pallet_configuration::CheckAssociatedRelayNumber<Self>;
 	type ConsensusHook = ConsensusHookWrapper;
 	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
-	type RelayParentOffset = ConstU32<0>;
+	type RelayParentOffset = RelayParentOffset;
 }
 
 impl staging_parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
-/// Maximum number of blocks simultaneously accepted by the Runtime, not yet included
-/// into the relay chain.
-const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
 /// How many parachain blocks are processed by the relay chain per parent. Limits the
 /// number of blocks authored per slot.
 const BLOCK_PROCESSING_VELOCITY: u32 = 2;
+/// Maximum number of blocks simultaneously accepted by the Runtime, not yet included
+/// into the relay chain.
+const UNINCLUDED_SEGMENT_CAPACITY: u32 = (2 + RELAY_PARENT_OFFSET) * BLOCK_PROCESSING_VELOCITY + 1;
 pub type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
 	Runtime,
 	{ MILLISECS_PER_RELAY_BLOCK as u32 },
