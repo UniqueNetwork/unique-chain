@@ -24,7 +24,8 @@ use sp_std::{vec, vec::Vec};
 use super::{Call, Config, Pallet};
 
 #[benchmarks(
-	where <T as Config>::RuntimeEvent: parity_scale_codec::Encode
+	where
+		T: Config,
 )]
 mod benchmarks {
 	use super::*;
@@ -87,7 +88,7 @@ mod benchmarks {
 	fn insert_events(b: Linear<0, 200>) -> Result<(), BenchmarkError> {
 		use parity_scale_codec::Encode;
 		let logs = (0..b)
-			.map(|_| <T as Config>::RuntimeEvent::from(crate::Event::<T>::TestEvent).encode())
+			.map(|_| T::RuntimeEvent::from(crate::Event::<T>::TestEvent).encode())
 			.collect::<Vec<_>>();
 
 		#[extrinsic_call]

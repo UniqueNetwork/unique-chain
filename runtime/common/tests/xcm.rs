@@ -61,6 +61,6 @@ pub fn xcm_transact_is_forbidden() {
 		.ensure_complete()
 		.expect_err("XCM Transact shouldn't succeed");
 
-		assert_eq!(error, Error::NoPermission);
+		assert_eq!(error.error, Error::NoPermission);
 	});
 }

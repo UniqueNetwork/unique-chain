@@ -211,6 +211,8 @@ impl pallet_session::Config for Test {
 	type Keys = MockSessionKeys;
 	type DisablingStrategy = ();
 	type WeightInfo = ();
+	type Currency = Balances;
+	type KeyDeposit = ();
 }
 
 parameter_types! {
@@ -244,7 +246,6 @@ impl ValidatorRegistration<u64> for IsRegistered {
 }
 
 impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type UpdateOrigin = EnsureSignedBy<RootAccount, u64>;
 	type PotId = PotId;

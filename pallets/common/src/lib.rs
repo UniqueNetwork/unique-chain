@@ -501,7 +501,6 @@ pub mod pallet {
 		/// Helper function that handles deposit events
 		pub fn deposit_event(event: Event<T>) {
 			let event = T::RuntimeEvent::from(event);
-			let event = event.into();
 			<frame_system::Pallet<T>>::deposit_event(event)
 		}
 	}

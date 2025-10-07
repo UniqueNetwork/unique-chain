@@ -236,7 +236,6 @@ parameter_types! {
 }
 
 impl pallet_ethereum::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<32>;
@@ -250,7 +249,6 @@ impl pallet_evm::Config for Test {
 	type CrossAccountId = TestCrossAccountId;
 	type AddressMapping = TestEvmAddressMapping;
 	type BackwardsAddressMapping = TestEvmBackwardsAddressMapping;
-	type RuntimeEvent = RuntimeEvent;
 	type FeeCalculator = ();
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
@@ -276,7 +274,6 @@ impl pallet_evm_coder_substrate::Config for Test {}
 
 impl pallet_common::Config for Test {
 	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type PropertySizeLimitUpgradePriceDefault = PropertySizeLimitUpgradePriceDefault;
@@ -292,7 +289,6 @@ impl pallet_common::Config for Test {
 
 impl pallet_structure::Config for Test {
 	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 }
 impl pallet_fungible::Config for Test {
