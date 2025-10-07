@@ -31,7 +31,7 @@ use crate::{
 	runtime_common::config::xcm::{
 		ReserveProvider, SelfLocation, UniversalLocation, Weigher, XcmExecutorConfig,
 	},
-	RelayChainBlockNumberProvider, Runtime, RuntimeEvent,
+	RelayChainBlockNumberProvider, Runtime,
 };
 
 // Signed version of balance
