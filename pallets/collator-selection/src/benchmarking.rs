@@ -60,12 +60,11 @@ macro_rules! whitelist {
 	};
 }
 
-fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
+fn assert_last_event<T: Config>(generic_event: <T as frame_system::Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
-	let system_event: <T as frame_system::Config>::RuntimeEvent = generic_event.into();
 	// compare to the last event record
 	let EventRecord { event, .. } = &events[events.len() - 1];
-	assert_eq!(event, &system_event);
+	assert_eq!(event, &generic_event);
 }
 
 fn create_funded_user<T: Config>(
@@ -242,7 +241,7 @@ mod benchmarks {
 
 		let caller: T::AccountId = whitelisted_caller();
 		let bond: BalanceOf<T> = balance_unit::<T>() * 2u32.into();
-		T::Currency::set_balance(&caller, bond);
+		<T as Config>::Currency::set_balance(&caller, bond);
 
 		<session::Pallet<T>>::set_keys(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -275,7 +274,7 @@ mod benchmarks {
 
 		let caller: T::AccountId = whitelisted_caller();
 		let bond: BalanceOf<T> = balance_unit::<T>() * 2u32.into();
-		T::Currency::set_balance(&caller, bond);
+		<T as Config>::Currency::set_balance(&caller, bond);
 
 		let origin = RawOrigin::Signed(caller.clone());
 
@@ -373,7 +372,7 @@ mod benchmarks {
 	// worst case is paying a non-existing candidate account.
 	#[benchmark]
 	fn note_author() -> Result<(), BenchmarkError> {
-		T::Currency::set_balance(
+		<T as Config>::Currency::set_balance(
 			&<CollatorSelection<T>>::account_id(),
 			balance_unit::<T>() * 4u32.into(),
 		);
@@ -381,14 +380,14 @@ mod benchmarks {
 		let new_block: BlockNumberFor<T> = 10u32.into();
 
 		frame_system::Pallet::<T>::set_block_number(new_block);
-		assert!(T::Currency::balance(&author) == 0u32.into());
+		assert!(<T as Config>::Currency::balance(&author) == 0u32.into());
 
 		#[block]
 		{
 			<CollatorSelection<T> as EventHandler<_, _>>::note_author(author.clone());
 		}
 
-		assert!(T::Currency::balance(&author) > 0u32.into());
+		assert!(<T as Config>::Currency::balance(&author) > 0u32.into());
 		assert_eq!(frame_system::Pallet::<T>::block_number(), new_block);
 
 		Ok(())

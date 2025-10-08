@@ -265,12 +265,12 @@ impl
 	pallet_asset_tx_payment::BenchmarkHelperTrait<
 		AccountId,
 		staging_xcm::v5::AssetId,
-		staging_xcm::v3::MultiLocation,
+		staging_xcm::v5::Location,
 	> for AssetTxHelper
 {
 	fn create_asset_id_parameter(
 		_id: u32,
-	) -> (staging_xcm::v5::AssetId, staging_xcm::v3::MultiLocation) {
+	) -> (staging_xcm::v5::AssetId, staging_xcm::v5::Location) {
 		unimplemented!("uses default weights");
 	}
 	fn setup_balances_and_pool(_asset_id: staging_xcm::v5::AssetId, _account: AccountId) {

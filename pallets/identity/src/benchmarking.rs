@@ -47,8 +47,8 @@ use crate::Pallet as Identity;
 
 const SEED: u32 = 0;
 
-fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
-	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
+fn assert_last_event<T: Config>(generic_event: <T as frame_system::Config>::RuntimeEvent) {
+	frame_system::Pallet::<T>::assert_last_event(generic_event);
 }
 
 // Adds `r` registrars to the Identity Pallet. These registrars will have set fees and fields.
