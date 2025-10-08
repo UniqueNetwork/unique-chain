@@ -1,5 +1,6 @@
 local
 m = import 'baedeker-library/mixin/spec.libsonnet',
+ops = import 'baedeker-library/ops/common-args.libsonnet',
 ;
 
 function(relay_spec, assethub_spec)
@@ -181,7 +182,7 @@ local hydradx = {
 };
 
 
-relay + {
+ops.mixinExtraNodeArgsAllChains(relay + {
 	parachains: {
 		[para.name]: para,
 		for para in [
@@ -193,4 +194,4 @@ relay + {
 			hydradx,
 		]
 	},
-}
+}, ['-lxcm=trace'])

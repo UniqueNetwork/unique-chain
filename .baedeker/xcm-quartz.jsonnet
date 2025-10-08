@@ -1,5 +1,6 @@
 local
 m = import 'baedeker-library/mixin/spec.libsonnet',
+ops = import 'baedeker-library/ops/common-args.libsonnet',
 ;
 
 function(relay_spec, assethub_spec)
@@ -169,9 +170,9 @@ local shiden = {
 	},
 };
 
-relay + {
+ops.mixinExtraNodeArgsAllChains(relay + {
 	parachains: {
 		[para.name]: para,
 		for para in [unique, assethub, karura, moonriver, shiden]
 	},
-}
+}, ['-lxcm=trace'])
