@@ -59,8 +59,7 @@ impl pallet_foreign_assets::Config for Runtime {
 	>;
 
 	#[cfg(not(feature = "governance"))]
-	type ManagerOrigin =
-		EitherOfDiverse<governance::RootOrMoreThanHalfCouncil, governance::AllTechnicalCommittee>;
+	type ManagerOrigin = EnsureRoot<Self::AccountId>;
 
 	type PalletId = ForeignAssetPalletId;
 	type SelfLocation = SelfLocation;
