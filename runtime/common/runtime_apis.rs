@@ -59,7 +59,6 @@ macro_rules! impl_common_runtime_apis {
 			sponsoring::{SponsorshipPredict, UniqueSponsorshipPredict},
 			dispatch::CollectionDispatch,
 			config::ethereum::CrossAccountId,
-			config::parachain::RelayParentOffset,
 		};
 		use up_data_structs::*;
 		use staging_xcm::{Version as XcmVersion, VersionedAsset, VersionedLocation, VersionedXcm};
@@ -505,12 +504,6 @@ macro_rules! impl_common_runtime_apis {
 			impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
 				fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
 					ParachainSystem::collect_collation_info(header)
-				}
-			}
-
-			impl cumulus_primitives_core::RelayParentOffsetApi<Block> for Runtime {
-				fn relay_parent_offset() -> u32 {
-					RelayParentOffset::get()
 				}
 			}
 
