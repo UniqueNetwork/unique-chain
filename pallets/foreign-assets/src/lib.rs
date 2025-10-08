@@ -185,6 +185,9 @@ pub mod module {
 		>;
 
 		/// Origin for force registering of a foreign asset.
+		type ForceRegisterOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
+		/// Origin for the foreign asset management.
 		type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// The ID of the foreign assets pallet.
@@ -398,7 +401,8 @@ pub mod module {
 	/// The corresponding collections of foreign assets.
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_conversion_coefficient)]
-	pub type ForeignAssetConversionCoefficient<T: Config> = StorageMap<_, Blake2_128Concat, staging_xcm::v5::AssetId, FixedU128, OptionQuery>;
+	pub type ForeignAssetConversionCoefficient<T: Config> =
+		StorageMap<_, Blake2_128Concat, staging_xcm::v5::AssetId, FixedU128, OptionQuery>;
 
 	#[pallet::storage]
 	pub type OracleMembers<T: Config> =
@@ -477,7 +481,7 @@ pub mod module {
 			token_prefix: CollectionTokenPrefix,
 			mode: ForeignCollectionMode,
 		) -> DispatchResult {
-			T::ManagerOrigin::ensure_origin(origin.clone())?;
+			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
 
 			let asset_id: AssetId = versioned_asset_id
 				.as_ref()
@@ -642,8 +646,8 @@ pub mod module {
 				.try_into()
 				.map_err(|()| Error::<T>::BadForeignAssetId)?;
 
-			let old_conversion_coefficient =
-				<ForeignAssetConversionCoefficient<T>>::get(&asset_id).unwrap_or(FixedU128::from(0));
+			let old_conversion_coefficient = <ForeignAssetConversionCoefficient<T>>::get(&asset_id)
+				.unwrap_or(FixedU128::from(0));
 
 			if conversion_coefficient != 0.into() {
 				<ForeignAssetConversionCoefficient<T>>::insert(&asset_id, conversion_coefficient);

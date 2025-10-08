@@ -62,6 +62,8 @@ pub mod identity;
 
 impl pallet_gov_origins::Config for Runtime {}
 
+pub type SupremeTrio = EitherOfDiverse<RootOrMoreThanHalfCouncil, AllTechnicalCommittee>;
+
 morph_types! {
 	/// A `TryMorph` implementation to reduce a scalar by a particular amount, checking for
 	/// underflow.

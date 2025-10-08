@@ -53,10 +53,16 @@ impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
 
 impl pallet_foreign_assets::Config for Runtime {
 	#[cfg(feature = "governance")]
-	type ManagerOrigin = EitherOfDiverse<
+	type ForceRegisterOrigin = EitherOfDiverse<
 		governance::RootOrFinancialCouncilMember,
 		governance::TechnicalCommitteeMember,
 	>;
+
+	#[cfg(not(feature = "governance"))]
+	type ForceRegisterOrigin = EnsureRoot<Self::AccountId>;
+
+	#[cfg(feature = "governance")]
+	type ManagerOrigin = governance::SupremeTrio;
 
 	#[cfg(not(feature = "governance"))]
 	type ManagerOrigin = EnsureRoot<Self::AccountId>;
