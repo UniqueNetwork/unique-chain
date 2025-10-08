@@ -392,7 +392,13 @@ pub fn run() -> Result<()> {
 					let storage = partials.backend.expose_storage();
 					let shared_trie_cache = partials.backend.expose_shared_trie_cache();
 
-					cmd.run(config, partials.client.clone(), db, storage, shared_trie_cache)
+					cmd.run(
+						config,
+						partials.client.clone(),
+						db,
+						storage,
+						shared_trie_cache,
+					)
 				}),
 				BenchmarkCmd::Machine(cmd) => {
 					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
