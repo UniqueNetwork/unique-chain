@@ -398,7 +398,7 @@ pub mod module {
 	/// The corresponding collections of foreign assets.
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_conversion_coefficient)]
-	pub type ForeignAssetConversionCoefficient<T: Config> = StorageValue<_, FixedU128, OptionQuery>;
+	pub type ForeignAssetConversionCoefficient<T: Config> = StorageMap<_, Blake2_128Concat, staging_xcm::v5::AssetId, FixedU128, OptionQuery>;
 
 	#[pallet::storage]
 	pub type OracleMembers<T: Config> =
@@ -439,7 +439,7 @@ pub mod module {
 			if !Self::get_convertible_assets().contains(asset_id) {
 				return None;
 			}
-			let conversion_coefficient = Self::foreign_asset_conversion_coefficient()
+			let conversion_coefficient = Self::foreign_asset_conversion_coefficient(asset_id)
 				.unwrap_or_else(T::ForeignAssetConversionCoefficientDefault::get);
 			let native_decimals = <T as pallet_balances_adapter::Config>::Decimals::get();
 			let conversion_rate =
@@ -628,19 +628,25 @@ pub mod module {
 		}
 
 		#[pallet::call_index(4)]
-		//TODO: add benchmark
 		#[pallet::weight(<T as Config>::WeightInfo::force_set_foreign_asset_conversion_coefficient())]
 		pub fn force_set_foreign_asset_conversion_coefficient(
 			origin: OriginFor<T>,
+			versioned_asset_id: Box<VersionedAssetId>,
 			conversion_coefficient: FixedU128,
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin.clone())?;
 
+			let asset_id: AssetId = versioned_asset_id
+				.as_ref()
+				.clone()
+				.try_into()
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
+
 			let old_conversion_coefficient =
-				<ForeignAssetConversionCoefficient<T>>::get().unwrap_or(FixedU128::from(0));
+				<ForeignAssetConversionCoefficient<T>>::get(&asset_id).unwrap_or(FixedU128::from(0));
 
 			if conversion_coefficient != 0.into() {
-				<ForeignAssetConversionCoefficient<T>>::set(Some(conversion_coefficient));
+				<ForeignAssetConversionCoefficient<T>>::insert(&asset_id, conversion_coefficient);
 			}
 
 			Self::deposit_event(Event::<T>::ForeignAssetConversionCoefficientSet {
