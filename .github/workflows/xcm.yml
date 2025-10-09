@@ -66,7 +66,7 @@ jobs:
       - name: Remove all containers
         if: always() # run this step always
         run: |
-          docker ps -aq | xargs docker rm -f
+          docker ps -aq | xargs -r docker rm -f
 
       - name: Remove builder cache
         if: always()
