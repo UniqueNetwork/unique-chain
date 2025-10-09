@@ -68,10 +68,10 @@ jobs:
       #   run: |
       #     docker ps -aq | xargs -r docker rm -f
 
-      - name: Remove builder cache
-        if: always()
-        run: |
-          docker system prune -a -f
+      # - name: Remove builder cache
+      #   if: always()
+      #   run: |
+      #     docker system prune -a -f
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
