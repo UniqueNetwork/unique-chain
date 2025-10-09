@@ -83,6 +83,9 @@ local unique = {
 				'--increase-future-pool',
 				'--pool-type=fork-aware',
 			],
+			extraArgsInternalParent: [
+				'--network-backend=libp2p',
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -102,7 +105,10 @@ local assethub = {
 			bin: $.bin,
 			wantedKeys: 'para',
 			parentConnection: 'internal-samedir',
-            expectedDataPath: '/parity',
+			expectedDataPath: '/parity',
+			extraArgsInternalParent: [
+				'--network-backend=libp2p',
+			],
 		},
 		for name in ['alice', 'bob']
 	},
