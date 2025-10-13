@@ -2476,8 +2476,8 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
    * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
-    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transferKeepAlive', [address, amount], true/*, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`*/);
+  async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string, options: Partial<SignerOptions> | null = null): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transferKeepAlive', [address, amount], true, options/*, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`*/);
 
     let transfer = {from: null, to: null, amount: 0n} as any;
     result.result.events.forEach(({event: {data, method, section}}: any) => {
@@ -2658,8 +2658,8 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
-    return this.subBalanceGroup.transferToSubstrate(signer, address, amount);
+  transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string, options: Partial<SignerOptions> | null = null): Promise<boolean> {
+    return this.subBalanceGroup.transferToSubstrate(signer, address, amount, options);
   }
 
   async forceTransferToSubstrate(signer: TSigner, from: TSubstrateAccount, to: TSubstrateAccount, amount: bigint | string): Promise<boolean> {

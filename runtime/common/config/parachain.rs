@@ -19,8 +19,8 @@ use cumulus_pallet_parachain_system::{
 };
 use cumulus_primitives_core::AggregateMessageOrigin;
 use frame_support::{parameter_types, traits::EnqueueWithOrigin, weights::Weight};
-use up_common::constants::*;
 use sp_runtime::traits::ConstU32;
+use up_common::constants::*;
 
 use crate::{MessageQueue, Runtime, RuntimeEvent, XcmpQueue};
 

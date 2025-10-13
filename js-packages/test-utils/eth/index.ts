@@ -33,6 +33,7 @@ import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/typ
 import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
 import {waitParams} from './util.ts';
+import { SignerOptions } from "@polkadot/api/types";
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -262,14 +263,14 @@ class EthGroup extends EthGroupBase {
     return new Contract(contract.target, contract.interface, from);
   }
 
-  async createAccountWithBalance(donor: IKeyringPair, amount = 600n): Promise<ethers.HDNodeWallet> {
+  async createAccountWithBalance(donor: IKeyringPair, amount = 600n, options: Partial<SignerOptions> | null = null): Promise<ethers.HDNodeWallet> {
     const account = this.createAccount();
-    await this.transferBalanceFromSubstrate(donor, account.address, amount);
+    await this.transferBalanceFromSubstrate(donor, account.address, amount, true, options);
     return account;
   }
 
-  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount = 100n, inTokens = true) {
-    return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n));
+  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount = 100n, inTokens = true, options: Partial<SignerOptions> | null = null) {
+    return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n), options);
   }
 
   async getCollectionCreationFee(signer: HDNodeWallet) {

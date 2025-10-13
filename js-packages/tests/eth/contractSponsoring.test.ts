@@ -321,21 +321,27 @@ describe('Sponsoring EVM contracts', () => {
     {balance: 10n, label: '10'},
   ].map(testCase => {
     itEth(`Allow-listed address that has ${testCase.label} UNQ can call a contract. Sponsor balance should decrease`, async ({helper}) => {
-      const owner = await helper.eth.createAccountWithBalance(donor);
-      const sponsor = await helper.eth.createAccountWithBalance(donor);
       const caller = helper.eth.createAccount();
-      await helper.eth.transferBalanceFromSubstrate(donor, caller.address, testCase.balance);
-      const helpers = await helper.ethNativeContract.contractHelpers(owner);
+      let nonce = await helper.chain.getNonce(donor.address);
+      const [owner, sponsor] = await Promise.all([
+        helper.eth.createAccountWithBalance(donor, 100n, { nonce }),
+        helper.eth.createAccountWithBalance(donor, 100n, { nonce: nonce + 1 }),
+        helper.eth.transferBalanceFromSubstrate(donor, caller.address, testCase.balance, true, { nonce: nonce + 2 }),
+      ]);
+      const helpers = helper.ethNativeContract.contractHelpers(owner);
       const flipper = await helper.eth.deployFlipper(owner);
       const flipperAddress = await flipper.getAddress();
 
-      await (await helpers.toggleAllowlist.send(flipperAddress, true)).wait(...waitParams);
-      await (await helpers.toggleAllowed.send(flipperAddress, caller, true)).wait(...waitParams);
+      nonce = await helper.web3!.provider.getTransactionCount(owner.address);
+      await Promise.all([
+        (await helpers.toggleAllowlist.send(flipperAddress, true, { nonce })).wait(...waitParams),
+        (await helpers.toggleAllowed.send(flipperAddress, caller, true, { nonce: nonce + 1 })).wait(...waitParams),
 
-      await (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Allowlisted)).wait(...waitParams);
-      await (await helpers.setSponsoringRateLimit.send(flipperAddress, 0)).wait(...waitParams);
+        (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Allowlisted, { nonce: nonce + 2 })).wait(...waitParams),
+        (await helpers.setSponsoringRateLimit.send(flipperAddress, 0, { nonce: nonce + 3 })).wait(...waitParams),
 
-      await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
+        (await helpers.setSponsor.send(flipperAddress, sponsor, { nonce: nonce + 4 })).wait(...waitParams),
+      ]);
       await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
 
       const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
