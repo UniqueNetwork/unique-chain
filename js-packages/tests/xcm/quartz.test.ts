@@ -501,7 +501,8 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Karura', () =>
     );
   });
 
-  itSub('Should connect to Karura and send QTZ back', async () => {
+  // TODO we need an updated Karura to run this test (we need PolkadotXcm.Sent event instead of Xcmp's event)
+  itSub.skip('Should connect to Karura and send QTZ back', async () => {
     await testHelper.sendUnqFromTo(
       'karura',
       'quartz',
@@ -554,7 +555,9 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () =>
     });
   });
 
-  itSub('Should connect and send QTZ to Moonriver', async () => {
+  // TODO we need an updated Moonbeam to make it work.
+  // It must include this PR: https://github.com/moonbeam-foundation/moonbeam/pull/3113
+  itSub.skip('Should connect and send QTZ to Moonriver', async () => {
     await testHelper.sendUnqFromTo(
       'quartz',
       'moonriver',
@@ -656,7 +659,8 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Shiden', () =>
     });
   });
 
-  itSub('Should connect and send QTZ to Shiden', async () => {
+  // TODO Shiden didn't fix the barriers and doesn't honor SetTopic with message ID
+  itSub.skip('Should connect and send QTZ to Shiden', async () => {
     await testHelper.sendUnqFromTo(
       'quartz',
       'shiden',
@@ -666,7 +670,8 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Shiden', () =>
     );
   });
 
-  itSub('Should connect to Shiden and send QTZ back', async () => {
+  // TODO we need an updated Shiden to run this test (we need PolkadotXcm.Sent event instead of Xcmp's event)
+  itSub.skip('Should connect to Shiden and send QTZ back', async () => {
     await testHelper.sendUnqFromTo(
       'shiden',
       'quartz',
