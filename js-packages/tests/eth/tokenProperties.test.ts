@@ -32,7 +32,7 @@ describe('EVM token properties', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      [alice, bob] = await helper.arrange.createAccounts([10000n, 100n], donor);
+      [alice, bob] = await helper.arrange.createAccounts([40000n, 200n], donor);
     });
   });
 
@@ -64,7 +64,7 @@ describe('EVM token properties', () => {
     const maxProps = makeMaxLimitedProperties(maxLimit);
 
     const tokenPropertyPermissions = ['a', 'b', 'c', 'd']
-      .map(k => ({key: k.repeat(maxKeySize), permission: {mutable: true, tokenOwner: true}}));
+      .map(k => ({key: k.repeat(maxKeySize), permission: {mutable: true, tokenOwner: true, collectionAdmin: true }}));
 
     let collection: UniqueBaseCollection;
 
@@ -88,9 +88,7 @@ describe('EVM token properties', () => {
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
     expect(await collection.getTokensPropertiesLimit()).to.be.equal(defaultLimit);
 
-    const caller = await helper.eth.createAccountWithBalance(donor);
-
-    const upgradeToExtendedFee = await helper.arrange.calculateFee({Ethereum: caller.address}, async () => {
+    const upgradeToExtendedFee = await helper.arrange.calculateFee({Substrate: alice.address}, async () => {
       await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
     });
     expect(upgradeToExtendedFee > 2000n * helper.balance.getOneTokenNominal()).to.be.true;
@@ -106,7 +104,7 @@ describe('EVM token properties', () => {
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
     expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);    
 
-    const upgradeToMaxFee = await helper.arrange.calculateFee({Ethereum: caller.address}, async () => {
+    const upgradeToMaxFee = await helper.arrange.calculateFee({Substrate: alice.address}, async () => {
       await expect(collection.upgradeTokensPropertiesLimit(alice, 'Max')).to.be.fulfilled;
     });
     expect(upgradeToMaxFee > 5000n * helper.balance.getOneTokenNominal()).to.be.true;

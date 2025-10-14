@@ -259,8 +259,8 @@ class EthGroup extends EthGroupBase {
     return wallet;
   }
 
-  changeContractCaller(contract: Contract, from: HDNodeWallet): Contract {
-    return new Contract(contract.target, contract.interface, from);
+  changeContractCaller<T extends Contract>(contract: T, from: HDNodeWallet): Contract {
+    return contract.connect(from) as T;
   }
 
   async createAccountWithBalance(donor: IKeyringPair, amount = 600n, options: Partial<SignerOptions> | null = null): Promise<ethers.HDNodeWallet> {
