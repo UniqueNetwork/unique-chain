@@ -1218,7 +1218,7 @@ class HydraFastDemocracyGroup {
 
     const councilVotingThreshold = 1;
     const technicalCommitteeThreshold = 3;
-    const fastTrackVotingPeriod = 10;
+    const fastTrackVotingPeriod = 15;
     const fastTrackDelayPeriod = 0;
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal`);
@@ -1249,40 +1249,65 @@ class HydraFastDemocracyGroup {
 
     await this.helper.collective.techCommittee.propose(aliceAccount, technicalCommitteeThreshold, fastTrack, fastTrack.encodedLength);
 
+    // It seems sometimes the `propose` above isn't finalized on Hydra when the promise is fulfilled.
+    // Waiting here for it to complete.
+    await this.helper.wait.newBlocks(5);
+
     const techProposalIdx = await this.helper.collective.techCommittee.proposalCount() - 1;
     await this.helper.collective.techCommittee.vote(aliceAccount, fastTrackHash, techProposalIdx, true);
     await this.helper.collective.techCommittee.vote(bobAccount, fastTrackHash, techProposalIdx, true);
     await this.helper.collective.techCommittee.vote(eveAccount, fastTrackHash, techProposalIdx, true);
 
-    const closeResult = await this.helper.collective.techCommittee.close(
-      bobAccount,
-      fastTrackHash,
-      techProposalIdx,
-      {
-        refTime: 1_000_000_000,
-        proofSize: 1_000_000,
-      },
-      fastTrack.encodedLength,
-    );
+    const closeTechProposal = async () => {
+      // Do not rush to the tx to avoid skipping the Democracy.Started event.
+      await this.helper.wait.newBlocks(3);
+
+      await this.helper.collective.techCommittee.close(
+        bobAccount,
+        fastTrackHash,
+        techProposalIdx,
+        {
+          refTime: 1_000_000_000,
+          proofSize: 1_000_000,
+        },
+        fastTrack.encodedLength,
+      );
+    };
+
+    const [democracyStarted, _] = await Promise.all([
+      // We need to wait for the event instead of getting it out of the tx result
+      // since this method os unreliable on Hydration.
+      this.helper.wait.expectEvent(10, Event.Democracy.Started),
+      closeTechProposal(),
+    ]);
+
     console.log('\t* Fast track proposal through technical committee.......DONE');
     // <<< Fast track proposal through technical committee <<<
 
-    const democracyStarted = Event.Democracy.Started.expect(closeResult);
     const referendumIndex = democracyStarted.referendumIndex;
 
-    // >>> Referendum voting >>>
-    console.log(`\t* Referendum #${referendumIndex} voting.......`);
-    await this.helper.democracy.referendumVote(eveAccount, referendumIndex, {
-      balance: 10_000_000_000_000_000_000n,
-      vote: {aye: true, conviction: 1},
-    });
-    console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
-    // <<< Referendum voting <<<
+    const referendumVote = async () => {
+      // >>> Referendum voting >>>
+      console.log(`\t* Referendum #${referendumIndex} voting.......`);
+      await this.helper.democracy.referendumVote(eveAccount, referendumIndex, {
+        balance: 10_000_000_000_000_000_000n,
+        vote: {aye: true, conviction: 1},
+      });
+      console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
+      // <<< Referendum voting <<<
+    };
 
-    // Wait the proposal to pass
-    await this.helper.wait.expectEvent(10, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
+    const waitReferendumPass = async () => {
+      // Wait the proposal to pass
+      await this.helper.wait.expectEvent(fastTrackVotingPeriod, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
+    };
 
-    await this.helper.wait.newBlocks(1);
+    await Promise.all([
+      waitReferendumPass(),
+      referendumVote(),
+    ]);
+
+    await this.helper.wait.newBlocks(5);
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal.......DONE`);
   }

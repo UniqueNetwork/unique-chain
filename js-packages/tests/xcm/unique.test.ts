@@ -502,7 +502,8 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Acala', () => 
     );
   });
 
-  itSub('Should connect to Acala and send UNQ back', async () => {
+  // TODO we need an updated Acala to run this test (we need PolkadotXcm.Sent event instead of Xcmp's event)
+  itSub.skip('Should connect to Acala and send UNQ back', async () => {
     await testHelper.sendUnqFromTo(
       'acala',
       'unique',
@@ -555,7 +556,9 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => 
     });
   });
 
-  itSub('Should connect and send UNQ to Moonbeam', async () => {
+  // TODO we need an updated Moonbeam to make it work.
+  // It must include this PR: https://github.com/moonbeam-foundation/moonbeam/pull/3113
+  itSub.skip('Should connect and send UNQ to Moonbeam', async () => {
     await testHelper.sendUnqFromTo(
       'unique',
       'moonbeam',
@@ -659,7 +662,8 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Astar', () => 
     });
   });
 
-  itSub('Should connect and send UNQ to Astar', async () => {
+  // TODO Astar didn't fixed the barriers and doesn't honor SetTopic with message ID
+  itSub.skip('Should connect and send UNQ to Astar', async () => {
     await testHelper.sendUnqFromTo(
       'unique',
       'astar',
@@ -669,7 +673,8 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Astar', () => 
     );
   });
 
-  itSub('Should connect to Astar and send UNQ back', async () => {
+  // TODO we need an updated Astar to run this test (we need PolkadotXcm.Sent event instead of Xcmp's event)
+  itSub.skip('Should connect to Astar and send UNQ back', async () => {
     await testHelper.sendUnqFromTo(
       'astar',
       'unique',
@@ -700,6 +705,15 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with HydraDx', () =
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
+  // The value is taken from the live Hydra
+  const UNQ_ASSET_ID_ON_HYDRA = 25;
+  const UNQ_NAME_ON_HYDRA = 'Unique network';
+  const UNQ_SYMBOL_ON_HYDRA = 'UNQ';
+  const UNQ_ED_ON_HYDRA = 1224384348939740000n;
+
+  // This is an arbitrary value
+  const UNQ_PRICE_ON_HYDRA = 100000000000000;
+
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
@@ -713,6 +727,38 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with HydraDx', () =
 
     await usingHydraDxPlaygrounds(async (helper) => {
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
+
+      if(!(await helper.callRpc('api.query.assetRegistry.assetLocations', [UNQ_ASSET_ID_ON_HYDRA])).toJSON()) {
+        const xcmRateLimit = null;
+        const isSufficient = true;
+
+        const registerUnqCall = helper.encodeApiCall('api.tx.assetRegistry.register', [
+          UNQ_ASSET_ID_ON_HYDRA,
+          UNQ_NAME_ON_HYDRA,
+          'Token',
+          UNQ_ED_ON_HYDRA,
+          UNQ_SYMBOL_ON_HYDRA,
+          UNQ_DECIMALS,
+          {
+            parents: 1,
+            interior: {
+              X1: {
+                Parachain: UNIQUE_CHAIN,
+              },
+            },
+          },
+          xcmRateLimit,
+          isSufficient,
+        ]);
+
+        const setUnqPriceCall = helper.encodeApiCall('api.tx.multiTransactionPayment.addCurrency', [UNQ_ASSET_ID_ON_HYDRA, UNQ_PRICE_ON_HYDRA]);
+
+        const batchCall = helper.encodeApiCall('api.tx.utility.batchAll', [[registerUnqCall, setUnqPriceCall]]);
+
+        await helper.fastDemocracy.executeProposal('registering UNQ on HydraDx', batchCall);
+      } else {
+        console.log('UNQ is already registered on HydraDx');
+      }
     });
   });
 
@@ -726,8 +772,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with HydraDx', () =
     );
   });
 
-  // TODO
-  itSub.skip('Should connect to HydraDx and send UNQ back', async () => {
+  itSub('Should connect to HydraDx and send UNQ back', async () => {
     await testHelper.sendUnqFromTo(
       'hydraDx',
       'unique',

@@ -225,7 +225,10 @@ export class XcmTestHelper {
         if(sendFrom === 'relay') {
           return Event.XcmPallet.Sent.expect(sendResult).messageId;
         } else {
-          return Event.XcmpQueue.XcmpMessageSent.expect(sendResult).messageHash;
+          // TODO we should always use PolkadotXcm
+          // return Event.XcmpQueue.XcmpMessageSent.expect(sendResult).messageHash;
+
+          return Event.PolkadotXcm.Sent.expect(sendResult).messageId;
         }
       } else if('fastDemocracy' in helper) {
         // Needed to bypass the call filter.
@@ -233,10 +236,18 @@ export class XcmTestHelper {
 
         const [, messageSent] = await Promise.all([
           helper.fastDemocracy.executeProposal(`sending ${sendFrom} -> ${sendTo} via XCM program`, batchCall),
-          helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent),
+          helper.wait.expectEvent(maxWaitBlocks, Event.PolkadotXcm.Sent),
         ]);
 
-        return messageSent.messageHash;
+        // Since we didn't use sudo tx (where we wait for the finalization, so the msg is delivered when the promise if fulfilled)
+        // but used the democracy+scheduler, we need to wait for block finalization manualy.
+        //
+        // To keep it simple, we just wait several blocks here before returning the message hash.
+        //
+        // (This is all horrible, we need to come up with a better way of XCM integration testing)
+        await helper.wait.newBlocks(5);
+
+        return messageSent.messageId;
       } else {
         throw new Error(`unknown governance in ${sendFrom}`);
       }
@@ -362,7 +373,7 @@ export class XcmTestHelper {
           'Unlimited',
         );
 
-        messageHashOrId = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
+        messageHashOrId = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
       } else {
         const destination = from === 'relay'
           ? {V4: {parents: 0, interior: {X1: [{Parachain: mapToChainId(to)}]}}}
@@ -389,11 +400,9 @@ export class XcmTestHelper {
 
       if(from === 'relay') {
         messageHashOrId = Event.XcmPallet.Sent.expect(transferResult).messageId;
-      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub' || to === 'acala' || to === 'polkadotAssetHub') {
-        messageHashOrId = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
       } else {
-        messageHashOrId = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
-      }
+        messageHashOrId = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
+      };
 
       const balanceAfter = await getRandomAccountBalance();
       if(isFromUnique) {
@@ -465,6 +474,11 @@ export class XcmTestHelper {
         const success = processedMsgEvent[3];
         console.log('[%s -> %s] Success status for message %s: %s', from, to, getMessageHash(), success);
       }
+
+      // FIXME For some reason, sometimes, even if the message processed event is found,
+      // the balance isn't immediatly updated. Maybe this is something related to async-backing or finality.
+      // Either way, we wait for several blocks here before reading the balance again.
+      await helper.wait.newBlocks(5);
 
       const balanceAfter = await getRandomAccountBalance();
 
@@ -571,10 +585,8 @@ export class XcmTestHelper {
 
       if(from === 'relay') {
         messageHashOrId = Event.XcmPallet.Sent.expect(transferResult).messageId;
-      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub' || to === 'acala' || to === 'polkadotAssetHub') {
+      } else { 
         messageHashOrId = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
-      } else {
-        messageHashOrId = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
       }
 
       const balanceAfter = await getRandomAccountBalance();
@@ -774,8 +786,8 @@ export class XcmTestHelper {
     };
 
     await Promise.all([
-      sendMaliciousProgram(),
       this.#awaitMaliciousProgramRejection(() => messageHash),
+      sendMaliciousProgram(),
     ]);
 
     await usingPlaygrounds(async (helper) => {
@@ -807,7 +819,6 @@ export class XcmTestHelper {
     };
 
     await Promise.all([
-      sendGoodProgram(),
       this.#awaitTokens({
         from: otherChain,
         to: uniqueChain,
@@ -816,6 +827,7 @@ export class XcmTestHelper {
         getAssetBalanceOnUnique: async (helper) => await helper.balance.getSubstrate(randomAccount!.address),
         getMessageHash: () => messageHash,
       }),
+      sendGoodProgram(),
     ]);
 
     await usingPlaygrounds(async (helper) => {
@@ -855,8 +867,8 @@ export class XcmTestHelper {
     };
 
     await Promise.all([
-      sendMaliciousXcmProgramFullId(),
       this.#awaitMaliciousProgramRejection(() => messageHash),
+      sendMaliciousXcmProgramFullId(),
     ]);
 
     messageHash = null;
@@ -882,8 +894,8 @@ export class XcmTestHelper {
     };
 
     await Promise.all([
-      sendMaliciousXcmProgramHereId(),
       this.#awaitMaliciousProgramRejection(() => messageHash),
+      sendMaliciousXcmProgramHereId(),
     ]);
 
     await usingPlaygrounds(async (helper) => {
@@ -917,8 +929,8 @@ export class XcmTestHelper {
     };
 
     await Promise.all([
-      sendMaliciousProgram(),
       this.#awaitMaliciousProgramRejection(() => messageHash),
+      sendMaliciousProgram(),
     ]);
   }
 }
