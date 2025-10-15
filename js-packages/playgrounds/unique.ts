@@ -195,8 +195,8 @@ class UniqueUtil {
 
   static extractCollectionIdFromCreationResult(creationResult: ITransactionResult): number {
     if(creationResult.status !== this.transactionStatus.SUCCESS) {
-      const status = JSON.stringify((creationResult.result as any).status.toHuman());
-      throw Error(`Unable to create collection! Status: ${status}`);
+      const result = JSON.stringify((creationResult.result as any).toHuman());
+      throw Error(`Unable to create collection! Status: ${result}`);
     }
 
     let collectionId: number | null = null;
