@@ -27,6 +27,6 @@ describe('TxVersion is present', () => {
   });
 
   itSub('Signed extension CheckTxVersion is present', () => {
-    expect(metadata.asLatest.extrinsic.signedExtensions.map(se => se.identifier.toString())).to.include('CheckTxVersion');
+    expect(metadata.asLatest.extrinsic.transactionExtensions.map(se => se.identifier.toString())).to.include('CheckTxVersion');
   });
 });
