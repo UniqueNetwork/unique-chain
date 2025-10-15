@@ -2286,6 +2286,7 @@ export interface PalletForeignAssetsModuleCall extends Enum {
   } & Struct;
   readonly isForceSetForeignAssetConversionCoefficient: boolean;
   readonly asForceSetForeignAssetConversionCoefficient: {
+    readonly versionedAssetId: XcmVersionedAssetId;
     readonly conversionCoefficient: u128;
   } & Struct;
   readonly isAddOracleMember: boolean;

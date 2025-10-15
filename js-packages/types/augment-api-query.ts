@@ -633,7 +633,7 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * The corresponding collections of foreign assets.
        **/
-      foreignAssetConversionCoefficient: AugmentedQuery<ApiType, () => Observable<Option<u128>>, []> & QueryableStorageEntry<ApiType, []>;
+      foreignAssetConversionCoefficient: AugmentedQuery<ApiType, (arg: StagingXcmV5AssetAssetId | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u128>>, [StagingXcmV5AssetAssetId]> & QueryableStorageEntry<ApiType, [StagingXcmV5AssetAssetId]>;
       /**
        * Override the reserve location for the given foreign assets.
        **/

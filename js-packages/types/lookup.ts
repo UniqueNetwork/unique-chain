@@ -3788,6 +3788,7 @@ export default {
         isSuspended: 'bool',
       },
       force_set_foreign_asset_conversion_coefficient: {
+        versionedAssetId: 'XcmVersionedAssetId',
         conversionCoefficient: 'u128',
       },
       add_oracle_member: {
