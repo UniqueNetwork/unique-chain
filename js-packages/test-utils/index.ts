@@ -1251,7 +1251,7 @@ class HydraFastDemocracyGroup {
 
     // It seems sometimes the `propose` above isn't finalized on Hydra when the promise is fulfilled.
     // Waiting here for it to complete.
-    await this.helper.wait.newBlocks(5);
+    await this.helper.wait.newBlocks(10);
 
     const techProposalIdx = await this.helper.collective.techCommittee.proposalCount() - 1;
     await this.helper.collective.techCommittee.vote(aliceAccount, fastTrackHash, techProposalIdx, true);
