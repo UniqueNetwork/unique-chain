@@ -753,6 +753,7 @@ export class XcmTestHelper {
 
     let randomAccount: IKeyringPair;
     let maliciousXcmProgram: any;
+    let goodXcmProgram: any;
     let messageHash: any = null;
 
     await usingPlaygrounds(async (helper) => {
@@ -760,23 +761,29 @@ export class XcmTestHelper {
       await helper.getSudo().balance.setBalanceSubstrate(sudoer, otherChainSovereignAccount, otherChainBalance);
 
       randomAccount = helper.arrange.createEmptyAccount();
+
+      const moreThanOtherChainHas = 2n * otherChainBalance;
+
+      maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+        randomAccount.addressRaw,
+        {
+          parents: 0,
+          interior: 'Here',
+        },
+        moreThanOtherChainHas,
+      );
+
+      goodXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+        randomAccount.addressRaw,
+        {
+          parents: 0,
+          interior: 'Here',
+        },
+        otherChainBalance,
+      );
     });
 
     const sendMaliciousProgram = async () => {
-      // eslint-disable-next-line require-await
-      await usingPlaygrounds((helper) => {
-        const moreThanOtherChainHas = 2n * otherChainBalance;
-
-        maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
-          randomAccount.addressRaw,
-          {
-            parents: 0,
-            interior: 'Here',
-          },
-          moreThanOtherChainHas,
-        );
-      });
-
       messageHash = await this.#sendXcmProgram(
         sudoer,
         otherChain,
@@ -797,24 +804,11 @@ export class XcmTestHelper {
 
     messageHash = null;
     const sendGoodProgram = async () => {
-      // eslint-disable-next-line require-await
-      await usingPlaygrounds((helper) => {
-
-        maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
-          randomAccount.addressRaw,
-          {
-            parents: 0,
-            interior: 'Here',
-          },
-          otherChainBalance,
-        );
-      });
-
       messageHash = await this.#sendXcmProgram(
         sudoer,
         otherChain,
         uniqueChain,
-        maliciousXcmProgram,
+        goodXcmProgram,
       );
     };
 
