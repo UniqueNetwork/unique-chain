@@ -69,6 +69,9 @@ local unique = {
 				'--increase-future-pool',
 				'--pool-type=fork-aware',
 			],
+			extraArgsInternalParent: [
+				'--network-backend=libp2p',
+			],
 		},
 		for name in ['alice', 'bob']
 	},
