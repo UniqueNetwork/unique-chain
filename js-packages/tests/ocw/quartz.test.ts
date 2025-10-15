@@ -85,7 +85,7 @@ describe.ifRunOcw('Paying fee with DOTs', () => {
       [collectionId] = foreignAssetRegisteredEvent?.data || [];
     }
     const coefficient = 2n * tokenNominal;
-    await helper.getSudo().executeExtrinsic(alice, 'api.tx.foreignAssets.forceSetForeignAssetConversionCoefficient', [coefficient]);
+    await helper.getSudo().executeExtrinsic(alice, 'api.tx.foreignAssets.forceSetForeignAssetConversionCoefficient', [{V3: assetId}, coefficient]);
     await helper.getSudo().executeExtrinsic(alice, 'api.tx.testUtils.enable', []);
     await helper.executeExtrinsic(alice, 'api.tx.testUtils.mintForeignAssets', [collectionId, 1_000_000_000_000n]);
 
@@ -123,9 +123,15 @@ describe.ifRunOcw('Paying fee with DOTs', () => {
   });
 
   itSub('should check permissions for setting conversion coefficien', async ({helper}) => {
+    const assetId = {
+      Concrete: {
+        parents: 1,
+        interior: 'here',
+      }
+    };
     const api = helper.getApi();
     const tokenNominal = helper.balance.getOneTokenNominal();
     const coefficient = 2n * tokenNominal;
-    await expect(helper.signTransaction(alice, api.tx.foreignAssets.forceSetForeignAssetConversionCoefficient(coefficient))).to.be.rejected;
+    await expect(helper.signTransaction(alice, api.tx.foreignAssets.forceSetForeignAssetConversionCoefficient({V3: assetId}, coefficient))).to.be.rejected;
   });
 });
