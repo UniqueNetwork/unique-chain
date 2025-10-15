@@ -16,7 +16,6 @@
   "devDependencies": {
     "@polkadot/api": "TODO",
     "@polkadot/types": "TODO",
-    "tsx": "TODO",
     "typescript": "TODO"
   }
 }
