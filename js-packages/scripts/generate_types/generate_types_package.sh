@@ -182,7 +182,7 @@ cat "$gen/package.json"
 echo "overall diff:"
 pushd "$gen"
 git status
-git diff HEAD || true
+#git diff HEAD || true
 popd
 
 # This check is only active if running in interactive terminal
