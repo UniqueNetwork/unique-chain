@@ -5,8 +5,8 @@ name: develop
 # Triger: PR at 'develop' branch with following types of events.
 on:
   pull_request:
-    branches: [ 'develop' ]
-    types: [ opened, reopened, synchronize, ready_for_review, converted_to_draft ]
+    branches: ['develop']
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
 
 #Concurency group for control execution queue over github runners.
 concurrency:
@@ -15,16 +15,15 @@ concurrency:
 
 # List of a jobs included into Workflow.
 jobs:
-
   deno-dev:
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
     uses: ./.github/workflows/deno-dev.yml
-    secrets: inherit    
+    secrets: inherit
 
   unit-test:
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
     uses: ./.github/workflows/unit-test.yml
-    secrets: inherit    
+    secrets: inherit
 
   xcm:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-xcm')
@@ -35,19 +34,19 @@ jobs:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-offchain-worker')
     uses: ./.github/workflows/offchain-worker.yml
     secrets: inherit
-    
+
   collator-selection:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-collator-selection')
     uses: ./.github/workflows/collator-selection.yml
-    secrets: inherit    
+    secrets: inherit
 
   main-process:
-    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-main-process') || contains(github.event.pull_request.labels.*.name, 'CI-main-process'))
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-main-process')
     uses: ./.github/workflows/main-process-update.yml
     secrets: inherit
 
   try-runtime:
-    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-try-runtime') || contains(github.event.pull_request.labels.*.name, 'CI-try-runtime'))
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-try-runtime')
     uses: ./.github/workflows/try-runtime.yml
     secrets: inherit
 
@@ -62,6 +61,6 @@ jobs:
     secrets: inherit
 
   polkadot-types:
-    if: contains(github.event.pull_request.labels.*.name, 'CI-hotfix-types')
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-polkadot-types')
     uses: ./.github/workflows/polkadot-types.yml
     secrets: inherit
