@@ -11,7 +11,8 @@
   },
   "peerDependencies": {
     "@polkadot/api": "TODO",
-    "@polkadot/types": "TODO"
+    "@polkadot/types": "TODO",
+    "@polkadot/types-codec": "TODO"
   },
   "devDependencies": {
     "@polkadot/api": "TODO",

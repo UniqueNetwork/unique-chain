@@ -120,6 +120,7 @@ package_version=${package_version}$last_patch
 echo "New package version: $new_package_version"
 
 pjsapi_ver=^$(cat "$DIR/../../playgrounds/package.json" | jq -r '.dependencies."@polkadot/api"' | sed -e "s/^\^//")
+pjstypecodec_ver=^$(cat "$DIR/../../package.json" | jq -r '.dependencies."@polkadot/types-codec"' | sed -e "s/^\^//")
 ts_ver=^$(cat "$DIR/../../package.json" | jq -r '.devDependencies."typescript"' | sed -e "s/^\^//")
 
 gen=$(mktemp -d)
@@ -139,8 +140,10 @@ cat "$TEMPLATE/package.json" \
 | jq ".version = \"$package_version\"" - \
 | jq ".peerDependencies.\"@polkadot/api\" = \"$pjsapi_ver\"" - \
 | jq ".peerDependencies.\"@polkadot/types\" = \"$pjsapi_ver\"" - \
+| jq ".peerDependencies.\"@polkadot/types-codec\" = \"$pjstypecodec_ver\"" - \
 | jq ".devDependencies.\"@polkadot/api\" = \"$pjsapi_ver\"" - \
 | jq ".devDependencies.\"@polkadot/types\" = \"$pjsapi_ver\"" - \
+| jq ".devDependencies.\"@polkadot/types-codec\" = \"$pjstypecodec_ver\"" - \
 | jq ".devDependencies.\"typescript\" = \"$ts_ver\"" - \
 > "$gen/package.json"
 for file in .gitignore .npmignore README.md tsconfig.json; do
