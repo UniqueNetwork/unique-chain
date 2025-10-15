@@ -82,6 +82,9 @@ local unique = {
 			extraArgs: [
 				'--pool-type=fork-aware',
 			],			
+			extraArgsInternalParent: [
+				'--network-backend=libp2p',
+			],
 		},
 		for name in ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta']
 	},
