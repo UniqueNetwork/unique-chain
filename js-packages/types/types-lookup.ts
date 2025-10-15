@@ -4033,6 +4033,7 @@ declare module '@polkadot/types/lookup' {
     } & Struct;
     readonly isForceSetForeignAssetConversionCoefficient: boolean;
     readonly asForceSetForeignAssetConversionCoefficient: {
+      readonly versionedAssetId: XcmVersionedAssetId;
       readonly conversionCoefficient: u128;
     } & Struct;
     readonly isAddOracleMember: boolean;
