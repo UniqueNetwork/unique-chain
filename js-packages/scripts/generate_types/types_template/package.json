@@ -17,6 +17,7 @@
   "devDependencies": {
     "@polkadot/api": "TODO",
     "@polkadot/types": "TODO",
+    "@polkadot/types-codec": "TODO",
     "typescript": "TODO"
   }
 }
