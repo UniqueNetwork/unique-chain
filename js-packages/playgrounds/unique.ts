@@ -811,6 +811,7 @@ export class ChainHelperBase {
     }
     return result as any;
   }
+
   executeExtrinsicUncheckedWeight<
       E extends string,
       V extends (
@@ -1744,11 +1745,13 @@ class NFTnRFT extends CollectionGroup {
     let retries = 0;
     let creationResult;
     while (true) {
+      console.log(`Calling mintCollection(${JSON.stringify(collectionOptions)})`)
+      const nonce = await this.helper.api!.rpc.system.accountNextIndex(signer.addressRaw);
       creationResult = await this.helper.executeExtrinsic(
         signer,
         'api.tx.unique.createCollectionEx', [collectionOptions],
         true, // errorLabel,
-        { nonce: -1 }
+        { nonce }
       );
       if (creationResult.status  !== this.helper.util.transactionStatus.SUCCESS) {
         if ((creationResult.result as any).status.toHuman() == 'Invalid') {
