@@ -26,7 +26,7 @@ import {AbiCoder, Contract, id} from 'ethers';
 import { NormalizedEvent } from "../../test-utils/eth/types.ts";
 
 const encodeEvent = (api: ApiPromise, pallet: string, palletEvents: string, event: string, fields: any) => {
-  const palletIndex = api.runtimeMetadata.asV15.pallets.find(p => p.name.toString() == pallet)!.index.toNumber();
+  const palletIndex = api.runtimeMetadata.asV16.pallets.find(p => p.name.toString() == pallet)!.index.toNumber();
   const eventMeta = api.events[palletEvents][event].meta;
   const eventIndex = eventMeta.index.toNumber();
   const data = [
