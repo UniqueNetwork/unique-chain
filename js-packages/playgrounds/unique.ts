@@ -1673,11 +1673,12 @@ class NFTnRFT extends CollectionGroup {
    * @example setTokenProperties(aliceKeyring, 10, 5, [{key: "gender", value: "female"}, {key: "age", value: "23"}])
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async setTokenProperties(signer: TSigner, collectionId: number, tokenId: number, properties: IProperty[]): Promise<boolean> {
+  async setTokenProperties(signer: TSigner, collectionId: number, tokenId: number, properties: IProperty[], options: Partial<SignerOptions> | null = null): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setTokenProperties', [collectionId, tokenId, properties],
       true,
+      options,
     );
 
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertySet');
@@ -3281,8 +3282,8 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.burnTokenFrom(signer, this.collectionId, tokenId, fromAddressObj);
   }
 
-  async setTokenProperties(signer: TSigner, tokenId: number, properties: IProperty[]) {
-    return await this.helper.nft.setTokenProperties(signer, this.collectionId, tokenId, properties);
+  async setTokenProperties(signer: TSigner, tokenId: number, properties: IProperty[], options: Partial<SignerOptions> | null = null) {
+    return await this.helper.nft.setTokenProperties(signer, this.collectionId, tokenId, properties, options);
   }
 
   async deleteTokenProperties(signer: TSigner, tokenId: number, propertyKeys: string[]) {
@@ -3386,8 +3387,8 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
     return await this.helper.rft.burnTokenFrom(signer, this.collectionId, tokenId, fromAddressObj, amount);
   }
 
-  async setTokenProperties(signer: TSigner, tokenId: number, properties: IProperty[]) {
-    return await this.helper.rft.setTokenProperties(signer, this.collectionId, tokenId, properties);
+  async setTokenProperties(signer: TSigner, tokenId: number, properties: IProperty[], options: Partial<SignerOptions> | null = null) {
+    return await this.helper.rft.setTokenProperties(signer, this.collectionId, tokenId, properties, options);
   }
 
   async deleteTokenProperties(signer: TSigner, tokenId: number, propertyKeys: string[]) {
@@ -3476,8 +3477,8 @@ export class UniqueBaseToken {
     return await this.collection.getTokenPropertiesConsumedSpace(this.tokenId);
   }
 
-  async setProperties(signer: TSigner, properties: IProperty[]) {
-    return await this.collection.setTokenProperties(signer, this.tokenId, properties);
+  async setProperties(signer: TSigner, properties: IProperty[], options: Partial<SignerOptions> | null = null) {
+    return await this.collection.setTokenProperties(signer, this.tokenId, properties, options);
   }
 
   async deleteProperties(signer: TSigner, propertyKeys: string[]) {

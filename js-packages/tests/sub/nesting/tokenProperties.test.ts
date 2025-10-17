@@ -688,26 +688,34 @@ describe('Negative Integration Test: Token Properties', () => {
     return (await (mode == 'NFT' ? api.query.nonfungible : api.query.refungible).tokenProperties(collectionId, tokenId)).toJSON().consumedSpace;
   }
 
-  async function prepare(token: UniqueNFToken | UniqueRFToken, pieces: bigint): Promise<number> {
+  async function prepare(helper: UniqueHelper, token: UniqueNFToken | UniqueRFToken, pieces: bigint): Promise<number> {
     await token.collection.addAdmin(alice, {Substrate: bob.address});
     await token.transfer(alice, {Substrate: charlie.address}, pieces);
 
     let i = 0;
+    const nonces = {};
+    const txs: Chai.PromisedAssertion[] = [];
     for(const passage of constitution) {
       i++;
       const signer = passage.signers[0];
-      await expect(
-        token.setProperties(signer, [{key: `${i}`, value: 'Serotonin increase'}]),
+      if (Object.hasOwn(nonces, signer.address))
+        nonces[signer.address]++;
+      else
+        nonces[signer.address] = (await helper.api!.rpc.system.accountNextIndex(signer.addressRaw)).toNumber();
+      const nonce = nonces[signer.address];
+      txs.push(expect(
+        token.setProperties(signer, [{key: `${i}`, value: 'Serotonin increase'}], { nonce }),
         `on adding property ${i} by ${signer.address}`,
-      ).to.be.fulfilled;
+      ).to.be.fulfilled);
     }
+    await Promise.all(txs);
 
     const originalSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
     return originalSpace;
   }
 
-  async function testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
-    const originalSpace = await prepare(token, pieces);
+  async function testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(helper: UniqueHelper, token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    const originalSpace = await prepare(helper, token, pieces);
 
     let i = 0;
     for(const forbiddance of constitution) {
@@ -731,16 +739,16 @@ describe('Negative Integration Test: Token Properties', () => {
 
   itSub('Forbids changing/deleting properties of a token if the user is outside of permissions (NFT)', async ({helper}) =>  {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
-    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token, amount);
+    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(helper, token, amount);
   });
 
   itSub.ifWithPallets('Forbids changing/deleting properties of a token if the user is outside of permissions (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
-    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token, amount);
+    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(helper, token, amount);
   });
 
-  async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
-    const originalSpace = await prepare(token, pieces);
+  async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper: UniqueHelper, token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    const originalSpace = await prepare(helper, token, pieces);
 
     let i = 0;
     for(const permission of constitution) {
@@ -764,16 +772,16 @@ describe('Negative Integration Test: Token Properties', () => {
 
   itSub('Forbids changing/deleting properties of a token if the property is permanent (immutable) (NFT)', async ({helper}) =>  {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
-    await testForbidsChangingDeletingPropertiesIfPropertyImmutable(token, amount);
+    await testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper, token, amount);
   });
 
   itSub.ifWithPallets('Forbids changing/deleting properties of a token if the property is permanent (immutable) (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
-    await testForbidsChangingDeletingPropertiesIfPropertyImmutable(token, amount);
+    await testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper, token, amount);
   });
 
-  async function testForbidsAddingPropertiesIfPropertyNotDeclared(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
-    const originalSpace = await prepare(token, pieces);
+  async function testForbidsAddingPropertiesIfPropertyNotDeclared(helper: UniqueHelper, token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    const originalSpace = await prepare(helper, token, pieces);
 
     await expect(
       token.setProperties(alice, [{key: 'non-existent', value: 'I exist!'}]),
@@ -798,16 +806,16 @@ describe('Negative Integration Test: Token Properties', () => {
 
   itSub('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (NFT)', async ({helper}) =>  {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
-    await testForbidsAddingPropertiesIfPropertyNotDeclared(token, amount);
+    await testForbidsAddingPropertiesIfPropertyNotDeclared(helper, token, amount);
   });
 
   itSub.ifWithPallets('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
-    await testForbidsAddingPropertiesIfPropertyNotDeclared(token, amount);
+    await testForbidsAddingPropertiesIfPropertyNotDeclared(helper, token, amount);
   });
 
-  async function testForbidsAddingTooLargeProperties(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
-    const originalSpace = await prepare(token, pieces);
+  async function testForbidsAddingTooLargeProperties(helper: UniqueHelper,token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    const originalSpace = await prepare(helper, token, pieces);
 
     await expect(
       token.collection.setTokenPropertyPermissions(alice, [
@@ -836,12 +844,12 @@ describe('Negative Integration Test: Token Properties', () => {
 
   itSub('Forbids adding too large properties to a token (NFT)', async ({helper}) =>  {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
-    await testForbidsAddingTooLargeProperties(token, amount);
+    await testForbidsAddingTooLargeProperties(helper, token, amount);
   });
 
   itSub.ifWithPallets('Forbids adding too large properties to a token (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
-    await testForbidsAddingTooLargeProperties(token, amount);
+    await testForbidsAddingTooLargeProperties(helper, token, amount);
   });
 
   [
