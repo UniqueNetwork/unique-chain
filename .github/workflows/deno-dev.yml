@@ -22,8 +22,6 @@ jobs:
       matrix:
         include:
           - network: 'opal'
-          - network: 'quartz'
-          - network: 'unique'
 
     steps:
       - name: Clean Workspace

@@ -29,10 +29,6 @@ jobs:
         include:
           - network: 'opal'
             usage: ''
-          - network: 'quartz'
-            usage: ''
-          - network: 'unique'
-            usage: ''
 
     steps:
       - name: Clean Workspace

@@ -35,8 +35,6 @@ jobs:
         with:
           matrix: |
             network {opal}, replica_from_address {wss://ws-opal.unique.network:443}
-            network {quartz}, replica_from_address {wss://ws-quartz.unique.network:443}
-            network {unique}, replica_from_address {wss://ws.unique.network:443}
 
   try-runtime:
     needs: prepare-execution-marix

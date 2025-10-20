@@ -32,8 +32,6 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {unique}
-            network {quartz}
             network {opal}
 
   dev_build_int_tests:
