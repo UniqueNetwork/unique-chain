@@ -6459,33 +6459,27 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletWeightReclaimStorageWeightReclaim (800) */
-  interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[FrameSystemExtensionsCheckSpecVersion, FrameSystemExtensionsCheckTxVersion, FrameSystemExtensionsCheckGenesis, Era, PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
+  interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[FrameSystemExtensionsCheckGenesis, Era, PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
 
-  /** @name FrameSystemExtensionsCheckSpecVersion (802) */
-  type FrameSystemExtensionsCheckSpecVersion = Null;
-
-  /** @name FrameSystemExtensionsCheckTxVersion (803) */
-  type FrameSystemExtensionsCheckTxVersion = Null;
-
-  /** @name FrameSystemExtensionsCheckGenesis (804) */
+  /** @name FrameSystemExtensionsCheckGenesis (802) */
   type FrameSystemExtensionsCheckGenesis = Null;
 
-  /** @name PalletSponsoringCheckNonce (807) */
+  /** @name PalletSponsoringCheckNonce (805) */
   interface PalletSponsoringCheckNonce extends Compact<u32> {}
 
-  /** @name PalletSponsoringChargeAssetTxPayment (808) */
+  /** @name PalletSponsoringChargeAssetTxPayment (806) */
   interface PalletSponsoringChargeAssetTxPayment extends Struct {
     readonly tip: Compact<u128>;
     readonly assetId: Option<StagingXcmV5Location>;
   }
 
-  /** @name OpalRuntimeRuntime (809) */
+  /** @name OpalRuntimeRuntime (807) */
   type OpalRuntimeRuntime = Null;
 
-  /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier (810) */
+  /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier (808) */
   type OpalRuntimeRuntimeCommonFeeCoefficientApplier = Null;
 
-  /** @name PalletEthereumFakeTransactionFinalizer (811) */
+  /** @name PalletEthereumFakeTransactionFinalizer (809) */
   type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module

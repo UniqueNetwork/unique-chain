@@ -164,8 +164,8 @@ where
 			.saturating_sub(30);
 		let tip = 0;
 		let tx_ext: TxExtension = cumulus_pallet_weight_reclaim::StorageWeightReclaim::new((
-			frame_system::CheckSpecVersion::<Runtime>::new(),
-			frame_system::CheckTxVersion::<Runtime>::new(),
+			// frame_system::CheckSpecVersion::<Runtime>::new(),
+			// frame_system::CheckTxVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
 			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
 			pallet_charge_transaction::CheckNonce::<Runtime>::from(nonce),
