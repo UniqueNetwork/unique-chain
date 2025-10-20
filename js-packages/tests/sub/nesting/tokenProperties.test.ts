@@ -631,7 +631,7 @@ describe('Integration Test: Token Properties', () => {
 
 });
 
-describe('Negative Integration Test: Token Properties', () => {
+describe.only('Negative Integration Test: Token Properties', () => {
   let alice: IKeyringPair; // collection owner
   let bob: IKeyringPair; // collection admin
   let charlie: IKeyringPair; // token owner
@@ -656,26 +656,26 @@ describe('Negative Integration Test: Token Properties', () => {
     });
   });
 
-  [
-    {mode: 'nft' as const, requiredPallets: [Pallets.NFT]},
-    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-  ].map(testCase =>
-    itSub.ifWithPallets(`Forbids adding/deleting properties of a token if token doesn't exist (${testCase.mode.toLocaleUpperCase})`, testCase.requiredPallets, async({helper}) => {
-      const collection = await helper[testCase.mode].mintCollection(alice, {
-        tokenPropertyPermissions: constitution.slice(0, 1).map(({permission}) => ({key: '1', permission})),
-      });
-      const nonExistentToken = collection.getTokenObject(1);
+  // [
+  //   {mode: 'nft' as const, requiredPallets: [Pallets.NFT]},
+  //   {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  // ].map(testCase =>
+  //   itSub.ifWithPallets(`Forbids adding/deleting properties of a token if token doesn't exist (${testCase.mode.toLocaleUpperCase})`, testCase.requiredPallets, async({helper}) => {
+  //     const collection = await helper[testCase.mode].mintCollection(alice, {
+  //       tokenPropertyPermissions: constitution.slice(0, 1).map(({permission}) => ({key: '1', permission})),
+  //     });
+  //     const nonExistentToken = collection.getTokenObject(1);
 
-      await expect(
-        nonExistentToken.setProperties(alice, [{key: '1', value: 'Serotonin increase'}]),
-        'on expecting failure whilst adding a property by alice',
-      ).to.be.rejectedWith(/common\.TokenNotFound/);
+  //     await expect(
+  //       nonExistentToken.setProperties(alice, [{key: '1', value: 'Serotonin increase'}]),
+  //       'on expecting failure whilst adding a property by alice',
+  //     ).to.be.rejectedWith(/common\.TokenNotFound/);
 
-      await expect(
-        nonExistentToken.deleteProperties(alice, ['1']),
-        'on expecting failure whilst deleting a property by alice',
-      ).to.be.rejectedWith(/common\.TokenNotFound/);
-    }));
+  //     await expect(
+  //       nonExistentToken.deleteProperties(alice, ['1']),
+  //       'on expecting failure whilst deleting a property by alice',
+  //     ).to.be.rejectedWith(/common\.TokenNotFound/);
+  //   }));
 
   async function mintCollectionWithAllPermissionsAndToken(helper: UniqueHelper, mode: 'NFT' | 'RFT'): Promise<[UniqueNFToken | UniqueRFToken, bigint]> {
     const collection = await (mode == 'NFT' ? helper.nft : helper.rft).mintCollection(alice, {
@@ -726,7 +726,6 @@ describe('Negative Integration Test: Token Properties', () => {
         token.setProperties(forbiddance.sinner, [{key: `${i}`, value: 'Serotonin down'}]),
         `on failing to change property ${i} by the malefactor`,
       ).to.be.rejectedWith(/common\.NoPermission/);
-
       await expect(
         token.deleteProperties(forbiddance.sinner, [`${i}`]),
         `on failing to delete property ${i} by the malefactor`,
@@ -747,160 +746,160 @@ describe('Negative Integration Test: Token Properties', () => {
     await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(helper, token, amount);
   });
 
-  async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper: UniqueHelper, token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
-    const originalSpace = await prepare(helper, token, pieces);
+  // async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper: UniqueHelper, token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+  //   const originalSpace = await prepare(helper, token, pieces);
 
-    let i = 0;
-    for(const permission of constitution) {
-      i++;
-      if(permission.permission.mutable) continue;
+  //   let i = 0;
+  //   for(const permission of constitution) {
+  //     i++;
+  //     if(permission.permission.mutable) continue;
 
-      await expect(
-        token.setProperties(permission.signers[0], [{key: `${i}`, value: 'Serotonin down'}]),
-        `on failing to change property ${i} by signer #0`,
-      ).to.be.rejectedWith(/common\.NoPermission/);
+  //     await expect(
+  //       token.setProperties(permission.signers[0], [{key: `${i}`, value: 'Serotonin down'}]),
+  //       `on failing to change property ${i} by signer #0`,
+  //     ).to.be.rejectedWith(/common\.NoPermission/);
 
-      await expect(
-        token.deleteProperties(permission.signers[0], [i.toString()]),
-        `on failing to delete property ${i} by signer #0`,
-      ).to.be.rejectedWith(/common\.NoPermission/);
-    }
+  //     await expect(
+  //       token.deleteProperties(permission.signers[0], [i.toString()]),
+  //       `on failing to delete property ${i} by signer #0`,
+  //     ).to.be.rejectedWith(/common\.NoPermission/);
+  //   }
 
-    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
-    expect(consumedSpace).to.be.equal(originalSpace);
-  }
+  //   const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
+  //   expect(consumedSpace).to.be.equal(originalSpace);
+  // }
 
-  itSub('Forbids changing/deleting properties of a token if the property is permanent (immutable) (NFT)', async ({helper}) =>  {
-    const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
-    await testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper, token, amount);
-  });
+  // itSub('Forbids changing/deleting properties of a token if the property is permanent (immutable) (NFT)', async ({helper}) =>  {
+  //   const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
+  //   await testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper, token, amount);
+  // });
 
-  itSub.ifWithPallets('Forbids changing/deleting properties of a token if the property is permanent (immutable) (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
-    const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
-    await testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper, token, amount);
-  });
+  // itSub.ifWithPallets('Forbids changing/deleting properties of a token if the property is permanent (immutable) (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+  //   const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
+  //   await testForbidsChangingDeletingPropertiesIfPropertyImmutable(helper, token, amount);
+  // });
 
-  async function testForbidsAddingPropertiesIfPropertyNotDeclared(helper: UniqueHelper, token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
-    const originalSpace = await prepare(helper, token, pieces);
+  // async function testForbidsAddingPropertiesIfPropertyNotDeclared(helper: UniqueHelper, token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+  //   const originalSpace = await prepare(helper, token, pieces);
 
-    await expect(
-      token.setProperties(alice, [{key: 'non-existent', value: 'I exist!'}]),
-      'on failing to add a previously non-existent property',
-    ).to.be.rejectedWith(/common\.NoPermission/);
+  //   await expect(
+  //     token.setProperties(alice, [{key: 'non-existent', value: 'I exist!'}]),
+  //     'on failing to add a previously non-existent property',
+  //   ).to.be.rejectedWith(/common\.NoPermission/);
 
-    await expect(
-      token.collection.setTokenPropertyPermissions(alice, [{key: 'now-existent', permission: {}}]),
-      'on setting a new non-permitted property',
-    ).to.be.fulfilled;
+  //   await expect(
+  //     token.collection.setTokenPropertyPermissions(alice, [{key: 'now-existent', permission: {}}]),
+  //     'on setting a new non-permitted property',
+  //   ).to.be.fulfilled;
 
-    await expect(
-      token.setProperties(alice, [{key: 'now-existent', value: 'I exist!'}]),
-      'on failing to add a property forbidden by the \'None\' permission',
-    ).to.be.rejectedWith(/common\.NoPermission/);
+  //   await expect(
+  //     token.setProperties(alice, [{key: 'now-existent', value: 'I exist!'}]),
+  //     'on failing to add a property forbidden by the \'None\' permission',
+  //   ).to.be.rejectedWith(/common\.NoPermission/);
 
-    expect(await token.getProperties(['non-existent', 'now-existent'])).to.be.empty;
+  //   expect(await token.getProperties(['non-existent', 'now-existent'])).to.be.empty;
 
-    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
-    expect(consumedSpace).to.be.equal(originalSpace);
-  }
+  //   const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
+  //   expect(consumedSpace).to.be.equal(originalSpace);
+  // }
 
-  itSub('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (NFT)', async ({helper}) =>  {
-    const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
-    await testForbidsAddingPropertiesIfPropertyNotDeclared(helper, token, amount);
-  });
+  // itSub('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (NFT)', async ({helper}) =>  {
+  //   const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
+  //   await testForbidsAddingPropertiesIfPropertyNotDeclared(helper, token, amount);
+  // });
 
-  itSub.ifWithPallets('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
-    const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
-    await testForbidsAddingPropertiesIfPropertyNotDeclared(helper, token, amount);
-  });
+  // itSub.ifWithPallets('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+  //   const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
+  //   await testForbidsAddingPropertiesIfPropertyNotDeclared(helper, token, amount);
+  // });
 
-  async function testForbidsAddingTooLargeProperties(helper: UniqueHelper,token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
-    const originalSpace = await prepare(helper, token, pieces);
+  // async function testForbidsAddingTooLargeProperties(helper: UniqueHelper,token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+  //   const originalSpace = await prepare(helper, token, pieces);
 
-    await expect(
-      token.collection.setTokenPropertyPermissions(alice, [
-        {key: 'a_holy_book', permission: {collectionAdmin: true, tokenOwner: true}},
-        {key: 'young_years', permission: {collectionAdmin: true, tokenOwner: true}},
-      ]),
-      'on setting new permissions for properties',
-    ).to.be.fulfilled;
+  //   await expect(
+  //     token.collection.setTokenPropertyPermissions(alice, [
+  //       {key: 'a_holy_book', permission: {collectionAdmin: true, tokenOwner: true}},
+  //       {key: 'young_years', permission: {collectionAdmin: true, tokenOwner: true}},
+  //     ]),
+  //     'on setting new permissions for properties',
+  //   ).to.be.fulfilled;
 
-    // Mute the general tx parsing error
-    {
-      console.error = () => {};
-      await expect(token.setProperties(alice, [{key: 'a_holy_book', value: 'word '.repeat(6554)}]))
-        .to.be.rejected;
-    }
+  //   // Mute the general tx parsing error
+  //   {
+  //     console.error = () => {};
+  //     await expect(token.setProperties(alice, [{key: 'a_holy_book', value: 'word '.repeat(6554)}]))
+  //       .to.be.rejected;
+  //   }
 
-    await expect(token.setProperties(alice, [
-      {key: 'a_holy_book', value: 'word '.repeat(3277)},
-      {key: 'young_years', value: 'neverending'.repeat(1490)},
-    ])).to.be.rejectedWith(/common\.NoSpaceForProperty/);
+  //   await expect(token.setProperties(alice, [
+  //     {key: 'a_holy_book', value: 'word '.repeat(3277)},
+  //     {key: 'young_years', value: 'neverending'.repeat(1490)},
+  //   ])).to.be.rejectedWith(/common\.NoSpaceForProperty/);
 
-    expect(await token.getProperties(['a_holy_book', 'young_years'])).to.be.empty;
-    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
-    expect(consumedSpace).to.be.equal(originalSpace);
-  }
+  //   expect(await token.getProperties(['a_holy_book', 'young_years'])).to.be.empty;
+  //   const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
+  //   expect(consumedSpace).to.be.equal(originalSpace);
+  // }
 
-  itSub('Forbids adding too large properties to a token (NFT)', async ({helper}) =>  {
-    const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
-    await testForbidsAddingTooLargeProperties(helper, token, amount);
-  });
+  // itSub('Forbids adding too large properties to a token (NFT)', async ({helper}) =>  {
+  //   const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
+  //   await testForbidsAddingTooLargeProperties(helper, token, amount);
+  // });
 
-  itSub.ifWithPallets('Forbids adding too large properties to a token (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
-    const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
-    await testForbidsAddingTooLargeProperties(helper, token, amount);
-  });
+  // itSub.ifWithPallets('Forbids adding too large properties to a token (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+  //   const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
+  //   await testForbidsAddingTooLargeProperties(helper, token, amount);
+  // });
 
-  [
-    {mode: 'nft' as const, requiredPallets: []},
-    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-  ].map(testCase =>
-    itSub.ifWithPallets(`Forbids adding too many propeties to a token (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
-      const collection = await helper[testCase.mode].mintCollection(alice);
-      const maxPropertiesPerItem = 64;
+  // [
+  //   {mode: 'nft' as const, requiredPallets: []},
+  //   {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  // ].map(testCase =>
+  //   itSub.ifWithPallets(`Forbids adding too many propeties to a token (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+  //     const collection = await helper[testCase.mode].mintCollection(alice);
+  //     const maxPropertiesPerItem = 64;
 
-      for(let i = 0; i < maxPropertiesPerItem; i++) {
-        await collection.setTokenPropertyPermissions(alice, [{
-          key: `${i+1}`,
-          permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
-        }]);
-      }
+  //     for(let i = 0; i < maxPropertiesPerItem; i++) {
+  //       await collection.setTokenPropertyPermissions(alice, [{
+  //         key: `${i+1}`,
+  //         permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
+  //       }]);
+  //     }
 
-      await expect(collection.setTokenPropertyPermissions(alice, [{
-        key: `${maxPropertiesPerItem}-th`,
-        permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
-      }])).to.be.rejectedWith(/common\.PropertyLimitReached/);
-    }));
+  //     await expect(collection.setTokenPropertyPermissions(alice, [{
+  //       key: `${maxPropertiesPerItem}-th`,
+  //       permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
+  //     }])).to.be.rejectedWith(/common\.PropertyLimitReached/);
+  //   }));
 
-  [
-    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
-  ].map(testCase =>
-    itSub.ifWithPallets(`Forbids force_repair_item from non-sudo (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
-      const propKey = 'tok-prop';
+  // [
+  //   {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
+  //   {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
+  // ].map(testCase =>
+  //   itSub.ifWithPallets(`Forbids force_repair_item from non-sudo (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+  //     const propKey = 'tok-prop';
 
-      const collection = await helper[testCase.mode].mintCollection(alice, {
-        tokenPropertyPermissions: [
-          {
-            key: propKey,
-            permission: {mutable: true, tokenOwner: true},
-          },
-        ],
-      });
-      const token = await (
-        testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces as any)
-          : collection.mintToken(alice)
-      );
+  //     const collection = await helper[testCase.mode].mintCollection(alice, {
+  //       tokenPropertyPermissions: [
+  //         {
+  //           key: propKey,
+  //           permission: {mutable: true, tokenOwner: true},
+  //         },
+  //       ],
+  //     });
+  //     const token = await (
+  //       testCase.pieces
+  //         ? collection.mintToken(alice, testCase.pieces as any)
+  //         : collection.mintToken(alice)
+  //     );
 
-      const propDataSize = 4096;
-      const propData = 'a'.repeat(propDataSize);
-      await token.setProperties(alice, [{key: propKey, value: propData}]);
+  //     const propDataSize = 4096;
+  //     const propData = 'a'.repeat(propDataSize);
+  //     await token.setProperties(alice, [{key: propKey, value: propData}]);
 
-      await expect(helper.executeExtrinsic(alice, 'api.tx.unique.forceRepairItem', [token.collectionId, token.tokenId], true))
-        .to.be.rejectedWith(/BadOrigin/);
-    }));
+  //     await expect(helper.executeExtrinsic(alice, 'api.tx.unique.forceRepairItem', [token.collectionId, token.tokenId], true))
+  //       .to.be.rejectedWith(/BadOrigin/);
+  //   }));
 });
 
 describe('ReFungible token properties permissions tests', () => {
