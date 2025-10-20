@@ -30,6 +30,11 @@ local relay = {
 							scheduler_params+: {
 								lookahead: 3,
 							},
+							executor_params: [
+                                { MaxMemoryPages: 8192 },
+                                { PvfExecTimeout: [ "Backing", 2500 ] },
+                                { PvfExecTimeout: [ "Approval", 15000 ] }
+                            ],							
 						},
 					},
 				},
@@ -89,14 +94,20 @@ local unique = {
 				'--increase-future-pool',
 				'--pool-type=fork-aware',
 			],
+			extraArgsInternalParent: [
+				'--network-backend=libp2p',
+			],			
 		},
 		for name in ['alice', 'bob', 'charlie']
 	},
 };
 
-relay + {
+ops.mixinExtraNodeArgsAllChains(relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique]
+		for para in [
+			unique
+		]
 	},
-}
+}, ['-lxcm=trace'])
+

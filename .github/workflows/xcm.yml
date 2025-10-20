@@ -263,6 +263,21 @@ jobs:
           NOW=$(date +%s) && deno task ${{ matrix.runtest }}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Echo containers logs
+        if: always() # run this step always
+        run: |
+          mkdir -p ${{ steps.bdk.outputs.composeProject }}/logs
+          for i in `docker ps -a --format {{.Names}} | grep baedeker`; do docker logs $i >& ${{ steps.bdk.outputs.composeProject }}/logs/$i.log; done
+
+      - name: Upload containers logs
+        uses: actions/upload-artifact@v4
+        if: always() # run this step always
+        with:
+          name: ${{ matrix.network }}-xcm-baedeker-logs
+          path: ${{ steps.bdk.outputs.composeProject }}/logs
+          retention-days: 7
+          compression-level: 9
 #      - name: Remove all containers
 #        if: always() # run this step always
 #        run: |
