@@ -187,7 +187,7 @@ export interface CumulusPalletParachainSystemUnincludedSegmentUsedBandwidth exte
 }
 
 /** @name CumulusPalletWeightReclaimStorageWeightReclaim */
-export interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[FrameSystemExtensionsCheckGenesis, Era, PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
+export interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[Era, PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
 
 /** @name CumulusPalletXcmCall */
 export interface CumulusPalletXcmCall extends Null {}
@@ -723,9 +723,6 @@ export interface FrameSystemEventRecord extends Struct {
   readonly event: Event;
   readonly topics: Vec<H256>;
 }
-
-/** @name FrameSystemExtensionsCheckGenesis */
-export interface FrameSystemExtensionsCheckGenesis extends Null {}
 
 /** @name FrameSystemLastRuntimeUpgradeInfo */
 export interface FrameSystemLastRuntimeUpgradeInfo extends Struct {

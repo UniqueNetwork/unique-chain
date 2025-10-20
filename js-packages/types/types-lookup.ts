@@ -6459,27 +6459,24 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletWeightReclaimStorageWeightReclaim (800) */
-  interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[FrameSystemExtensionsCheckGenesis, Era, PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
+  interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[Era, PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
 
-  /** @name FrameSystemExtensionsCheckGenesis (802) */
-  type FrameSystemExtensionsCheckGenesis = Null;
-
-  /** @name PalletSponsoringCheckNonce (805) */
+  /** @name PalletSponsoringCheckNonce (804) */
   interface PalletSponsoringCheckNonce extends Compact<u32> {}
 
-  /** @name PalletSponsoringChargeAssetTxPayment (806) */
+  /** @name PalletSponsoringChargeAssetTxPayment (805) */
   interface PalletSponsoringChargeAssetTxPayment extends Struct {
     readonly tip: Compact<u128>;
     readonly assetId: Option<StagingXcmV5Location>;
   }
 
-  /** @name OpalRuntimeRuntime (807) */
+  /** @name OpalRuntimeRuntime (806) */
   type OpalRuntimeRuntime = Null;
 
-  /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier (808) */
+  /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier (807) */
   type OpalRuntimeRuntimeCommonFeeCoefficientApplier = Null;
 
-  /** @name PalletEthereumFakeTransactionFinalizer (809) */
+  /** @name PalletEthereumFakeTransactionFinalizer (808) */
   type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module
