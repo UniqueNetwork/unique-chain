@@ -164,20 +164,20 @@ where
 			.saturating_sub(30);
 		let tip = 0;
 		let tx_ext: TxExtension = cumulus_pallet_weight_reclaim::StorageWeightReclaim::new((
-			frame_system::CheckSpecVersion::<Runtime>::new(),
-			frame_system::CheckTxVersion::<Runtime>::new(),
-			frame_system::CheckGenesis::<Runtime>::new(),
-			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
+			// frame_system::CheckSpecVersion::<Runtime>::new(),
+			// frame_system::CheckTxVersion::<Runtime>::new(),
+			// frame_system::CheckGenesis::<Runtime>::new(),
+			// frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
 			pallet_charge_transaction::CheckNonce::<Runtime>::from(nonce),
-			frame_system::CheckWeight::<Runtime>::new(),
-			maintenance::CheckMaintenance,
-			identity::DisableIdentityCalls,
+			// frame_system::CheckWeight::<Runtime>::new(),
+			// maintenance::CheckMaintenance,
+			// identity::DisableIdentityCalls,
 			pallet_charge_transaction::ChargeAssetTxPayment::<Runtime, FeeCoefficientApplier>::new(
 				tip, None,
 			),
 			//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 			pallet_ethereum::FakeTransactionFinalizer::<Runtime>::new(),
-			frame_metadata_hash_extension::CheckMetadataHash::<Runtime>::new(false),
+			// frame_metadata_hash_extension::CheckMetadataHash::<Runtime>::new(false),
 		));
 		let raw_payload = generic::SignedPayload::new(call, tx_ext)
 			.map_err(|e| {

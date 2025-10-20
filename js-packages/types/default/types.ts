@@ -5,7 +5,6 @@ import type { Data } from '@polkadot/types';
 import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, i64, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { Vote } from '@polkadot/types/interfaces/elections';
-import type { Era } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
@@ -187,7 +186,7 @@ export interface CumulusPalletParachainSystemUnincludedSegmentUsedBandwidth exte
 }
 
 /** @name CumulusPalletWeightReclaimStorageWeightReclaim */
-export interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[FrameSystemExtensionsCheckSpecVersion, FrameSystemExtensionsCheckTxVersion, FrameSystemExtensionsCheckGenesis, Era, PalletSponsoringCheckNonce, FrameSystemExtensionsCheckWeight, OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance, OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer, FrameMetadataHashExtensionCheckMetadataHash]> {}
+export interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
 
 /** @name CumulusPalletXcmCall */
 export interface CumulusPalletXcmCall extends Null {}
@@ -491,18 +490,6 @@ export interface FpRpcTransactionStatus extends Struct {
   readonly logsBloom: EthbloomBloom;
 }
 
-/** @name FrameMetadataHashExtensionCheckMetadataHash */
-export interface FrameMetadataHashExtensionCheckMetadataHash extends Struct {
-  readonly mode: FrameMetadataHashExtensionMode;
-}
-
-/** @name FrameMetadataHashExtensionMode */
-export interface FrameMetadataHashExtensionMode extends Enum {
-  readonly isDisabled: boolean;
-  readonly isEnabled: boolean;
-  readonly type: 'Disabled' | 'Enabled';
-}
-
 /** @name FrameSupportDispatchDispatchClass */
 export interface FrameSupportDispatchDispatchClass extends Enum {
   readonly isNormal: boolean;
@@ -736,18 +723,6 @@ export interface FrameSystemEventRecord extends Struct {
   readonly topics: Vec<H256>;
 }
 
-/** @name FrameSystemExtensionsCheckGenesis */
-export interface FrameSystemExtensionsCheckGenesis extends Null {}
-
-/** @name FrameSystemExtensionsCheckSpecVersion */
-export interface FrameSystemExtensionsCheckSpecVersion extends Null {}
-
-/** @name FrameSystemExtensionsCheckTxVersion */
-export interface FrameSystemExtensionsCheckTxVersion extends Null {}
-
-/** @name FrameSystemExtensionsCheckWeight */
-export interface FrameSystemExtensionsCheckWeight extends Null {}
-
 /** @name FrameSystemLastRuntimeUpgradeInfo */
 export interface FrameSystemLastRuntimeUpgradeInfo extends Struct {
   readonly specVersion: Compact<u32>;
@@ -809,12 +784,6 @@ export interface OpalRuntimeRuntime extends Null {}
 
 /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier */
 export interface OpalRuntimeRuntimeCommonFeeCoefficientApplier extends Null {}
-
-/** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
-export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
-
-/** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
-export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
 
 /** @name OpalRuntimeRuntimeCommonSessionKeys */
 export interface OpalRuntimeRuntimeCommonSessionKeys extends Struct {
@@ -3416,9 +3385,6 @@ export interface PalletSponsoringChargeAssetTxPayment extends Struct {
   readonly tip: Compact<u128>;
   readonly assetId: Option<StagingXcmV5Location>;
 }
-
-/** @name PalletSponsoringCheckNonce */
-export interface PalletSponsoringCheckNonce extends Compact<u32> {}
 
 /** @name PalletSponsoringEvent */
 export interface PalletSponsoringEvent extends Enum {
