@@ -9,7 +9,6 @@ import type { Data } from '@polkadot/types';
 import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Set, Struct, Text, U256, U8aFixed, Vec, bool, i64, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { Vote } from '@polkadot/types/interfaces/elections';
-import type { Era } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
@@ -6459,24 +6458,24 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletWeightReclaimStorageWeightReclaim (800) */
-  interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[Era, PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
+  interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
 
-  /** @name PalletSponsoringCheckNonce (804) */
+  /** @name PalletSponsoringCheckNonce (802) */
   interface PalletSponsoringCheckNonce extends Compact<u32> {}
 
-  /** @name PalletSponsoringChargeAssetTxPayment (805) */
+  /** @name PalletSponsoringChargeAssetTxPayment (803) */
   interface PalletSponsoringChargeAssetTxPayment extends Struct {
     readonly tip: Compact<u128>;
     readonly assetId: Option<StagingXcmV5Location>;
   }
 
-  /** @name OpalRuntimeRuntime (806) */
+  /** @name OpalRuntimeRuntime (804) */
   type OpalRuntimeRuntime = Null;
 
-  /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier (807) */
+  /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier (805) */
   type OpalRuntimeRuntimeCommonFeeCoefficientApplier = Null;
 
-  /** @name PalletEthereumFakeTransactionFinalizer (808) */
+  /** @name PalletEthereumFakeTransactionFinalizer (806) */
   type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module
