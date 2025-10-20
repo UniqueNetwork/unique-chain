@@ -5988,28 +5988,64 @@ export default {
   /**
    * Lookup800: cumulus_pallet_weight_reclaim::StorageWeightReclaim<T, S>
    **/
-  CumulusPalletWeightReclaimStorageWeightReclaim: '(PalletSponsoringCheckNonce,PalletSponsoringChargeAssetTxPayment,PalletEthereumFakeTransactionFinalizer)',
+  CumulusPalletWeightReclaimStorageWeightReclaim: '(FrameSystemExtensionsCheckSpecVersion,FrameSystemExtensionsCheckTxVersion,FrameSystemExtensionsCheckGenesis,PalletSponsoringCheckNonce,FrameSystemExtensionsCheckWeight,OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance,OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls,PalletSponsoringChargeAssetTxPayment,PalletEthereumFakeTransactionFinalizer,FrameMetadataHashExtensionCheckMetadataHash)',
   /**
-   * Lookup802: pallet_sponsoring::CheckNonce<T>
+   * Lookup802: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   **/
+  FrameSystemExtensionsCheckSpecVersion: 'Null',
+  /**
+   * Lookup803: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+   **/
+  FrameSystemExtensionsCheckTxVersion: 'Null',
+  /**
+   * Lookup804: frame_system::extensions::check_genesis::CheckGenesis<T>
+   **/
+  FrameSystemExtensionsCheckGenesis: 'Null',
+  /**
+   * Lookup805: pallet_sponsoring::CheckNonce<T>
    **/
   PalletSponsoringCheckNonce: 'Compact<u32>',
   /**
-   * Lookup803: pallet_sponsoring::ChargeAssetTxPayment<opal_runtime::Runtime, opal_runtime::runtime_common::FeeCoefficientApplier>
+   * Lookup806: frame_system::extensions::check_weight::CheckWeight<T>
+   **/
+  FrameSystemExtensionsCheckWeight: 'Null',
+  /**
+   * Lookup807: opal_runtime::runtime_common::maintenance::CheckMaintenance
+   **/
+  OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
+  /**
+   * Lookup808: opal_runtime::runtime_common::identity::DisableIdentityCalls
+   **/
+  OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls: 'Null',
+  /**
+   * Lookup809: pallet_sponsoring::ChargeAssetTxPayment<opal_runtime::Runtime, opal_runtime::runtime_common::FeeCoefficientApplier>
    **/
   PalletSponsoringChargeAssetTxPayment: {
     tip: 'Compact<u128>',
     assetId: 'Option<StagingXcmV5Location>'
   },
   /**
-   * Lookup804: opal_runtime::Runtime
+   * Lookup810: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
-   * Lookup805: opal_runtime::runtime_common::FeeCoefficientApplier
+   * Lookup811: opal_runtime::runtime_common::FeeCoefficientApplier
    **/
   OpalRuntimeRuntimeCommonFeeCoefficientApplier: 'Null',
   /**
-   * Lookup806: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+   * Lookup812: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
    **/
-  PalletEthereumFakeTransactionFinalizer: 'Null'
+  PalletEthereumFakeTransactionFinalizer: 'Null',
+  /**
+   * Lookup813: frame_metadata_hash_extension::CheckMetadataHash<T>
+   **/
+  FrameMetadataHashExtensionCheckMetadataHash: {
+    mode: 'FrameMetadataHashExtensionMode'
+  },
+  /**
+   * Lookup814: frame_metadata_hash_extension::Mode
+   **/
+  FrameMetadataHashExtensionMode: {
+    _enum: ['Disabled', 'Enabled']
+  }
 };

@@ -186,7 +186,7 @@ export interface CumulusPalletParachainSystemUnincludedSegmentUsedBandwidth exte
 }
 
 /** @name CumulusPalletWeightReclaimStorageWeightReclaim */
-export interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[PalletSponsoringCheckNonce, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer]> {}
+export interface CumulusPalletWeightReclaimStorageWeightReclaim extends ITuple<[FrameSystemExtensionsCheckSpecVersion, FrameSystemExtensionsCheckTxVersion, FrameSystemExtensionsCheckGenesis, PalletSponsoringCheckNonce, FrameSystemExtensionsCheckWeight, OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance, OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls, PalletSponsoringChargeAssetTxPayment, PalletEthereumFakeTransactionFinalizer, FrameMetadataHashExtensionCheckMetadataHash]> {}
 
 /** @name CumulusPalletXcmCall */
 export interface CumulusPalletXcmCall extends Null {}
@@ -490,6 +490,18 @@ export interface FpRpcTransactionStatus extends Struct {
   readonly logsBloom: EthbloomBloom;
 }
 
+/** @name FrameMetadataHashExtensionCheckMetadataHash */
+export interface FrameMetadataHashExtensionCheckMetadataHash extends Struct {
+  readonly mode: FrameMetadataHashExtensionMode;
+}
+
+/** @name FrameMetadataHashExtensionMode */
+export interface FrameMetadataHashExtensionMode extends Enum {
+  readonly isDisabled: boolean;
+  readonly isEnabled: boolean;
+  readonly type: 'Disabled' | 'Enabled';
+}
+
 /** @name FrameSupportDispatchDispatchClass */
 export interface FrameSupportDispatchDispatchClass extends Enum {
   readonly isNormal: boolean;
@@ -723,6 +735,18 @@ export interface FrameSystemEventRecord extends Struct {
   readonly topics: Vec<H256>;
 }
 
+/** @name FrameSystemExtensionsCheckGenesis */
+export interface FrameSystemExtensionsCheckGenesis extends Null {}
+
+/** @name FrameSystemExtensionsCheckSpecVersion */
+export interface FrameSystemExtensionsCheckSpecVersion extends Null {}
+
+/** @name FrameSystemExtensionsCheckTxVersion */
+export interface FrameSystemExtensionsCheckTxVersion extends Null {}
+
+/** @name FrameSystemExtensionsCheckWeight */
+export interface FrameSystemExtensionsCheckWeight extends Null {}
+
 /** @name FrameSystemLastRuntimeUpgradeInfo */
 export interface FrameSystemLastRuntimeUpgradeInfo extends Struct {
   readonly specVersion: Compact<u32>;
@@ -784,6 +808,12 @@ export interface OpalRuntimeRuntime extends Null {}
 
 /** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier */
 export interface OpalRuntimeRuntimeCommonFeeCoefficientApplier extends Null {}
+
+/** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
+export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
+
+/** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
+export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
 
 /** @name OpalRuntimeRuntimeCommonSessionKeys */
 export interface OpalRuntimeRuntimeCommonSessionKeys extends Struct {
