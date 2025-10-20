@@ -1,6 +1,7 @@
 local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 rm = import 'baedeker-library/mixin/raw-spec.libsonnet',
+ops = import 'baedeker-library/ops/common-args.libsonnet',
 ;
 
 function(relay_spec, forked_spec, dump_spec, token_symbol)
