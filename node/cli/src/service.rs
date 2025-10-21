@@ -34,7 +34,6 @@ use cumulus_client_consensus_aura::collators::lookahead::{
 	run as run_aura, Params as BuildAuraConsensusParams,
 };
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
-use cumulus_client_consensus_proposer::Proposer;
 use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
 	CollatorSybilResistance, DARecoveryProfile, StartRelayChainTasksParams,
@@ -797,14 +796,13 @@ where
 		announce_block,
 	} = parameters;
 
-	let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+	let proposer = sc_basic_authorship::ProposerFactory::with_proof_recording(
 		task_manager.spawn_handle(),
 		client.clone(),
 		transaction_pool,
 		prometheus_registry,
 		telemetry,
 	);
-	let proposer = Proposer::new(proposer_factory);
 
 	let collator_service = CollatorService::new(
 		client.clone(),
