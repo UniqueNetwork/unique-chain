@@ -42,7 +42,6 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type XcmpMessageHandler = XcmpQueue;
 	type CheckAssociatedRelayNumber = pallet_configuration::CheckAssociatedRelayNumber<Self>;
 	type ConsensusHook = ConsensusHookWrapper;
-	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
 	type RelayParentOffset = ConstU32<0>;
 }
 
