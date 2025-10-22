@@ -1746,8 +1746,8 @@ class NFTnRFT extends CollectionGroup {
     let retries = 0;
     let creationResult;
     while (true) {
+      console.log(`Calling mintCollection(${JSON.stringify(collectionOptions)})`)
       const nonce = await this.helper.api!.rpc.system.accountNextIndex(signer.addressRaw);
-      console.log(`Calling mintCollection(${JSON.stringify(collectionOptions)}), nonce ${nonce}`);
       creationResult = await this.helper.executeExtrinsic(
         signer,
         'api.tx.unique.createCollectionEx', [collectionOptions],
