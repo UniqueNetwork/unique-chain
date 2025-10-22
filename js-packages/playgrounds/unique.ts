@@ -1741,27 +1741,11 @@ class NFTnRFT extends CollectionGroup {
     }
     collectionOptions.flags = [flags];
 
-    // Workaround for "Invalid" error that appears for unknown reason
-    let retries = 0;
-    let creationResult;
-    while (true) {
-      creationResult = await this.helper.executeExtrinsic(
-        signer,
-        'api.tx.unique.createCollectionEx', [collectionOptions],
-        true, // errorLabel,
-        { nonce: -1 }
-      );
-      if (creationResult.status  !== this.helper.util.transactionStatus.SUCCESS) {
-        if ((creationResult.result as any).status.toHuman() == 'Invalid') {
-          if (retries >= 3)
-            break;
-          retries++;
-          console.log(`Retrying mintCollection. Attempt ${retries}. Result: ${JSON.stringify((creationResult.result as any).toHuman())}`);
-          continue;
-        }
-      }
-      break;
-    }
+    const creationResult = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.createCollectionEx', [collectionOptions],
+      true, // errorLabel,
+    );
     return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult));
   }
 
