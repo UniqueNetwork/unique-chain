@@ -403,7 +403,7 @@ describe('Sponsoring EVM contracts', () => {
     await (await helpers.toggleAllowed.send(flipperAddress, caller, true)).wait(...waitParams);
 
     await (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Allowlisted)).wait(...waitParams);
-    await (await helpers.setSponsoringRateLimit.send(flipperAddress, 10)).wait(...waitParams);
+    await (await helpers.setSponsoringRateLimit.send(flipperAddress, 20)).wait(...waitParams);
 
     await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
     await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
