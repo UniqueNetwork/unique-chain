@@ -464,15 +464,15 @@ describe('Refungible: Plain calls', () => {
 
     {
       const tokenEvents: NormalizedEvent[] = [];
-      tokenContract.on('Transfer', (...args) => {
+      await tokenContract.on('Transfer', (...args) => {
         const eventPayload = args.at(-1);
         const event = helper.eth.rebuildLog(eventPayload.log);
         if (event)
           tokenEvents.push(event);
       });
       const result = await (await contract.transferFrom.send(caller, receiver, tokenId)).wait(...waitParams);
-      if(tokenEvents.length == 0) await helper.wait.newBlocks(1);
-      tokenContract.off('Transfer');
+      if(tokenEvents.length == 0) await helper.wait.newBlocks(8);
+      await tokenContract.off('Transfer');
 
       expect(tokenEvents[0]).to.be.deep.equal({
         address: tokenAddress,
@@ -733,7 +733,7 @@ describe('Refungible: Plain calls', () => {
     await (await tokenContract.transfer.send(receiver, 1)).wait(...waitParams);
 
     const events: NormalizedEvent[] = [];
-    contract.on('Transfer', (...args) => {
+    await contract.on('Transfer', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -741,8 +741,8 @@ describe('Refungible: Plain calls', () => {
     });
 
     await (await tokenContract.transfer.send(receiver, 1)).wait(...waitParams);
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    contract.off('Transfer');
+    if(events.length == 0) await helper.wait.newBlocks(8);
+    await contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
       address: collectionAddress,
@@ -769,7 +769,7 @@ describe('Refungible: Plain calls', () => {
     await (await tokenContract.repartition.send(2)).wait(...waitParams);
 
     const events: NormalizedEvent[] = [];
-    contract.on('Transfer', (...args) => {
+    await contract.on('Transfer', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -777,8 +777,8 @@ describe('Refungible: Plain calls', () => {
     });
 
     await (await tokenContract.transfer.send(receiver, 1)).wait(...waitParams);
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    contract.off('Transfer');
+    if(events.length == 0) await helper.wait.newBlocks(8);
+    await contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
       address: collectionAddress,

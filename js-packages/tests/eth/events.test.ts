@@ -80,7 +80,7 @@ async function testCollectionPropertySetAndDeleted(helper: EthUniqueHelper, mode
 
   const ethEvents: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  collectionHelper.on('CollectionChanged', (collectionId) => {
+  await collectionHelper.on('CollectionChanged', (collectionId) => {
     ethEvents.push({args: {collectionId}});
   });
 
@@ -123,7 +123,7 @@ async function testPropertyPermissionSet(helper: EthUniqueHelper, mode: TCollect
 
   const ethEvents: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  collectionHelper.on('CollectionChanged', (collectionId) => {
+  await collectionHelper.on('CollectionChanged', (collectionId) => {
     ethEvents.push({args: {collectionId}});
   });
 
@@ -162,7 +162,7 @@ async function testAllowListAddressAddedAndRemoved(helper: EthUniqueHelper, mode
 
   const ethEvents: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  collectionHelper.on('CollectionChanged', (collectionId) => {
+  await collectionHelper.on('CollectionChanged', (collectionId) => {
     ethEvents.push({args: {collectionId}});
   });
 
@@ -209,7 +209,7 @@ async function testCollectionAdminAddedAndRemoved(helper: EthUniqueHelper, mode:
 
   const ethEvents: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  collectionHelper.on('CollectionChanged', (collectionId) => {
+  await collectionHelper.on('CollectionChanged', (collectionId) => {
     ethEvents.push({args: {collectionId}});
   });
 
@@ -257,7 +257,7 @@ async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollection
 
   const ethEvents: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  collectionHelper.on('CollectionChanged', (collectionId) => {
+  await collectionHelper.on('CollectionChanged', (collectionId) => {
     ethEvents.push({args: {collectionId}});
   });
 
@@ -292,7 +292,7 @@ async function testCollectionOwnerChanged(helper: EthUniqueHelper, mode: TCollec
 
   const ethEvents: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  collectionHelper.on('CollectionChanged', (collectionId) => {
+  await collectionHelper.on('CollectionChanged', (collectionId) => {
     ethEvents.push({args: {collectionId}});
   });
 
@@ -324,7 +324,7 @@ async function testCollectionPermissionSet(helper: EthUniqueHelper, mode: TColle
 
   const ethEvents: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  collectionHelper.on('CollectionChanged', (collectionId) => {
+  await collectionHelper.on('CollectionChanged', (collectionId) => {
     ethEvents.push({args: {collectionId}});
   });
 
@@ -374,7 +374,7 @@ async function testCollectionSponsorSetAndConfirmedAndThenRemoved(helper: EthUni
 
   const ethEvents: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  collectionHelper.on('CollectionChanged', (collectionId) => {
+  await collectionHelper.on('CollectionChanged', (collectionId) => {
     ethEvents.push({args: {collectionId}});
   });
 

@@ -176,7 +176,7 @@ describe('EVM Migrations', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
 
     const events: NormalizedEvent[] = [];
-    contract.on('Transfer', (...args) => {
+    await contract.on('Transfer', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -207,8 +207,8 @@ describe('EVM Migrations', () => {
       await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txInsertEthLogs]);
     }
 
-    if(events.length == 0) await helper.wait.newBlocks(4);
-    contract.off('Transfer');
+    if(events.length == 0) await helper.wait.newBlocks(8);
+    await contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
       address: collectionAddress,

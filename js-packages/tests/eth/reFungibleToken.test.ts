@@ -457,7 +457,7 @@ describe('Refungible: Plain calls', () => {
     await (await tokenContract.transfer.send(receiver, 1)).wait(...waitParams);
 
     const events: NormalizedEvent[] = [];
-    contract.on('Transfer', (...args) => {
+    await contract.on('Transfer', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -465,8 +465,8 @@ describe('Refungible: Plain calls', () => {
     });
     await (await tokenContract.burnFrom(caller, 1)).wait(...waitParams);
 
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    contract.off('Transfer');
+    if(events.length == 0) await helper.wait.newBlocks(8);
+    await contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
       address: collectionAddress,
@@ -639,7 +639,7 @@ describe('Refungible: Substrate calls', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, helper.web3!);
 
     const events: NormalizedEvent[] = [];
-    contract.on('Approval', (...args) => {
+    await contract.on('Approval', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -647,8 +647,8 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.approve(alice, {Ethereum: receiver.address}, 100n)).to.be.true;
-    if(events.length == 0) await helper.wait.newBlocks(4);
-    contract.off('Approval');
+    if(events.length == 0) await helper.wait.newBlocks(8);
+    await contract.off('Approval');
 
     expect(events[0]).to.be.deep.equal({
       address: tokenAddress,
@@ -672,7 +672,7 @@ describe('Refungible: Substrate calls', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, helper.web3!);
 
     const transferEvents: NormalizedEvent[] = [];
-    contract.on('Transfer', (...args) => {
+    await contract.on('Transfer', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -680,7 +680,7 @@ describe('Refungible: Substrate calls', () => {
     });
 
     const approvalEvents: NormalizedEvent[] = [];
-    contract.on('Approval', (...args) => {
+    await contract.on('Approval', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -688,9 +688,9 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address},  51n)).to.be.true;
-    if(transferEvents.length == 0) await helper.wait.newBlocks(4);
-    contract.off('Approval');
-    contract.off('Transfer');
+    if(transferEvents.length == 0) await helper.wait.newBlocks(8);
+    await contract.off('Approval');
+    await contract.off('Transfer');
 
     expect(transferEvents[0]).to.be.deep.equal({
       address: tokenAddress,
@@ -722,7 +722,7 @@ describe('Refungible: Substrate calls', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, helper.web3!);
 
     const events: NormalizedEvent[] = [];
-    contract.on('Transfer', (...args) => {
+    await contract.on('Transfer', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -730,8 +730,8 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.transfer(alice, {Ethereum: receiver.address},  51n)).to.be.true;
-    if(events.length == 0) await helper.wait.newBlocks(4);
-    contract.off('Transfer');
+    if(events.length == 0) await helper.wait.newBlocks(8);
+    await contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
       address: tokenAddress,

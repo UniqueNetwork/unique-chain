@@ -586,7 +586,7 @@ describe('Fungible: Substrate calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', helper.web3!);
 
     const events: NormalizedEvent[] = [];
-    contract.on('Approval', (...args) => {
+    await contract.on('Approval', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -594,9 +594,9 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.approveTokens(alice, {Ethereum: receiver.address}, 100n);
-    if(events.length == 0) await helper.wait.newBlocks(4);
+    if(events.length == 0) await helper.wait.newBlocks(8);
 
-    contract.off('Approval');
+    await contract.off('Approval');
     expect(events[0]).to.be.deep.equal({
       address: collectionAddress,
       event: 'Approval',
@@ -619,7 +619,7 @@ describe('Fungible: Substrate calls', () => {
     await collection.approveTokens(alice, {Substrate: bob.address}, 100n);
 
     const transferEvents: NormalizedEvent[] = [];
-    contract.on('Transfer', (...args) => {
+    await contract.on('Transfer', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -627,7 +627,7 @@ describe('Fungible: Substrate calls', () => {
     });
 
     const approvalEvents: NormalizedEvent[] = [];
-    contract.on('Approval', (...args) => {
+    await contract.on('Approval', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -635,10 +635,10 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address}, 51n);
-    if(transferEvents.length == 0) await helper.wait.newBlocks(4);
+    if(transferEvents.length == 0) await helper.wait.newBlocks(8);
 
-    contract.off('Approval');
-    contract.off('Transfer');
+    await contract.off('Approval');
+    await contract.off('Transfer');
 
     expect(transferEvents[0]).to.be.deep.equal({
       address: collectionAddress,
@@ -670,7 +670,7 @@ describe('Fungible: Substrate calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', helper.web3!);
 
     const events: NormalizedEvent[] = [];
-    contract.on('Transfer', (...args) => {
+    await contract.on('Transfer', (...args) => {
       const eventPayload = args.at(-1);
       const event = helper.eth.rebuildLog(eventPayload.log);
       if (event)
@@ -678,9 +678,9 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.transfer(alice, {Ethereum: receiver.address}, 51n);
-    if(events.length == 0) await helper.wait.newBlocks(4);
+    if(events.length == 0) await helper.wait.newBlocks(8);
 
-    contract.off('Transfer');
+    await contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
       address: collectionAddress,
