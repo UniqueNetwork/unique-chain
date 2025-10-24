@@ -99,6 +99,7 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with AssetHub', () 
     });
 
     await usingRelayPlaygrounds(async (helper) => {
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
       await helper.getSudo().xcm.send(
         alice,
         {
