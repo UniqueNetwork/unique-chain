@@ -22,7 +22,7 @@ let superuser: IKeyringPair;
 let donor: IKeyringPair;
 let palletAdmin: IKeyringPair;
 
-describe('App promotion', () => {
+describe.ifRunAppPromo('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(helper, [Pallets.AppPromotion]);

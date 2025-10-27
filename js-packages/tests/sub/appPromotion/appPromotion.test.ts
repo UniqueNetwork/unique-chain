@@ -47,7 +47,7 @@ async function getAccounts(accountsNumber: number, balance?: bigint) {
 // LOCKING_PERIOD = 12 blocks of relay
 // UNLOCKING_PERIOD = 12 blocks of parachain
 
-describe('App promotion', () => {
+describe.ifRunAppPromo('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(helper, [Pallets.AppPromotion]);

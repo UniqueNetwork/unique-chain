@@ -775,7 +775,9 @@ export class ChainHelperBase {
     }
     catch (e) {
       if(!Object.hasOwn(e as object, 'status')) throw e;
+      console.log(`[ExecuteExtrinsic] Caught error during extrinsic: (${extrinsic})...`); 
       result = e as ITransactionResult;
+      if (result == null) throw e;
     }
 
     const endTime = (new Date()).getTime();

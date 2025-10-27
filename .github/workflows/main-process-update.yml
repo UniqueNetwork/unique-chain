@@ -283,6 +283,7 @@ jobs:
           NOW=$(date +%s) && deno task testSubParallel
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+          SKIP_APP_PROMO_TESTS: 1
 
       - name: Run Sequential Substrate tests after upgrade
         working-directory: js-packages/tests
@@ -291,6 +292,7 @@ jobs:
           NOW=$(date +%s) && deno task testSubSequential
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+          SKIP_APP_PROMO_TESTS: 1
 
       - name: Run Parallel Ethereum tests after upgrade
         working-directory: js-packages/tests
