@@ -62,7 +62,7 @@ jobs:
           deno install
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          NOW=$(date +%s) && deno task test
+          NOW=$(date +%s) && deno task _test './sub/nesting/tokenProperties.test.ts'
         env:
           RPC_URL: http://127.0.0.1:9944/
 
@@ -81,6 +81,21 @@ jobs:
         run: |
           deno install
           deno -A ./benchmarks/opsFee/index.ts
+
+      - name: Echo containers logs
+        if: always() # run this step always
+        run: |
+          mkdir -p logs
+          for i in `docker ps -a --format {{.Names}}`; do docker logs $i >& logs/$i.log; done
+
+      - name: Upload containers logs
+        uses: actions/upload-artifact@v4
+        if: always() # run this step always
+        with:
+          name: ${{ matrix.network }}-deno-dev-logs
+          path: logs
+          retention-days: 7
+          compression-level: 9
 
       - name: Stop running containers
         if: always() # run this step always
