@@ -166,36 +166,20 @@ pub mod pallet {
 			Ok(None::<Weight>.into())
 		}
 
-		#[pallet::call_index(6)]
-		#[pallet::weight(10_000)]
-		pub fn mint_foreign_assets(
+		#[pallet::call_index(7)]
+		#[pallet::weight(*weight)]
+		pub fn use_weight(
 			origin: OriginFor<T>,
-			collection_id: CollectionId,
-			amount: u128,
-		) -> DispatchResult {
-			let receiver = Self::ensure_origin_and_enabled(origin.clone())?;
-			let dispatch = T::CollectionDispatch::dispatch(collection_id)
-				.map_err(|_| DispatchError::Other("Can't find collection"))?;
-			let collection = dispatch.as_dyn();
+			weight: Weight,
+			actual_weight: Option<Weight>,
+		) -> DispatchResultWithPostInfo {
+			Self::ensure_origin_and_enabled(origin)?;
+			let _ = weight;
 
-			let pallet_account: T::AccountId =
-				<T as pallet_foreign_assets::Config>::PalletId::get().into_account_truncating();
-			let pallet_account = T::CrossAccountId::from_sub(pallet_account);
-			let receiver = T::CrossAccountId::from_sub(receiver);
-
-			collection
-				.create_item(
-					pallet_account,
-					receiver,
-					CreateItemData::Fungible(CreateFungibleData { value: amount }),
-					&ZeroBudget,
-				)
-				.map_err(|e| {
-					log::info!("Error creating item: {e:?}");
-					DispatchError::Other("Can't create item")
-				})?;
-
-			Ok(())
+			Ok(PostDispatchInfo {
+				actual_weight,
+				pays_fee: Pays::Yes,
+			})
 		}
 	}
 }
