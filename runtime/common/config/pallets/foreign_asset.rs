@@ -1,7 +1,7 @@
 use frame_support::{
 	parameter_types,
-	traits::{ConstU128, ConstU32, EitherOfDiverse, SortedMembers},
-	BoundedVec, PalletId,
+	traits::{EitherOfDiverse, SortedMembers, Time},
+	PalletId,
 };
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
@@ -15,6 +15,7 @@ use sp_std::vec::Vec;
 use staging_xcm::prelude::*;
 use staging_xcm_builder::AccountKey20Aliases;
 use up_common::types::{AccountId, Signature};
+use up_data_structs::CollectionTokenPrefix;
 
 use crate::{
 	identity, maintenance,
@@ -75,12 +76,7 @@ impl pallet_foreign_assets::Config for Runtime {
 	type AuthorityId = pallet_foreign_assets::crypto::AuthId;
 	type AccountId32 = AccountId;
 	type ForeignAssetConversionCoefficientDefault = ForeignAssetConversionCoefficient;
-	type DotAccuracy = ConstU128<1_000_000_000_000>;
 }
-
-type Key = BoundedVec<u8, ConstU32<3>>;
-type Value = FixedU128;
-pub type Moment = u64;
 
 pub struct Members;
 
@@ -104,7 +100,7 @@ impl SortedMembers<AccountId> for Members {
 
 parameter_types! {
 	pub const MinimumCount: u32 = 1;
-	pub const ExpiresIn: Moment = 1000 * 60;
+	pub const ExpiresIn: <crate::Timestamp as Time>::Moment = 1000 * 60;
 	pub const RootOperatorAccountId: AccountId = AccountId::new([0u8; 32]);
 	pub const MaxFeedValues: u32 = 5;
 	pub const MaxHasDispatchedSize: u32 = 20;
@@ -114,8 +110,8 @@ impl orml_oracle::Config for Runtime {
 	type OnNewData = ();
 	type CombineData = DefaultCombineData<Self, MinimumCount, ExpiresIn, ()>;
 	type Time = crate::Timestamp;
-	type OracleKey = Key;
-	type OracleValue = Value;
+	type OracleKey = CollectionTokenPrefix;
+	type OracleValue = FixedU128;
 	type RootOperatorAccountId = RootOperatorAccountId;
 	type Members = Members;
 	type WeightInfo = ();
