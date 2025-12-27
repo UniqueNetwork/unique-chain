@@ -31,7 +31,7 @@ use crate::{
 	runtime_common::config::xcm::{
 		ReserveProvider, SelfLocation, UniversalLocation, Weigher, XcmExecutorConfig,
 	},
-	RelayChainBlockNumberProvider, Runtime,
+	ForeignAssets, RelayChainBlockNumberProvider, Runtime,
 };
 
 // Signed version of balance
@@ -74,7 +74,7 @@ impl orml_vesting::Config for Runtime {
 impl orml_xtokens::Config for Runtime {
 	type Balance = Balance;
 	type CurrencyId = CollectionId;
-	type CurrencyIdConvert = CurrencyIdConvert<Self>;
+	type CurrencyIdConvert = CurrencyIdConvert<ForeignAssets>;
 	type AccountIdToLocation = AccountIdToLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
