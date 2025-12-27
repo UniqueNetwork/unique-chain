@@ -790,20 +790,12 @@ macro_rules! impl_common_runtime_apis {
 							// for native token
 							Ok(fee_in_native)
 						},
-						Ok(asset_id) => {
-							let assets_in_pool_with_this_asset = ForeignAssets::get_convertible_assets();
-							if assets_in_pool_with_this_asset
-								.into_iter()
-								.map(|asset_id| asset_id.0)
-								.any(|location| location == native_asset) {
-								ForeignAssets::convert_native_to_asset(&asset_id, fee_in_native).ok_or(xcm_runtime_apis::fees::Error::AssetNotFound)
-							} else {
-								log::trace!(target: "staging_xcm::xcm_runtime_apis", "query_weight_to_asset_fee - unhandled asset_id: {asset_id:?}!");
-								Err(xcm_runtime_apis::fees::Error::AssetNotFound)
-							}
-						},
+						Ok(asset_id) => ForeignAssets::convert_native_to_asset(&asset_id, fee_in_native).map_err(|_| {
+							log::trace!(target: "xcm::xcm_runtime_apis", "query_weight_to_asset_fee - unhandled asset_id: {asset_id:?}!");
+							xcm_runtime_apis::fees::Error::AssetNotFound
+						}),
 						Err(_) => {
-							log::trace!(target: "staging_xcm::xcm_runtime_apis", "query_weight_to_asset_fee - failed to convert asset: {asset:?}!");
+							log::trace!(target: "xcm::xcm_runtime_apis", "query_weight_to_asset_fee - failed to convert asset: {asset:?}!");
 							Err(xcm_runtime_apis::fees::Error::VersionedConversionFailed)
 						}
 					}
