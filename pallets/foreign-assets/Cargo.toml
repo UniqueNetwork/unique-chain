@@ -25,6 +25,7 @@ sp-std = { workspace = true }
 staging-xcm = { workspace = true }
 staging-xcm-executor = { workspace = true }
 up-data-structs = { workspace = true }
+up-common = { workspace = true }
 derivative = { workspace = true }
 
 orml-oracle = { workspace = true }

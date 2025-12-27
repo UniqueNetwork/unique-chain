@@ -9000,6 +9000,7 @@ dependencies = [
  "sp-std",
  "staging-xcm",
  "staging-xcm-executor",
+ "up-common",
  "up-data-structs",
 ]
 

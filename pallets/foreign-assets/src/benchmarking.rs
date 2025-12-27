@@ -170,4 +170,14 @@ mod benchmarks {
 
 		Ok(())
 	}
+
+	#[benchmark]
+	fn set_exchange_rate_update_interval() -> Result<(), BenchmarkError> {
+		let interval = 10000;
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, interval);
+
+		Ok(())
+	}
 }

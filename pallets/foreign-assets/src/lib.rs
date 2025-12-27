@@ -30,13 +30,7 @@ use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::*,
 	storage_alias,
-	traits::{
-		fungibles,
-		tokens::{
-			DepositConsequence, Fortitude, Precision, Preservation, Provenance, WithdrawConsequence,
-		},
-		ConstU128, EnsureOrigin,
-	},
+	traits::{tokens::ConversionToAssetBalance, ConstU128, EnsureOrigin},
 	PalletId,
 };
 use frame_system::{
@@ -47,6 +41,7 @@ use lite_json::JsonValue;
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
+use pallet_fungible::FungibleHandle;
 use parity_scale_codec::DecodeWithMemTracking;
 use sp_core::{crypto::KeyTypeId, U256};
 use sp_runtime::{
@@ -55,7 +50,7 @@ use sp_runtime::{
 		storage_lock::{StorageLock, Time},
 		Duration,
 	},
-	traits::{AccountIdConversion, IdentifyAccount},
+	traits::{AccountIdConversion, EnsureDiv, EnsureFixedPointNumber, EnsureMul, IdentifyAccount},
 	FixedPointNumber, FixedU128, MultiSigner,
 };
 #[cfg(not(feature = "std"))]
@@ -69,6 +64,7 @@ use staging_xcm_executor::{
 	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
 	AssetsInHolding,
 };
+use up_common::types::Balance as NativeBalance;
 use up_data_structs::{
 	budget::ZeroBudget, CollectionFlags, CollectionId, CollectionMode, CollectionName,
 	CollectionTokenPrefix, CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
@@ -174,6 +170,7 @@ pub mod module {
 		frame_system::Config
 		+ pallet_common::Config
 		+ pallet_fungible::Config
+		+ pallet_balances_adapter::Config
 		+ pallet_balances::Config
 		+ orml_oracle::Config
 		+ CreateSignedTransaction<orml_oracle::Call<Self>>
@@ -205,10 +202,6 @@ pub mod module {
 		/// The conversion coefficient for foreign assets.
 		#[pallet::constant]
 		type ForeignAssetConversionCoefficientDefault: Get<FixedU128>;
-
-		#[pallet::constant]
-		/// 1 DOT in u128
-		type DotAccuracy: Get<u128>;
 	}
 
 	#[pallet::error]
@@ -228,8 +221,14 @@ pub mod module {
 		/// Only fungible assets could be converted to fee.
 		ForeignAssetIsNotFungible,
 
-		/// Failed to parse the balance received from currency exchange.
-		CantParseBalance,
+		/// Failed to decode the balance received from currency exchange.
+		FailedToDecodeBalance,
+
+		/// Zero balance received from currency exchange.
+		ZeroBalance,
+
+		/// The specified foreign asset can't be converted to be used as a tx fee.
+		NotFeeConvertible,
 
 		/// Failed to fetch the exchange rate.
 		FailedToFetchRate,
@@ -239,6 +238,9 @@ pub mod module {
 
 		/// Can't add more oracle members.
 		OracleMembersCapacityExceeded,
+
+		/// An attempt to set a zero fee coefficient.
+		ZeroCoefficient,
 	}
 
 	#[pallet::event]
@@ -272,76 +274,6 @@ pub mod module {
 			old_conversion_coefficient: FixedU128,
 			new_conversion_coefficient: FixedU128,
 		},
-	}
-
-	fn fetch_rate<T: Config>() -> Result<FixedU128, Error<T>> {
-		let unq_storage_key = "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51512f6eaaf236595bff0193f47dc14ef9d7a3d484f8388e304ae0e53869d8443c8f31c951596896e9b942a2e924cc2cf2e99190c148ccde2019000000";
-		let dot_storage_key = "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51512f6eaaf236595bff0193f47dc14ef9d7a3d484f8388e304ae0e53869d8443c8f31c951596896e9b942a2e924cc2cf239b9d2792f8bd4c305000000";
-		let unique_amount_bytes = get_storage_value_from_hydration(unq_storage_key)?;
-		let unique_amount = parse_balance(unique_amount_bytes)?;
-
-		let dot_amount_bytes = get_storage_value_from_hydration(dot_storage_key)?;
-		let dot_amount = parse_balance(dot_amount_bytes)?;
-
-		Ok(FixedU128::from_rational(
-			dot_amount * 100_000_000,
-			unique_amount,
-		)) // DOT has 10 decimals, UNQ has 18
-	}
-
-	fn get_storage_value_from_hydration<T: Config>(storage_key: &str) -> Result<Vec<u8>, Error<T>> {
-		let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
-		let url = Pallet::<T>::currency_exchange_url()
-			.map(|v| {
-				String::from_utf8(v.to_vec()).unwrap_or("https://hydration.ibp.network".to_string())
-			})
-			.unwrap_or_else(|| "https://hydration.ibp.network".to_string());
-		let body = format!(
-			r#"{{"id":1, "jsonrpc":"2.0", "method": "state_getStorage", "params": ["{storage_key}"]}}"#
-		);
-
-		let request = http::Request::post(&url, vec![body.as_bytes().to_vec()])
-			.add_header("Content-Type", "application/json")
-			.deadline(deadline)
-			.send()
-			.map_err(|_| Error::FailedToFetchRate)?;
-
-		let response = request.wait().map_err(|_| Error::FailedToFetchRate)?;
-		let body = response.body().collect::<Vec<u8>>();
-		let body_str = sp_std::str::from_utf8(&body).map_err(|_| Error::CantParseResponse)?;
-		let val = lite_json::parse_json(body_str).map_err(|_| Error::CantParseResponse)?;
-		let storage_value_bytes = match val {
-			JsonValue::Object(obj) => {
-				let (_, v) = obj
-					.into_iter()
-					.find(|(k, _)| k.iter().copied().eq("result".chars()))
-					.ok_or(Error::CantParseResponse)?;
-				match v {
-					JsonValue::String(storage_value_hex) => {
-						hex::decode(storage_value_hex.iter().skip(2).collect::<String>())
-							.map_err(|_| Error::CantParseResponse)?
-					}
-					_ => return Err(Error::CantParseResponse),
-				}
-			}
-			_ => return Err(Error::CantParseResponse),
-		};
-
-		Ok(storage_value_bytes)
-	}
-
-	fn parse_balance<T>(storage_value_bytes: Vec<u8>) -> Result<u128, Error<T>> {
-		if storage_value_bytes.len() < 16 {
-			return Err(Error::CantParseBalance);
-		}
-		let mut unique_amount_bytes = storage_value_bytes;
-		unique_amount_bytes.truncate(16);
-		let value = u128::from_le_bytes(
-			unique_amount_bytes
-				.try_into()
-				.map_err(|_| Error::CantParseBalance)?,
-		);
-		Ok(value)
 	}
 
 	/// The corresponding collections of foreign assets.
@@ -401,8 +333,14 @@ pub mod module {
 	/// The corresponding collections of foreign assets.
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_conversion_coefficient)]
-	pub type ForeignAssetConversionCoefficient<T: Config> =
-		StorageMap<_, Blake2_128Concat, staging_xcm::v5::AssetId, FixedU128, OptionQuery>;
+	pub type ForeignAssetConversionCoefficient<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		staging_xcm::v5::AssetId,
+		FixedU128,
+		ValueQuery,
+		T::ForeignAssetConversionCoefficientDefault,
+	>;
 
 	#[pallet::storage]
 	pub type OracleMembers<T: Config> =
@@ -424,49 +362,167 @@ pub mod module {
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 
-	impl<T: Config + pallet_balances_adapter::Config + orml_oracle::Config> Pallet<T> {
+	impl<T: Config + orml_oracle::Config> Pallet<T> {
+		fn dot_asset() -> AssetId {
+			AssetId(Location::parent())
+		}
+
 		pub fn get_convertible_assets() -> Vec<staging_xcm::v5::AssetId> {
-			vec![staging_xcm::v5::AssetId(staging_xcm::v5::Location {
-				parents: 1,     // means go up one level (to relay chain)
-				interior: Here, // refers directly to relay chain’s native token
-			})]
+			// We support the Relay token only
+			let dot_asset_id = Self::dot_asset();
+
+			// Check if the asset exists and it is mapped to a fungible collection
+			// (i.e., do not list an asset as convertible if it isn't registered)
+			let dot_fungible_collection = Self::require_fungible_collection(&dot_asset_id).ok();
+			dot_fungible_collection
+				.map(|_| vec![dot_asset_id])
+				.unwrap_or_default()
 		}
 
 		pub fn convert_native_to_asset(
 			asset_id: &staging_xcm::v5::AssetId,
-			native_amount: u128,
-		) -> Option<u128>
+			native_amount: NativeBalance,
+		) -> Result<u128, DispatchError>
 		where
-			T::OracleKey: TryFrom<Vec<u8>>,
+			T::OracleKey: From<CollectionTokenPrefix>,
 			T::OracleValue: Into<FixedU128>,
 		{
-			if !Self::get_convertible_assets().contains(asset_id) {
-				return None;
-			}
-			let conversion_coefficient = Self::foreign_asset_conversion_coefficient(asset_id)
-				.unwrap_or_else(T::ForeignAssetConversionCoefficientDefault::get);
-			let native_decimals = <T as pallet_balances_adapter::Config>::Decimals::get();
-			let conversion_rate =
-				orml_oracle::Pallet::<T>::get(&T::OracleKey::try_from(b"DOT".to_vec()).ok()?)?;
-			let native_accuracy = 10u128.pow(native_decimals as u32);
-			let dot_accuracy = T::DotAccuracy::get();
-			let native_fee = FixedU128::checked_from_rational(native_amount, native_accuracy)?;
-			let result = conversion_coefficient
-				.const_checked_mul(native_fee)?
-				.const_checked_mul(conversion_rate.value.into())?;
+			// We shouldn't attempt to convert the native asset to itself
+			ensure!(
+				!Self::is_native_asset_id(asset_id),
+				<Error<T>>::ForeignAssetNotFound
+			);
 
-			if dot_accuracy != FixedU128::accuracy() {
-				Some(
-					result
-						.const_checked_mul(FixedU128::checked_from_rational(
-							dot_accuracy,
-							FixedU128::accuracy(),
-						)?)?
-						.into_inner(),
-				)
-			} else {
-				Some(result.into_inner())
+			ensure!(
+				Self::get_convertible_assets().contains(asset_id),
+				<Error<T>>::NotFeeConvertible
+			);
+
+			let asset_collection = Self::require_fungible_collection(asset_id)?;
+			let conversion_rate_info = orml_oracle::Pallet::<T>::get(&T::OracleKey::from(
+				asset_collection.token_prefix.clone(),
+			))
+			.ok_or(<Error<T>>::NotFeeConvertible)?;
+			let conversion_coefficient = Self::foreign_asset_conversion_coefficient(asset_id);
+
+			let native_decimals = T::Decimals::get();
+			let native_amount =
+				FixedU128::ensure_from_rational(native_amount, 10u128.pow(native_decimals.into()))?;
+
+			let mut converted_amount = native_amount
+				.ensure_mul(conversion_rate_info.value.into())?
+				.ensure_mul(conversion_coefficient)?;
+
+			let CollectionMode::Fungible(asset_decimals) = asset_collection.mode else {
+				// Shouldn't be reachable
+				return Err(<Error<T>>::NotFeeConvertible.into());
+			};
+
+			if asset_decimals < native_decimals {
+				let decimals_diff = native_decimals - asset_decimals;
+				let correction_coeff = 10u128.pow(decimals_diff.into());
+
+				converted_amount = converted_amount.ensure_div(correction_coeff.into())?
 			}
+
+			Ok(converted_amount.into_inner())
+		}
+
+		fn fetch_rate(
+			asset_id: &AssetId,
+		) -> Result<(CollectionTokenPrefix, FixedU128), DispatchError> {
+			ensure!(
+				*asset_id == Self::dot_asset(),
+				<Error<T>>::NotFeeConvertible
+			);
+
+			let asset_collection = Self::require_fungible_collection(asset_id)?;
+			let CollectionMode::Fungible(asset_decimals) = asset_collection.mode else {
+				// Shouldn't be reachable
+				return Err(<Error<T>>::NotFeeConvertible.into());
+			};
+
+			ensure!(
+				u128::from(asset_decimals) <= FixedU128::accuracy(),
+				<Error<T>>::NotFeeConvertible
+			);
+
+			let unq_decimals = T::Decimals::get();
+
+			let unq_storage_key = "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51512f6eaaf236595bff0193f47dc14ef9d7a3d484f8388e304ae0e53869d8443c8f31c951596896e9b942a2e924cc2cf2e99190c148ccde2019000000";
+			let dot_storage_key = "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51512f6eaaf236595bff0193f47dc14ef9d7a3d484f8388e304ae0e53869d8443c8f31c951596896e9b942a2e924cc2cf239b9d2792f8bd4c305000000";
+			let unique_amount_bytes = Self::get_storage_value_from_hydration(unq_storage_key)?;
+			let unq_amount = Self::decode_fetched_balance(unique_amount_bytes)?;
+
+			let asset_amount_bytes = Self::get_storage_value_from_hydration(dot_storage_key)?;
+			let asset_amount = Self::decode_fetched_balance(asset_amount_bytes)?;
+
+			let unq_amount =
+				FixedU128::ensure_from_rational(unq_amount, 10u128.pow(unq_decimals.into()))?;
+			let asset_amount =
+				FixedU128::ensure_from_rational(asset_amount, 10u128.pow(asset_decimals.into()))?;
+
+			let rate = asset_amount
+				.const_checked_div(unq_amount)
+				.ok_or_else(|| <Error<T>>::NotFeeConvertible)?;
+			let token_prefix = asset_collection.token_prefix.clone();
+
+			Ok((token_prefix, rate))
+		}
+
+		fn get_storage_value_from_hydration(storage_key: &str) -> Result<Vec<u8>, Error<T>> {
+			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
+			let url = Self::currency_exchange_url()
+				.map(|v| {
+					String::from_utf8(v.to_vec())
+						.unwrap_or("https://hydration.ibp.network".to_string())
+				})
+				.unwrap_or_else(|| "https://hydration.ibp.network".to_string());
+			let body = format!(
+				r#"{{"id":1, "jsonrpc":"2.0", "method": "state_getStorage", "params": ["{storage_key}"]}}"#
+			);
+
+			let request = http::Request::post(&url, vec![body.as_bytes().to_vec()])
+				.add_header("Content-Type", "application/json")
+				.deadline(deadline)
+				.send()
+				.map_err(|_| Error::FailedToFetchRate)?;
+
+			let response = request.wait().map_err(|_| Error::FailedToFetchRate)?;
+			let body = response.body().collect::<Vec<u8>>();
+			let body_str = sp_std::str::from_utf8(&body).map_err(|_| Error::CantParseResponse)?;
+			let val = lite_json::parse_json(body_str).map_err(|_| Error::CantParseResponse)?;
+			let storage_value_bytes = match val {
+				JsonValue::Object(obj) => {
+					let (_, v) = obj
+						.into_iter()
+						.find(|(k, _)| k.iter().copied().eq("result".chars()))
+						.ok_or(Error::CantParseResponse)?;
+					match v {
+						JsonValue::String(storage_value_hex) => {
+							hex::decode(storage_value_hex.iter().skip(2).collect::<String>())
+								.map_err(|_| Error::CantParseResponse)?
+						}
+						_ => return Err(Error::CantParseResponse),
+					}
+				}
+				_ => return Err(Error::CantParseResponse),
+			};
+
+			Ok(storage_value_bytes)
+		}
+
+		fn decode_fetched_balance(storage_value_bytes: Vec<u8>) -> Result<u128, Error<T>> {
+			let (free, _reserved, frozen) =
+				<(u128, u128, u128)>::decode(&mut storage_value_bytes.as_slice())
+					.map_err(|_| Error::FailedToDecodeBalance)?;
+
+			let balance = free.saturating_sub(frozen);
+			if balance == 0 {
+				return Err(Error::ZeroBalance);
+			}
+
+			Ok(balance)
 		}
 	}
 
@@ -640,18 +696,20 @@ pub mod module {
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin.clone())?;
 
+			ensure!(
+				!conversion_coefficient.is_zero(),
+				Error::<T>::ZeroCoefficient
+			);
+
 			let asset_id: AssetId = versioned_asset_id
 				.as_ref()
 				.clone()
 				.try_into()
 				.map_err(|()| Error::<T>::BadForeignAssetId)?;
 
-			let old_conversion_coefficient = <ForeignAssetConversionCoefficient<T>>::get(&asset_id)
-				.unwrap_or(FixedU128::from(0));
+			let old_conversion_coefficient = <ForeignAssetConversionCoefficient<T>>::get(&asset_id);
 
-			if conversion_coefficient != 0.into() {
-				<ForeignAssetConversionCoefficient<T>>::insert(&asset_id, conversion_coefficient);
-			}
+			<ForeignAssetConversionCoefficient<T>>::insert(&asset_id, conversion_coefficient);
 
 			Self::deposit_event(Event::<T>::ForeignAssetConversionCoefficientSet {
 				old_conversion_coefficient,
@@ -696,6 +754,20 @@ pub mod module {
 			CurrencyExchangeUrl::<T>::set(Some(url));
 			Ok(())
 		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_exchange_rate_update_interval())]
+		pub fn set_exchange_rate_update_interval(
+			origin: OriginFor<T>,
+			interval: u128,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
+
+			if interval > 0 {
+				ExchangeRateUpdateInterval::<T>::set(interval);
+			}
+			Ok(())
+		}
 	}
 
 	#[pallet::genesis_config]
@@ -714,7 +786,7 @@ pub mod module {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
 	where
 		T: Config,
-		T::OracleKey: From<BoundedVec<u8, ConstU32<3>>>,
+		T::OracleKey: From<CollectionTokenPrefix>,
 		T::OracleValue: From<FixedU128>,
 		<T as SigningTypes>::Public: From<MultiSigner>,
 	{
@@ -737,7 +809,7 @@ pub mod module {
 		fn offchain_worker(block_number: BlockNumberFor<T>) {
 			let block_number: U256 = block_number.into();
 			let interval = Self::exchange_rate_update_interval();
-			if block_number.as_u128() % interval != 1 {
+			if block_number.as_u128() % interval != 0 {
 				return;
 			}
 			let oracles = OracleMembers::<T>::get()
@@ -771,13 +843,12 @@ pub mod module {
 				Duration::from_millis(LOCK_TIMEOUT_EXPIRATION),
 			);
 			if let Ok(_guard) = lock.try_lock() {
-				match fetch_rate::<T>() {
-					Ok(rate) => {
-						let scaled_rate = T::OracleValue::from(rate);
-						let key =
-							BoundedVec::<u8, ConstU32<3>>::truncate_from("DOT".as_bytes().to_vec())
-								.into();
-						let values = BoundedVec::truncate_from(vec![(key, scaled_rate)]);
+				match Self::fetch_rate(&Self::dot_asset()) {
+					Ok((token_prefix, rate)) => {
+						let oracle_key = T::OracleKey::from(token_prefix);
+						let oracle_value = T::OracleValue::from(rate);
+
+						let values = BoundedVec::truncate_from(vec![(oracle_key, oracle_value)]);
 						let call = orml_oracle::Call::<T>::feed_values { values };
 						// Use any available signer to submit a signed extrinsic
 						if let Some((_account, result)) =
@@ -796,187 +867,6 @@ pub mod module {
 				}
 			};
 		}
-	}
-
-	// TODO: check if collection is fungible
-	impl<T: Config> fungibles::Inspect<<T as frame_system::Config>::AccountId> for Pallet<T> {
-		type AssetId = staging_xcm::v5::AssetId;
-		type Balance = u128;
-
-		fn total_issuance(asset: Self::AssetId) -> Self::Balance {
-			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
-				return Zero::zero();
-			};
-			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
-				return Zero::zero();
-			};
-			let collection = dispatch.as_dyn();
-			collection
-				.total_pieces(TokenId::default())
-				.unwrap_or_else(Zero::zero)
-		}
-
-		fn minimum_balance(_asset: Self::AssetId) -> Self::Balance {
-			Zero::zero()
-		}
-
-		fn balance(
-			asset: Self::AssetId,
-			who: &<T as frame_system::Config>::AccountId,
-		) -> Self::Balance {
-			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
-				return Zero::zero();
-			};
-			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
-				return Zero::zero();
-			};
-			let collection = dispatch.as_dyn();
-			collection.balance(T::CrossAccountId::from_sub(who.clone()), TokenId::default())
-		}
-
-		fn total_balance(
-			asset: Self::AssetId,
-			who: &<T as frame_system::Config>::AccountId,
-		) -> Self::Balance {
-			Pallet::<T>::balance(asset, who)
-		}
-
-		fn reducible_balance(
-			asset: Self::AssetId,
-			who: &<T as frame_system::Config>::AccountId,
-			_preservation: Preservation,
-			_: Fortitude,
-		) -> Self::Balance {
-			Pallet::<T>::balance(asset, who)
-		}
-
-		fn can_deposit(
-			asset: Self::AssetId,
-			_who: &<T as frame_system::Config>::AccountId,
-			_amount: Self::Balance,
-			_provenance: Provenance,
-		) -> DepositConsequence {
-			if <ForeignAssetToCollection<T>>::get(asset).is_some() {
-				DepositConsequence::Success
-			} else {
-				DepositConsequence::UnknownAsset
-			}
-		}
-
-		fn can_withdraw(
-			asset: Self::AssetId,
-			who: &<T as frame_system::Config>::AccountId,
-			amount: Self::Balance,
-		) -> WithdrawConsequence<Self::Balance> {
-			if Pallet::<T>::balance(asset, who) >= amount {
-				WithdrawConsequence::Success
-			} else {
-				WithdrawConsequence::BalanceLow
-			}
-		}
-
-		fn asset_exists(asset: Self::AssetId) -> bool {
-			<ForeignAssetToCollection<T>>::get(asset).is_some()
-		}
-	}
-
-	impl<T: Config> fungibles::Balanced<<T as frame_system::Config>::AccountId> for Pallet<T> {
-		type OnDropCredit = fungibles::DecreaseIssuance<T::AccountId, Self>;
-		type OnDropDebt = fungibles::IncreaseIssuance<T::AccountId, Self>;
-
-		fn done_deposit(
-			_asset_id: Self::AssetId,
-			_who: &<T as frame_system::Config>::AccountId,
-			_amount: Self::Balance,
-		) {
-		}
-
-		fn done_withdraw(
-			_asset_id: Self::AssetId,
-			_who: &<T as frame_system::Config>::AccountId,
-			_amount: Self::Balance,
-		) {
-		}
-	}
-
-	impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
-		fn handle_raw_dust(_: Self::AssetId, _: Self::Balance) {}
-		fn handle_dust(_: fungibles::Dust<T::AccountId, Self>) {
-			defensive!("`decrease_balance` and `increase_balance` have non-default impls; nothing else calls this; qed");
-		}
-		fn write_balance(
-			_: Self::AssetId,
-			_: &T::AccountId,
-			_: Self::Balance,
-		) -> Result<Option<Self::Balance>, DispatchError> {
-			defensive!("write_balance is not used if other functions are impl'd");
-			Err(DispatchError::Unavailable)
-		}
-		fn set_total_issuance(_asset_id: Self::AssetId, _amount: Self::Balance) {
-			defensive!("set_total_issuance shouldn't be used");
-		}
-		fn decrease_balance(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-			precision: Precision,
-			_preservation: Preservation,
-			_: Fortitude,
-		) -> Result<Self::Balance, DispatchError> {
-			ensure!(
-				precision == Precision::Exact,
-				DispatchError::Other("Only Exact precision is supported")
-			);
-			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
-				return Err(DispatchError::Other("Asset is not registered"));
-			};
-			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
-				return Err(DispatchError::Other("Failed to dispatch collection"));
-			};
-			let collection = dispatch.as_dyn();
-			let xcm_ext = collection.xcm_extensions().ok_or(DispatchError::Other(
-				"xcm_extensions method not implemented",
-			))?;
-			let from = T::CrossAccountId::from_sub(who.clone());
-
-			xcm_ext
-				.burn_item(from.clone(), TokenId::default(), amount)
-				.map(|_| collection.balance(from, TokenId::default()))
-				.map_err(|_| DispatchError::Other("Fungible item deposit failed"))
-		}
-		fn increase_balance(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-			precision: Precision,
-		) -> Result<Self::Balance, DispatchError> {
-			ensure!(
-				precision == Precision::Exact,
-				DispatchError::Other("Only Exact precision is supported")
-			);
-			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
-				return Err(DispatchError::Other("Asset is not registered"));
-			};
-			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
-				return Err(DispatchError::Other("Failed to dispatch collection"));
-			};
-			let collection = dispatch.as_dyn();
-			let xcm_ext = collection.xcm_extensions().ok_or(DispatchError::Other(
-				"xcm_extensions method not implemented",
-			))?;
-			let to = T::CrossAccountId::from_sub(who.clone());
-			xcm_ext
-				.create_item(
-					&Self::pallet_account(),
-					to.clone(),
-					CreateItemData::Fungible(CreateFungibleData { value: amount }),
-					&ZeroBudget,
-				)
-				.map(|_| collection.balance(to, TokenId::default()))
-				.map_err(|_| DispatchError::Other("Fungible item deposit failed"))
-		}
-
-		// TODO: #13196 implement deactivate/reactivate once we have inactive balance tracking.
 	}
 }
 
@@ -1151,9 +1041,20 @@ impl<T: Config> Pallet<T> {
 		weight
 	}
 
+	fn require_fungible_collection(asset_id: &AssetId) -> Result<FungibleHandle<T>, DispatchError> {
+		let collection_id = <ForeignAssetToCollection<T>>::get(asset_id)
+			.ok_or_else(|| <Error<T>>::ForeignAssetNotFound)?;
+
+		<FungibleHandle<T>>::try_get(collection_id)
+	}
+
 	pub fn pallet_account() -> T::CrossAccountId {
 		let owner: T::AccountId = T::PalletId::get().into_account_truncating();
 		T::CrossAccountId::from_sub(owner)
+	}
+
+	fn is_native_asset_id(AssetId(asset_location): &AssetId) -> bool {
+		*asset_location == Here.into() || *asset_location == T::SelfLocation::get()
 	}
 
 	/// Converts a concrete asset ID (the asset multilocation) to a local collection on Unique Network.
@@ -1169,14 +1070,13 @@ impl<T: Config> Pallet<T> {
 	/// If the multilocation doesn't match the patterns listed above,
 	/// or the `<Collection ID>` points to a foreign collection,
 	/// `None` is returned, identifying that the given multilocation doesn't correspond to a local collection.
-	fn local_asset_id_to_collection(
-		AssetId(asset_location): &AssetId,
-	) -> Option<CollectionLocality> {
-		let self_location = T::SelfLocation::get();
-
-		if *asset_location == Here.into() || *asset_location == self_location {
+	fn local_asset_id_to_collection(asset_id: &AssetId) -> Option<CollectionLocality> {
+		if Self::is_native_asset_id(asset_id) {
 			return Some(CollectionLocality::Local(NATIVE_FUNGIBLE_COLLECTION_ID));
 		}
+
+		let asset_location = &asset_id.0;
+		let self_location = T::SelfLocation::get();
 
 		let prefix = if asset_location.parents == 0 {
 			&Here
@@ -1475,9 +1375,9 @@ impl Deref for CollectionLocality {
 	}
 }
 
-pub struct CurrencyIdConvert<T: Config>(PhantomData<T>);
+pub struct CurrencyIdConvert<Pallet>(PhantomData<Pallet>);
 impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<Location>>
-	for CurrencyIdConvert<T>
+	for CurrencyIdConvert<Pallet<T>>
 {
 	fn convert(collection_id: CollectionId) -> Option<Location> {
 		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
@@ -1491,6 +1391,33 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<Location>>
 						.ok()
 				})
 		}
+	}
+}
+impl<T: Config> sp_runtime::traits::Convert<AssetId, Option<CollectionId>>
+	for CurrencyIdConvert<Pallet<T>>
+{
+	fn convert(asset_id: AssetId) -> Option<CollectionId> {
+		<Pallet<T>>::asset_to_collection(&asset_id)
+			.ok()
+			.map(|locality| *locality)
+	}
+}
+impl<T: Config> sp_runtime::traits::Convert<Location, Option<CollectionId>>
+	for CurrencyIdConvert<Pallet<T>>
+{
+	fn convert(location: Location) -> Option<CollectionId> {
+		Self::convert(AssetId(location))
+	}
+}
+
+impl<T: Config> ConversionToAssetBalance<NativeBalance, Location, u128> for Pallet<T>
+where
+	T::OracleKey: From<CollectionTokenPrefix>,
+	T::OracleValue: Into<FixedU128>,
+{
+	type Error = DispatchError;
+	fn to_asset_balance(balance: NativeBalance, asset_id: Location) -> Result<u128, Self::Error> {
+		Self::convert_native_to_asset(&AssetId(asset_id), balance)
 	}
 }
 
