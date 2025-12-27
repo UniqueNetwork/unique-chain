@@ -97,8 +97,8 @@ use sp_std::collections::btree_map::BTreeMap;
 #[cfg(not(feature = "std"))]
 use sp_std::vec::Vec;
 use up_data_structs::{
-	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, Property, PropertyKey,
-	TokenId,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, CollectionMode,
+	Property, PropertyKey, TokenId,
 };
 use weights::WeightInfo;
 
@@ -108,6 +108,9 @@ pub mod benchmarking;
 pub mod common;
 pub mod erc;
 pub mod weights;
+
+mod impl_fungibles;
+pub use impl_fungibles::*;
 
 pub type CreateItemData<T> = (<T as pallet_evm::Config>::CrossAccountId, u128);
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
@@ -183,6 +186,16 @@ impl<T: Config> FungibleHandle<T> {
 	/// Casts [`CollectionHandle`][`pallet_common::CollectionHandle`] into [`FungibleHandle`].
 	pub fn cast(inner: pallet_common::CollectionHandle<T>) -> Self {
 		Self(inner)
+	}
+
+	pub fn try_get(collection_id: CollectionId) -> Result<Self, DispatchError> {
+		let handle = pallet_common::CollectionHandle::try_get(collection_id)?;
+
+		if let CollectionMode::Fungible(_) = handle.mode {
+			Ok(Self::cast(handle))
+		} else {
+			Err(<CommonError<T>>::NoPermission.into())
+		}
 	}
 
 	/// Casts [`FungibleHandle`] into [`CollectionHandle`][`pallet_common::CollectionHandle`].
