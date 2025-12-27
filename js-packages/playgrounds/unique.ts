@@ -3046,6 +3046,10 @@ class UtilityGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   batchAllCall(txs: any[]) {
     return this.helper.constructApiCall('api.tx.utility.batchAll', [txs]);
   }
+
+  dispatchAs(signer: TSigner, asOrigin: any, tx: any) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.utility.dispatchAs', [asOrigin, tx])
+  }
 }
 
 export type ChainHelperBaseConstructor = new (...args: any[]) => ChainHelperBase;

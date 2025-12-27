@@ -853,21 +853,44 @@ export class ArrangeGroup {
     }
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
     const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
-    const findCreationDate = (block: any) => {
-      const methods = block.block.extrinsics.map((ext: any) => ext.method.toHuman());
-      let date;
-      methods.forEach((method: any) => {
-        if(method.section === 'timestamp') {
-          date = Number(method.args.now.replaceAll(',', ''));
-        }
-      });
-      return date;
-    };
-    const block1date = await findCreationDate(block1);
-    const block2date = await findCreationDate(block2);
-    if(block2date! - block1date! < 9000) return true;
+    const block1Ts = this.extractBlockTimestamp(block1);
+    const block2Ts = this.extractBlockTimestamp(block2);
+    if(block2Ts! - block1Ts! < 9000n) return true;
     return false;
   };
+
+  extractBlockTimestamp(block) {
+    const methods = block.block.extrinsics.map((ext: any) => ext.method.toHuman());
+    let date;
+    methods.forEach((method: any) => {
+      if(method.section === 'timestamp') {
+        date = BigInt(method.args.now.replaceAll(',', ''));
+      }
+    });
+    return date;
+  }
+
+  async fetchBlockTimestamp(blockNumber: number | null) {
+    blockNumber = blockNumber ?? await this.helper.callRpc('api.query.system.number');
+    const blockHash = await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber]);
+    const block = await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash]);
+    return this.extractBlockTimestamp(block);
+  }
+
+  async findRecentBlockByTimestamp(timestamp: BigInt, maxBlocksToCheck = 30) {
+    let blockNumber = await this.helper.callRpc('api.query.system.number').then(n => n.toJSON());
+
+    let blockTs;
+    for (let i = 0; i < maxBlocksToCheck; i++) {
+      blockTs = await this.fetchBlockTimestamp(blockNumber);
+
+      if (blockTs <= timestamp) {
+        return blockNumber;
+      }
+    }
+
+    return null;
+  }
 
   async calculateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
     const address = 'Substrate' in payer ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum);
