@@ -11,9 +11,7 @@
     "/dns/unique-boot-ng.dwellir.com/tcp/443/wss/p2p/12D3KooWJcKTGRDBPNuEuhKbs5gbkJRYK5Wd1Gt2NYxGrNB9ndgr",
     "/dns/unique-boot-ng.dwellir.com/tcp/30369/p2p/12D3KooWJcKTGRDBPNuEuhKbs5gbkJRYK5Wd1Gt2NYxGrNB9ndgr",
     "/dns/unique-bootnode.radiumblock.com/tcp/30333/p2p/12D3KooWSrb9tCNquZ8yRkYwrHYGFBGBjpvkJWLQK7kzh5XGBVuB",
-    "/dns/unique-bootnode.radiumblock.com/tcp/30336/wss/p2p/12D3KooWSrb9tCNquZ8yRkYwrHYGFBGBjpvkJWLQK7kzh5XGBVuB",
-    "/dns/boot.helikon.io/tcp/8650/p2p/12D3KooWBgfhay8zm3RhZtdDCXgfhkPmB9YEU9NjUiiztq3C13w1",
-    "/dns/boot.helikon.io/tcp/8652/wss/p2p/12D3KooWBgfhay8zm3RhZtdDCXgfhkPmB9YEU9NjUiiztq3C13w1"
+    "/dns/unique-bootnode.radiumblock.com/tcp/30336/wss/p2p/12D3KooWSrb9tCNquZ8yRkYwrHYGFBGBjpvkJWLQK7kzh5XGBVuB"
   ],
   "telemetryEndpoints": null,
   "protocolId": "unq",
